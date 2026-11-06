@@ -1,79 +1,58 @@
 import { Controller } from "@hotwired/stimulus"
 
+// Pulses each segment of a name in display order (Yao, then Ming; Elly, then
+// De La Cruz; Vitinha once), holding the final segment longest, then repeats.
 export default class extends Controller {
-  static targets = ["firstName", "lastName"]
+  static targets = ["segment"]
   static values = {
-    sequence: Object
+    sequence: {
+      type: Object,
+      default: {
+        initialDelay: 1000,
+        pause: 800,
+        segment: { growDuration: 500, holdDuration: 500 },
+        finalSegment: { growDuration: 800, holdDuration: 800 }
+      }
+    }
   }
 
   static SHRINK_DURATION = 300
 
   connect() {
     this.animationTimer = null
-
-    if (!this.hasSequenceValue) {
-      this.sequenceValue = {
-        initialDelay: 1000,
-        firstName: {
-          growDuration: 500,
-          holdDuration: 500
-        },
-        pause: 800,
-        lastName: {
-          growDuration: 800,
-          holdDuration: 800
-        }
-      }
-    }
-
     this.startPulseSequence()
   }
 
   disconnect() {
-    if (this.animationTimer) {
-      clearTimeout(this.animationTimer)
-    }
+    clearTimeout(this.animationTimer)
   }
 
   startPulseSequence() {
-    this.animationTimer = setTimeout(() => {
-      this.pulseFirstName()
-    }, this.sequenceValue.initialDelay)
+    this.animationTimer = setTimeout(() => this.pulse(0), this.sequenceValue.initialDelay)
   }
 
-  pulseFirstName() {
-    this.firstNameTarget.style.setProperty('--grow-duration', `${this.sequenceValue.firstName.growDuration}ms`)
-    this.firstNameTarget.style.setProperty('--shrink-duration', `${this.constructor.SHRINK_DURATION}ms`)
+  pulse(index) {
+    const target = this.segmentTargets[index]
+    if (!target) return
 
-    this.firstNameTarget.classList.add('pulse-grow')
-    this.firstNameTarget.classList.remove('pulse-shrink')
-
-    this.animationTimer = setTimeout(() => {
-      this.firstNameTarget.classList.remove('pulse-grow')
-      this.firstNameTarget.classList.add('pulse-shrink')
-
-      this.animationTimer = setTimeout(() => {
-        this.animationTimer = setTimeout(() => {
-          this.pulseLastName()
-        }, this.sequenceValue.pause)
-      }, this.constructor.SHRINK_DURATION)
-    }, this.sequenceValue.firstName.holdDuration)
-  }
-
-  pulseLastName() {
-    this.lastNameTarget.style.setProperty('--grow-duration', `${this.sequenceValue.lastName.growDuration}ms`)
-    this.lastNameTarget.style.setProperty('--shrink-duration', `${this.constructor.SHRINK_DURATION}ms`)
-
-    this.lastNameTarget.classList.add('pulse-grow')
-    this.lastNameTarget.classList.remove('pulse-shrink')
+    const final = index === this.segmentTargets.length - 1
+    const timing = final ? this.sequenceValue.finalSegment : this.sequenceValue.segment
+    target.style.setProperty("--grow-duration", `${timing.growDuration}ms`)
+    target.style.setProperty("--shrink-duration", `${this.constructor.SHRINK_DURATION}ms`)
+    target.classList.add("pulse-grow")
+    target.classList.remove("pulse-shrink")
 
     this.animationTimer = setTimeout(() => {
-      this.lastNameTarget.classList.remove('pulse-grow')
-      this.lastNameTarget.classList.add('pulse-shrink')
+      target.classList.remove("pulse-grow")
+      target.classList.add("pulse-shrink")
 
       this.animationTimer = setTimeout(() => {
-        this.startPulseSequence()
+        if (final) {
+          this.startPulseSequence()
+        } else {
+          this.animationTimer = setTimeout(() => this.pulse(index + 1), this.sequenceValue.pause)
+        }
       }, this.constructor.SHRINK_DURATION)
-    }, this.sequenceValue.lastName.holdDuration)
+    }, timing.holdDuration)
   }
 }

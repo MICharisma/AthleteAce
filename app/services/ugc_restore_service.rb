@@ -76,7 +76,8 @@ class UgcRestoreService
         rating_attrs["target_sport_identifier"],
         rating_attrs["target_league_identifier"],
         rating_attrs["target_team_identifier"],
-        rating_attrs["target_conference_identifier"]
+        rating_attrs["target_conference_identifier"],
+        code: rating_attrs["target_code"]
       )
 
       missing = { "ace" => ace_id, "spectrum" => spectrum_id, "target" => target }.select { |_, found| found.nil? }.keys
@@ -182,7 +183,8 @@ class UgcRestoreService
       achievement_data["target_sport_identifier"],
       achievement_data["target_league_identifier"],
       achievement_data["target_team_identifier"],
-      achievement_data["target_conference_identifier"]
+      achievement_data["target_conference_identifier"],
+      code: achievement_data["target_code"]
     )
 
     unless target
@@ -235,7 +237,8 @@ class UgcRestoreService
         attempt_data["subject_identifier"],
         attempt_data["subject_sport_identifier"],
         nil, # league not needed for subject
-        attempt_data["subject_team_identifier"]
+        attempt_data["subject_team_identifier"],
+        code: attempt_data["subject_code"]
       )
 
       target_entity = find_target_by_identifiers(
@@ -244,7 +247,8 @@ class UgcRestoreService
         attempt_data["target_sport_identifier"],
         attempt_data["target_league_identifier"],
         attempt_data["target_team_identifier"],
-        attempt_data["target_conference_identifier"]
+        attempt_data["target_conference_identifier"],
+        code: attempt_data["target_code"]
       )
 
       chosen_entity = find_target_by_identifiers(
@@ -253,7 +257,8 @@ class UgcRestoreService
         attempt_data["chosen_sport_identifier"],
         attempt_data["chosen_league_identifier"],
         attempt_data["chosen_team_identifier"],
-        attempt_data["chosen_conference_identifier"]
+        attempt_data["chosen_conference_identifier"],
+        code: attempt_data["chosen_code"]
       )
 
       missing_entities = []
@@ -292,7 +297,10 @@ class UgcRestoreService
 
   # === IDENTIFIER-BASED TARGET FINDING ===
 
-  def find_target_by_identifiers(target_type, identifier, sport_id = nil, league_id = nil, team_id = nil, conference_id = nil)
+  # An entity code is authoritative when the backup has one; name identifiers
+  # are only used for records exported without a code.
+  def find_target_by_identifiers(target_type, identifier, sport_id = nil, league_id = nil, team_id = nil, conference_id = nil, code: nil)
+    return find_target_by_code(target_type, code) if target_type && code.present?
     return nil unless target_type && identifier
     
     case target_type
@@ -321,6 +329,13 @@ class UgcRestoreService
     else
       nil
     end
+  end
+
+  def find_target_by_code(target_type, code)
+    model = target_type.safe_constantize
+    return unless model.is_a?(Class) && model < ApplicationRecord && model.column_names.include?("entity_code")
+
+    EntityCode.resolve(model, code)
   end
 
   def find_player_by_identifier(identifier, sport_identifier = nil, team_identifier = nil)

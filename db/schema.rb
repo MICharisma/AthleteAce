@@ -10,10 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_05_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_040000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
+  enable_extension "unaccent"
 
   create_table "account_actions", force: :cascade do |t|
     t.bigint "ace_id"
@@ -706,7 +707,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_020000) do
 
   create_table "people", force: :cascade do |t|
     t.string "name", null: false
-    t.bigint "player_id"
     t.string "entity_code", null: false
     t.jsonb "source", default: {}, null: false
     t.jsonb "details", default: {}, null: false
@@ -715,8 +715,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_020000) do
     t.string "first_name"
     t.string "last_name"
     t.string "nicknames", default: [], null: false, array: true
+    t.string "short_name", null: false
+    t.string "sort_name", null: false
+    t.string "name_segments", default: [], null: false, array: true
+    t.string "alternate_names", default: [], null: false, array: true
     t.index ["entity_code"], name: "index_people_on_entity_code", unique: true
-    t.index ["player_id"], name: "index_people_on_player_id", unique: true
+    t.index ["sort_name"], name: "index_people_on_sort_name"
   end
 
   create_table "player_group_memberships", force: :cascade do |t|
@@ -761,9 +765,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_020000) do
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.bigint "sport_id"
     t.string "entity_code"
+    t.bigint "person_id", null: false
     t.index ["birth_city_id"], name: "index_players_on_birth_city_id"
     t.index ["birth_country_id"], name: "index_players_on_birth_country_id"
     t.index ["entity_code"], name: "index_players_on_entity_code", unique: true
+    t.index ["person_id"], name: "index_players_on_person_id"
     t.index ["seed_version"], name: "index_players_on_seed_version"
     t.index ["sport_id"], name: "index_players_on_sport_id"
     t.index ["team_id"], name: "index_players_on_team_id"
@@ -1327,11 +1333,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_020000) do
   add_foreign_key "mutes", "shout_outs", column: "hidden_shout_out_id"
   add_foreign_key "organization_affiliations", "organizations"
   add_foreign_key "organization_affiliations", "teams"
-  add_foreign_key "people", "players", on_delete: :nullify
   add_foreign_key "player_group_memberships", "player_groups"
   add_foreign_key "player_group_memberships", "players"
   add_foreign_key "players", "cities", column: "birth_city_id"
   add_foreign_key "players", "countries", column: "birth_country_id"
+  add_foreign_key "players", "people"
   add_foreign_key "players", "sports"
   add_foreign_key "players", "teams"
   add_foreign_key "positions", "sports"

@@ -10,8 +10,8 @@ module Seeds
       "Stadium" => Stadium, "League" => League, "Conference" => Conference,
       "Division" => Division, "Team" => Team, "Organization" => Organization,
       "OrganizationAffiliation" => OrganizationAffiliation,
-      "Year" => Year, "Season" => Season, "Campaign" => Campaign, "Player" => Player,
-      "Person" => Person, "StaffTenure" => StaffTenure,
+      "Year" => Year, "Season" => Season, "Campaign" => Campaign, "Person" => Person,
+      "Player" => Player, "StaffTenure" => StaffTenure,
       "Contract" => Contract, "Activation" => Activation,
       "JerseyNumberAssignment" => JerseyNumberAssignment,
       "Logo" => Logo, "Uniform" => Uniform, "UniformPiece" => UniformPiece,
@@ -27,9 +27,9 @@ module Seeds
     SCOPE_ASSOCIATIONS = {
       "State" => %w[country], "City" => %w[state], "Stadium" => %w[city],
       "League" => %w[sport], "Conference" => %w[league], "Division" => %w[conference],
-      "Team" => %w[league], "Season" => %w[league year], "Player" => %w[sport],
+      "Team" => %w[league], "Season" => %w[league year], "Player" => %w[sport person],
       "OrganizationAffiliation" => %w[organization team],
-      "Person" => %w[player], "StaffTenure" => %w[person organization team],
+      "StaffTenure" => %w[person organization team],
       "Contract" => %w[player organization], "Campaign" => %w[team], "Activation" => %w[player],
       "JerseyNumberAssignment" => %w[player team],
       "Logo" => %w[team], "Uniform" => %w[team], "UniformPiece" => %w[uniform],
@@ -47,6 +47,8 @@ module Seeds
       [ "Game", "context" ] => %w[League Conference Division Sport Federation Organization]
     }.freeze
     PROTECTED_ATTRIBUTES = %w[id type entity_code created_at updated_at seed_version last_seeded_at].freeze
+    # Older files attach a Person to its athletic profile from the person's side.
+    LEGACY_REFERENCES = { "Person" => %w[player] }.freeze
 
     attr_reader :report
 
@@ -188,6 +190,7 @@ module Seeds
         end
       end
       record.references.each_key do |key|
+        next if LEGACY_REFERENCES.fetch(record.type, []).include?(key)
         association = model.reflect_on_association(key.to_sym)
         unless association&.macro == :belongs_to
           raise Error, "#{record.location}: unsupported #{record.type} reference #{key}"
@@ -202,8 +205,8 @@ module Seeds
 
     def import_record(record)
       model = MODELS.fetch(record.type)
-      desired = desired_attributes(record)
-      desired.merge!(associations_for(record))
+      # Associations first, so a player's chosen person is in place before its names are assigned.
+      desired = associations_for(record).merge(desired_attributes(record))
       codes = ([record.code] + record.aliases).uniq
       bindings = EntityCode.where(namespace: @namespace, catalog: @catalog, code: codes).lock.to_a
       bindings.each do |binding|
@@ -211,7 +214,7 @@ module Seeds
       end
       targets = codes.filter_map { |code| resolve_code(record.type, code) }.uniq(&:id)
       raise Error, "#{record.location}: aliases identify different #{record.type} records" if targets.length > 1
-      target = targets.first || natural_target(model, desired)
+      target = targets.first || legacy_person_target(record) || natural_target(model, desired)
       canonical_code = target&.entity_code.presence || bindings.first&.canonical_code || record.code
       codes |= [canonical_code]
       if target.nil?
@@ -278,6 +281,7 @@ module Seeds
         values[key] = resolve_reference(model, key, reference, record) if reference
       end
       record.references.each do |key, reference|
+        next if LEGACY_REFERENCES.fetch(record.type, []).include?(key)
         values[key] = reference.nil? ? nil : resolve_reference(model, key, reference, record)
       end
       if record.type == "League" && !values.key?("jurisdiction") && record.scope["country"]
@@ -363,13 +367,17 @@ module Seeds
       resolve_code(type, code) || raise(MissingReference, "#{record.location}: missing #{type} #{code}")
     end
 
+    def legacy_person_target(record)
+      reference = record.references["player"] if record.type == "Person"
+      required_code("Player", reference, record).person if reference
+    end
+
     def natural_target(model, desired)
       if model == JerseyNumberAssignment && desired["start_date"] && desired["player"] && desired["team"] && desired["number"]
         return model.where(player: desired["player"], team: desired["team"], number: desired["number"])
           .overlapping(desired["start_date"], desired["start_date"]).first
       end
       keys = {
-        Person => %w[player],
         Year => %w[number], Season => %w[year league], Campaign => %w[team season], Activation => %w[player campaign],
         PlayerGroupMembership => %w[player_group player], RosterEntry => %w[roster player], Contestant => %w[contest campaign],
         Appearance => %w[contestant player], TransactionPlayer => %w[event player],

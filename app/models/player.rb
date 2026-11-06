@@ -3,7 +3,7 @@ class Player < ApplicationRecord
 
   # Names live on the Person; preload it so lists of players don't query per name.
   default_scope { preload :person }
-  has_one :person, dependent: :nullify, autosave: true, inverse_of: :player
+  belongs_to :person, autosave: true, inverse_of: :players
   before_validation :attach_person_identity, on: :create
   has_many :shout_outs, as: :target, dependent: :nullify
   has_many :shout_out_drafts, as: :target, dependent: :nullify
@@ -68,12 +68,16 @@ class Player < ApplicationRecord
   end
   
   scope :sampled, ->(n = 50) { order(Arel.sql('RANDOM()')).limit(n) }
-  scope :by_name, -> { joins(:person).merge(Person.order(:last_name, :first_name)).order(:id) }
-  scope :matching_name, ->(query) {
-    joins(:person).where("CONCAT_WS(' ', people.first_name, people.last_name, array_to_string(people.nicknames, ' ')) ILIKE ?", "%#{sanitize_sql_like(query)}%")
+  scope :by_name, -> { joins(:person).merge(Person.order(:sort_name)).order(:id) }
+  scope :matching_name, ->(query) { joins(:person).merge(Person.matching_name(query)) }
+  # A code part names a player by short name (HART) or sort name (HART_JOSH, DE_LA_CRUZ_ELLY).
+  scope :named_in_code, ->(part) {
+    code_form = ->(column) { "UPPER(BTRIM(REGEXP_REPLACE(unaccent(people.#{column}), '[^[:alnum:]]+', '_', 'g'), '_'))" }
+    joins(:person).where("#{code_form.call('short_name')} = ? OR #{code_form.call('sort_name')} = ?", part.upcase, part.upcase)
   }
 
-  delegate :name, *NAME_ATTRIBUTES, *NAME_ATTRIBUTES.map { "#{it}=" }, to: :identity
+  delegate :name, :short_name, :sort_name, :name_segments, :alternate_names,
+    *NAME_ATTRIBUTES, *NAME_ATTRIBUTES.map { "#{it}=" }, to: :identity
   alias_method :full_name, :name
 
   def sport
@@ -120,21 +124,22 @@ class Player < ApplicationRecord
   private
 
   def identity
-    person || build_person(name: Person::UNNAMED)
+    person || build_person
   end
 
-  # A rebuilt athletic profile reclaims the Person that shares its entity code.
+  # A player without a chosen person gets one with a provisional code derived
+  # from its own, and a rebuilt athletic profile reclaims that person.
   def attach_person_identity
     pending = identity
+    return if pending.persisted?
+
     code = "PERSON-#{entity_code.presence || SecureRandom.uuid.upcase}"
     existing = Person.find_by(entity_code: code)
-    if existing.nil?
-      pending.entity_code = code
-    elsif existing.player_id.present?
-      errors.add :person, "is already linked to another athletic profile"
-    else
+    if existing
       existing.assign_attributes pending.changes.slice(*NAME_ATTRIBUTES).transform_values(&:last)
       self.person = existing
+    else
+      pending.entity_code = code
     end
   end
 end

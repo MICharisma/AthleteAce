@@ -52,7 +52,7 @@
             <label class="relative flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg cursor-pointer transition-colors">
               <%= f.radio_button :selected_id, player.id, class: "h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300" %>
               <span class="ml-3 block text-lg font-medium text-gray-700 flex-grow">
-                <%= player.first_name %> <%= player.last_name %>
+                <%= player.name %>
               </span>
             </label>
           <% end %>

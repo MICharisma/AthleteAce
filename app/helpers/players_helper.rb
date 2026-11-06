@@ -6,6 +6,17 @@ module PlayersHelper
     end
   end
 
+  # One pulse target per name segment, in the person's own name order
+  def name_pulse_segments player
+    segments = player.name_segments
+    safe_join(segments.each_with_index.map do |segment, index|
+      tag.div segment,
+        id: dom_id(player, "name_segment_#{index}_of"),
+        class: ["name-part", index == segments.size - 1 ? "final-name-part" : "lead-name-part"],
+        data: { name_pulse_target: "segment" }
+    end)
+  end
+
   # Display player metadata (team, league, sport)
   def player_metadata_display player
     tag.div class: "record-metadata" do

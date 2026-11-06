@@ -30,9 +30,10 @@ RSpec.describe "People and staff appointments", type: :request do
     create :staff_tenure, :broadcaster, person: person
     get person_path(person)
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Athletic profile: #{person.player.name}", player_path(person.player), "Assistant coach", "Color commentator")
+    player = person.players.sole
+    expect(response.body).to include("Athletic profile: #{player.sport.name}", player_path(player), "Assistant coach", "Color commentator")
     expect(response.body).to include("Unknown start to Unknown end")
-    get player_path(person.player)
+    get player_path(player)
     expect(response.body).to include(person_path(person), "Coaching, staff and broadcasting history")
   end
 

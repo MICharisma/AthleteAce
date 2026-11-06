@@ -171,6 +171,42 @@ The library importer uses one transaction and reads the selected bundle into mem
 
 `db:seed` invokes `seeds:import`, so ordinary Rails database setup imports the new YAML library. The previous JSON orchestration is retained in `db/seeds_legacy.rb` for explicit legacy use. Mixing both libraries requires explicit reconciliation of legacy entities that lack codes. Legacy JSON Contracts require an explicit verified `organization_code`. The importer adopts uncoded rows through strong Year/Season/Campaign/Activation keys and unique parent/player keys for RosterEntry, Appearance, Contestant, and TransactionPlayer; it does not guess that matching player names or team abbreviations identify the same entity.
 
+## People and names
+
+A `Person` is the human; a `Player` is one athletic profile. Every player belongs to exactly one person, and a person can have several players (two-sport careers such as Deion Sanders) and any number of `StaffTenure` appointments (broadcasting or coaching careers). Person codes are provisional: they are expected to become aliases of codes assigned by the shared naming service (Rizz).
+
+Names live on the person, stored by purpose so they need not fit first + last:
+
+| Attribute | Purpose | Built from parts when not supplied |
+| --- | --- | --- |
+| `name` | Display name, in the person's own order | `first_name last_name` |
+| `short_name` | Second reference in captions and games | `last_name`, else `first_name` |
+| `sort_name` | List order | `last_name, first_name` |
+| `name_segments` | Parts a game reveals one at a time, in display order | `[first_name, last_name]` |
+| `alternate_names` | Other scripts and legal names, for search only | — |
+| `nicknames` | Search and answer checking | — |
+
+Changing `first_name` or `last_name` rebuilds every form that the same change does not set. Search ignores accents.
+
+Preferred records put names on the Person and reference it from each Player, either directly or through a `person` scope:
+
+```yaml
+- type: Person
+  code: PERSON-YAO_MING
+  attributes:
+    name: Yao Ming
+    short_name: "Yao"
+    sort_name: Yao Ming
+    name_segments: ["Yao", "Ming"]
+    alternate_names: ["姚明"]
+- type: Player
+  code: BKT-NBA-PLAYER-YAO_MING
+  attributes: {debut_year: 2002}
+  references: {sport: SPORT-BKT, person: PERSON-YAO_MING}
+```
+
+Older shapes still import. `first_name`, `last_name`, and `nicknames` on a Player record are stored on its person; a player with no `person` reference gets one whose provisional code is `PERSON-` plus the player's code, and a rebuilt profile with the same code reclaims it. A Person record with a `player` reference (the original Steve Kerr file) adopts that player's person. Sequence lookups match a player code part against the person's short or sort name with punctuation folded to underscores, so `HART`, `HART_JOSH`, and `DE_LA_CRUZ_ELLY` all resolve.
+
 ## Curated player groups
 
 `PlayerGroup` stores a public name, description, and optional source/details mappings. `PlayerGroupMembership` references a group and a player, with one membership per pair. Both accept stable entity codes through the standard importer. The [Brunson/Hart example](../db/seeds/athlete_ace_data/yaml/player_groups/knicks_names.yaml) defines a manually selected practice list using existing player codes. Membership can span teams, sports, and seasons; no current roster or starter claim is implied.

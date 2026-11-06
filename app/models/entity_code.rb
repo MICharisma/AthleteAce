@@ -13,4 +13,17 @@ class EntityCode < ApplicationRecord
     record_class.find_by id: record_id, entity_code: canonical_code
   end
   alias_method :resolved_record, :record
+
+  # Finds the record a code or one of its aliases names, or nil when the code
+  # names a different kind of record.
+  def self.resolve(model, code, namespace: "MIC", catalog: "ALA")
+    binding = find_by(namespace: namespace, catalog: catalog, code: code)
+    if binding
+      return unless binding.record_type == model.polymorphic_name
+
+      target = binding.resolved_record || model.find_by(entity_code: binding.canonical_code)
+      return target if target
+    end
+    model.find_by(entity_code: code)
+  end
 end

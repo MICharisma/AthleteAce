@@ -57,28 +57,8 @@
   <% end %>
 </div>
 
-<div class="player-info" 
-  data-controller="name-pulse"
-  data-name-pulse-sequence-value='{
-    "initialDelay": 1000,
-    "firstName": {
-      "growDuration": 500,
-      "holdDuration": 500
-    },
-    "pause": 800,
-    "lastName": {
-      "growDuration": 800,
-      "holdDuration": 800
-    }
-  }'>
-  <%= tag.div(@current_player.first_name, 
-              id: dom_id(@current_player, :first_name_of), 
-              class: "name-part first-name",
-              data: { name_pulse_target: "firstName" }) %>
-  <%= tag.div(@current_player.last_name, 
-              id: dom_id(@current_player, :last_name_of), 
-              class: "name-part last-name",
-              data: { name_pulse_target: "lastName" }) %>
+<div class="player-info" data-controller="name-pulse">
+  <%= name_pulse_segments @current_player %>
   <%= tag.div(@current_player.team&.territory.present? ? "is on the " : "is on ", id: dom_id(@current_player, :is_on_the)) %>
   <%= tag.div(link_to_name(@current_player.team), id: dom_id(@current_player, :team_of)) %>
 </div>

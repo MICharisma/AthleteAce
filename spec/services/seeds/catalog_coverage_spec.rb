@@ -56,7 +56,7 @@ RSpec.describe "Expanded seasonal seed catalog" do
     expect(OrganizationAffiliation.count).to eq(114)
     expect(Team.all.all? { |team| team.current_organization.present? }).to be(true)
     person = importer.resolve_code("Person", "PERSON-KERR_STEVE")
-    expect(person.player.name).to eq("Steve Kerr")
+    expect(person.players.map(&:name)).to eq([ "Steve Kerr" ])
     expect(person.staff_tenures.pluck(:role)).to contain_exactly("coach", "broadcaster")
     broadcast = person.staff_tenures.broadcaster.sole
     expect(broadcast.organization.name).to eq("TNT")

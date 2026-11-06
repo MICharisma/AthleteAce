@@ -95,6 +95,7 @@ class UgcBackupService
   def export_ratings
     Rating.includes(:target).map do |rating|
       rating.attributes.merge(
+        "target_code" => entity_code_for(rating.target),
         "target_identifier" => build_target_identifier(rating.target),
         "target_sport_identifier" => extract_sport_identifier(rating.target),
         "target_league_identifier" => extract_league_identifier(rating.target),
@@ -126,6 +127,7 @@ class UgcBackupService
 
   def export_achievement(achievement)
     achievement.attributes.merge(
+      "target_code" => entity_code_for(achievement.target),
       "target_identifier" => build_target_identifier(achievement.target),
       "target_sport_identifier" => extract_sport_identifier(achievement.target),
       "target_league_identifier" => extract_league_identifier(achievement.target),
@@ -140,11 +142,13 @@ class UgcBackupService
     GameAttempt.includes(:subject_entity, :target_entity, :chosen_entity).map do |attempt|
       attempt.attributes.merge(
         # Subject entity identifiers
+        "subject_code" => entity_code_for(attempt.subject_entity),
         "subject_identifier" => build_target_identifier(attempt.subject_entity),
         "subject_sport_identifier" => extract_sport_identifier(attempt.subject_entity),
         "subject_team_identifier" => extract_team_identifier(attempt.subject_entity),
         
         # Target entity identifiers  
+        "target_code" => entity_code_for(attempt.target_entity),
         "target_identifier" => build_target_identifier(attempt.target_entity),
         "target_sport_identifier" => extract_sport_identifier(attempt.target_entity),
         "target_league_identifier" => extract_league_identifier(attempt.target_entity),
@@ -152,6 +156,7 @@ class UgcBackupService
         "target_conference_identifier" => extract_conference_identifier(attempt.target_entity),
         
         # Chosen entity identifiers
+        "chosen_code" => entity_code_for(attempt.chosen_entity),
         "chosen_identifier" => build_target_identifier(attempt.chosen_entity),
         "chosen_sport_identifier" => extract_sport_identifier(attempt.chosen_entity),
         "chosen_league_identifier" => extract_league_identifier(attempt.chosen_entity),
@@ -163,12 +168,18 @@ class UgcBackupService
 
   # === IDENTIFIER BUILDING HELPERS ===
 
+  # The stable identity restore looks up first; the name identifiers below are
+  # readable labels and the fallback for records without a code.
+  def entity_code_for(target)
+    target.try(:entity_code).presence
+  end
+
   def build_target_identifier(target)
     return nil unless target
     
     case target
     when Player
-      "#{target.first_name} #{target.last_name}"
+      target.name
     when Team
       target.name
     when League

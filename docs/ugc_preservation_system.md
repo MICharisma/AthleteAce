@@ -36,14 +36,15 @@ Traditional database reseeding would destroy this UGC data, requiring a sophisti
 
 3. **Identifier-Based Foreign Key Remapping**
 
-Instead of relying on fragile database IDs, the system uses human-readable identifiers with multiple context levels:
+Instead of relying on fragile database IDs, each exported reference carries the record's entity code (`target_code`, `subject_code`, `chosen_code`). Restore resolves that code through `EntityCode`, so aliases keep working after codes are merged or reassigned, and it never falls back to a name when a code is present. The human-readable identifiers remain as labels and as the lookup for records exported without a code, including older backups:
 
 ```yaml
-# Example rating with multi-context identifiers
+# Example rating with an entity code and multi-context identifiers
 - id: 1
   target_type: "Player"
   target_id: 123
-  target_identifier: "Aaron Judge"           # Primary identifier
+  target_code: "BSB-MLB-PLAYER-JUDGE_AARON"  # Authoritative when present
+  target_identifier: "Aaron Judge"           # Label, and fallback without a code
   target_team_identifier: "Yankees"          # Context for disambiguation
   target_sport_identifier: "Baseball"        # Additional context
   target_league_identifier: "MLB"            # Full hierarchy context

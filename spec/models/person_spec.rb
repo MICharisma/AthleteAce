@@ -5,24 +5,29 @@ RSpec.describe Person do
     player = create :player, first_name: "Jordan", last_name: "Reyes", entity_code: "PLAYER-REYES_JORDAN"
     expect(player.person.name).to eq("Jordan Reyes")
     expect(player.person.entity_code).to eq("PERSON-PLAYER-REYES_JORDAN")
-    expect(player.person.player).to eq(player)
+    expect(player.person.players).to eq([ player ])
     expect(player.reload.entity_code).to eq("PLAYER-REYES_JORDAN")
   end
 
   it "allows staff without athletic profiles and keeps same-name people distinct" do
     first = create :person, name: "Alex Morgan"
     second = create :person, name: first.name
-    expect(first.player).to be_nil
+    expect(first.players).to be_empty
     expect(second).not_to eq(first)
-    expect(build(:person, player: nil)).to be_valid
   end
 
-  it "allows only one person to link an athletic profile at the model and database boundary" do
+  it "holds several athletic profiles for a two-sport career" do
+    football = create :player, first_name: "Deion", last_name: "Sanders"
+    baseball = create :player, person: football.person
+    expect(football.person.players).to contain_exactly(football, baseball)
+    expect(baseball.name).to eq("Deion Sanders")
+    baseball.update! nicknames: [ "Prime Time" ]
+    expect(football.reload.nicknames).to eq([ "Prime Time" ])
+  end
+
+  it "requires every athletic profile to belong to a person at the database boundary" do
     player = create :player
-    duplicate = build :person, player: player
-    expect(duplicate).not_to be_valid
-    expect(duplicate.errors[:player_id]).to be_present
-    expect { Person.transaction(requires_new: true) { duplicate.save!(validate: false) } }.to raise_error(ActiveRecord::RecordNotUnique)
+    expect { player.update_column(:person_id, nil) }.to raise_error(ActiveRecord::NotNullViolation)
   end
 
   it "preserves a person and their appointments when an athletic profile is rebuilt" do
@@ -30,10 +35,19 @@ RSpec.describe Person do
     person = player.person
     tenure = create :staff_tenure, :broadcaster, person: person
     player.delete
-    expect(person.reload.player).to be_nil
+    expect(person.reload.players).to be_empty
     replacement = create :player, entity_code: "PLAYER-REYES_JORDAN"
     expect(replacement.person).to eq(person)
     expect(tenure.reload.person).to eq(person)
+  end
+
+  it "carries a rebuilt profile's new names onto the reclaimed person" do
+    player = create :player, entity_code: "PLAYER-REYES_JORDAN", first_name: "Jordan", last_name: "Reyes"
+    person = player.person
+    player.delete
+    replacement = create :player, entity_code: "PLAYER-REYES_JORDAN", first_name: "Jordán", last_name: "Reyes"
+    expect(replacement.person).to eq(person)
+    expect(person.reload.name).to eq("Jordán Reyes")
   end
 
   it "keeps career identity when a player transfers or changes their name" do
@@ -52,25 +66,11 @@ RSpec.describe Person do
     expect(create(:player, first_name: nil, last_name: " ").name).to eq(Person::UNNAMED)
   end
 
-  it "carries a rebuilt profile's new names onto the reclaimed person" do
-    player = create :player, entity_code: "PLAYER-REYES_JORDAN", first_name: "Jordan", last_name: "Reyes"
-    person = player.person
-    player.delete
-    replacement = create :player, entity_code: "PLAYER-REYES_JORDAN", first_name: "Jordán", last_name: "Reyes"
-    expect(replacement.person).to eq(person)
-    expect(person.reload).to have_attributes(player_id: replacement.id, name: "Jordán Reyes")
-  end
-
-  it "refuses a second profile for a person who already has one" do
-    create :player, entity_code: "PLAYER-REYES_JORDAN"
-    duplicate = build :player, entity_code: "PLAYER-REYES_JORDAN"
-    expect(duplicate).not_to be_valid
-    expect(duplicate.errors[:person]).to include("is already linked to another athletic profile")
-  end
-
-  it "restricts deletion while appointments refer to a person" do
+  it "restricts deletion while appointments or athletic profiles refer to a person" do
     tenure = create :staff_tenure
     expect(tenure.person.destroy).to be_falsey
     expect(tenure.reload.person).to be_persisted
+    player = create :player
+    expect(player.person.destroy).to be_falsey
   end
 end

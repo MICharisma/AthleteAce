@@ -49,8 +49,12 @@ module Admin
       records = @model.all
       records = records.where(id: @selected_ids) if @selected_ids
       if query.present?
-        fields = kind == "players" ? "people.first_name, people.last_name, array_to_string(people.nicknames, ' '), players.entity_code" : "teams.territory, teams.mascot, teams.abbreviation, teams.entity_code"
-        records = records.where("CONCAT_WS(' ', #{fields}) ILIKE ?", "%#{@model.sanitize_sql_like(query)}%")
+        pattern = "%#{@model.sanitize_sql_like(query)}%"
+        records = if kind == "players"
+          records.joins(:person).where("#{Person::SEARCH_SQL} ILIKE unaccent(:pattern) OR players.entity_code ILIKE :pattern", pattern: pattern)
+        else
+          records.where("CONCAT_WS(' ', teams.territory, teams.mascot, teams.abbreviation, teams.entity_code) ILIKE ?", pattern)
+        end
       end
       records = records.merge(edited_records) if edited
       if kind == "players"

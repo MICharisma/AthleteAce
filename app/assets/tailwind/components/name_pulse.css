@@ -8,11 +8,11 @@
   transform-origin: center;
 }
 
-.first-name {
+.lead-name-part {
   @apply text-blue-500;
 }
 
-.last-name {
+.final-name-part {
   @apply text-red-500;
 }
 
