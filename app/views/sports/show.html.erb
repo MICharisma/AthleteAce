@@ -7,4 +7,4 @@
 <%= render_collection @sport.conferences, parent: @sport, link_to_collection: true %>
 <%= render_collection @sport.divisions, parent: @sport, link_to_collection: true %>
 <%= render_collection @sport.teams.order(:territory, :mascot), parent: @sport, link_to_collection: true, limit: 12 %>
-<%= render_collection @sport.players.order(:last_name, :first_name), parent: @sport, link_to_collection: true, limit: 12, logo_attribute: :photo_url %>
+<%= render_collection @sport.players.by_name, parent: @sport, link_to_collection: true, limit: 12, logo_attribute: :photo_url %>

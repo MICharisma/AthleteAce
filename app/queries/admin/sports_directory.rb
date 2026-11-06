@@ -49,7 +49,7 @@ module Admin
       records = @model.all
       records = records.where(id: @selected_ids) if @selected_ids
       if query.present?
-        fields = kind == "players" ? "players.first_name, players.last_name, array_to_string(players.nicknames, ' '), players.entity_code" : "teams.territory, teams.mascot, teams.abbreviation, teams.entity_code"
+        fields = kind == "players" ? "people.first_name, people.last_name, array_to_string(people.nicknames, ' '), players.entity_code" : "teams.territory, teams.mascot, teams.abbreviation, teams.entity_code"
         records = records.where("CONCAT_WS(' ', #{fields}) ILIKE ?", "%#{@model.sanitize_sql_like(query)}%")
       end
       records = records.merge(edited_records) if edited
@@ -62,7 +62,7 @@ module Admin
           condition = "EXISTS (SELECT 1 FROM unnest(players.photo_urls) AS photo_url WHERE btrim(photo_url) <> '')"
           records = records.where(photo == "present" ? condition : "NOT #{condition}")
         end
-        records.includes(team: :league).order(:last_name, :first_name, :id)
+        records.includes(team: :league).by_name
       else
         records = records.where(league_id: league_id) if league_id
         records.includes(:league, :division, :stadium).select("teams.*", "(SELECT COUNT(*) FROM players WHERE players.team_id = teams.id) AS player_count").order(:territory, :mascot, :id)

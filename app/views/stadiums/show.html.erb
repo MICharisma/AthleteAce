@@ -2,4 +2,4 @@
 <%= browse_header @stadium.name %>
 <%= browse_metadata "City" => entity_link(@stadium.city), "State" => entity_link(@stadium.state), "Country" => entity_link(@stadium.country), "Capacity" => (@stadium.capacity && number_with_delimiter(@stadium.capacity)), "Address" => @stadium.address %>
 <%= render_collection @stadium.teams, parent: @stadium, link_to_collection: true %>
-<%= render_collection @stadium.players.order(:last_name, :first_name), parent: @stadium, link_to_collection: true, limit: 12, logo_attribute: :photo_url %>
+<%= render_collection @stadium.players.by_name, parent: @stadium, link_to_collection: true, limit: 12, logo_attribute: :photo_url %>

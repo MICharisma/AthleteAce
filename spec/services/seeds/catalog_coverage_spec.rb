@@ -32,7 +32,7 @@ RSpec.describe "Expanded seasonal seed catalog" do
       expect(campaign.details.fetch("roster_coverage")).to eq(complete ? "complete_source_listing" : "two_player_sample")
     end
     expect(Player.where.not(team_id: nil)).to be_empty
-    petterssons = Player.where(first_name: "Elias", last_name: "Pettersson")
+    petterssons = Player.joins(:person).where(people: { first_name: "Elias", last_name: "Pettersson" })
     expect(petterssons.count).to eq(2)
     expect(petterssons.pluck(:entity_code)).to contain_exactly(
       "HCK-NHL-PLAYER-PETTERSSON_ELIAS_SOURCE_8480012", "HCK-NHL-PLAYER-PETTERSSON_ELIAS_SOURCE_8483678"

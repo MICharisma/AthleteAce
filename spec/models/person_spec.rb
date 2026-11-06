@@ -36,12 +36,36 @@ RSpec.describe Person do
     expect(tenure.reload.person).to eq(person)
   end
 
-  it "keeps career identity when a player transfers or changes their profile name" do
-    player = create :player
+  it "keeps career identity when a player transfers or changes their name" do
+    player = create :player, last_name: "Reyes"
     original = player.person
     player.update! team: create(:team), first_name: "Jordán"
     expect(player.person.reload).to eq(original)
-    expect(player.person.name).to eq(original.name)
+    expect(original.reload).to have_attributes(first_name: "Jordán", last_name: "Reyes", name: "Jordán Reyes")
+  end
+
+  it "holds the player's names and builds a trimmed display name from them" do
+    player = create :player, first_name: "Pelé", last_name: nil, nicknames: [ "O Rei" ]
+    expect(player.reload.person).to have_attributes(first_name: "Pelé", last_name: nil, nicknames: [ "O Rei" ], name: "Pelé")
+    expect(player.name).to eq("Pelé")
+    expect(Player.matching_name("rei")).to eq([ player ])
+    expect(create(:player, first_name: nil, last_name: " ").name).to eq(Person::UNNAMED)
+  end
+
+  it "carries a rebuilt profile's new names onto the reclaimed person" do
+    player = create :player, entity_code: "PLAYER-REYES_JORDAN", first_name: "Jordan", last_name: "Reyes"
+    person = player.person
+    player.delete
+    replacement = create :player, entity_code: "PLAYER-REYES_JORDAN", first_name: "Jordán", last_name: "Reyes"
+    expect(replacement.person).to eq(person)
+    expect(person.reload).to have_attributes(player_id: replacement.id, name: "Jordán Reyes")
+  end
+
+  it "refuses a second profile for a person who already has one" do
+    create :player, entity_code: "PLAYER-REYES_JORDAN"
+    duplicate = build :player, entity_code: "PLAYER-REYES_JORDAN"
+    expect(duplicate).not_to be_valid
+    expect(duplicate.errors[:person]).to include("is already linked to another athletic profile")
   end
 
   it "restricts deletion while appointments refer to a person" do

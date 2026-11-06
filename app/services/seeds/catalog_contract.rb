@@ -9,7 +9,9 @@ module Seeds
         polymorphic_columns = model.reflect_on_all_associations(:belongs_to).filter_map do |association|
           association.foreign_type if association.polymorphic?
         end
-        attributes = model.columns.sort_by(&:name).filter_map do |column|
+        # Player names are stored on its Person but seeded with the player.
+        columns = model.columns + (model == Player ? Person.columns.select { Player::NAME_ATTRIBUTES.include?(it.name) } : [])
+        attributes = columns.sort_by(&:name).filter_map do |column|
           next if LibraryImporter::PROTECTED_ATTRIBUTES.include?(column.name) || column.name.end_with?("_id") || polymorphic_columns.include?(column.name)
           [column.name, column_schema(model, column)]
         end.to_h

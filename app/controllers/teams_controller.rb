@@ -78,7 +78,7 @@ class TeamsController < ApplicationController
       seed = session[:shout_out_feed_seed] ||= SecureRandom.hex(16)
       @pagy, @posts = pagy(ShoutOutFeed.ranked(posts.includes(:created_by, :target), seed: seed), limit: 25)
     elsif @tab == "roster"
-      @pagy, @players = pagy(@team.players.order(:last_name, :first_name, :id), limit: 25)
+      @pagy, @players = pagy(@team.players.by_name, limit: 25)
     elsif @tab == "staff"
       @staff_tenures = @team.staff_tenures.includes(:person, :organization, :team).chronological
     end

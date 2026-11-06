@@ -1,6 +1,10 @@
 class Player < ApplicationRecord
-  has_one :person, dependent: :nullify
-  after_create :create_person_identity!
+  NAME_ATTRIBUTES = %w[first_name last_name nicknames].freeze
+
+  # Names live on the Person; preload it so lists of players don't query per name.
+  default_scope { preload :person }
+  has_one :person, dependent: :nullify, autosave: true, inverse_of: :player
+  before_validation :attach_person_identity, on: :create
   has_many :shout_outs, as: :target, dependent: :nullify
   has_many :shout_out_drafts, as: :target, dependent: :nullify
   has_many :follows, as: :followable, dependent: :destroy
@@ -30,10 +34,6 @@ class Player < ApplicationRecord
   
   # Ransack configuration
   # Define searchable attributes and associations
-  ransacker :full_name do
-    Arel.sql("CONCAT(players.first_name, ' ', players.last_name)")
-  end
-  
   # Allow searching and sorting by team name
   ransacker :team_name do
     Arel.sql("teams.mascot")
@@ -60,7 +60,7 @@ class Player < ApplicationRecord
   end
   
   def self.ransackable_attributes(auth_object = nil)
-    ["active", "bio", "birth_city_id", "birth_country_id", "birthdate", "created_at", "current_position", "debut_year", "draft_year", "first_name", "full_name", "id", "last_name", "league_name", "nicknames", "photo_urls", "position_name", "sport_name", "team_id", "team_name", "team_territory", "updated_at"]
+    ["active", "bio", "birth_city_id", "birth_country_id", "birthdate", "created_at", "current_position", "debut_year", "draft_year", "id", "league_name", "photo_urls", "position_name", "sport_name", "team_id", "team_name", "team_territory", "updated_at"]
   end
   
   def self.ransackable_associations(auth_object = nil)
@@ -68,15 +68,17 @@ class Player < ApplicationRecord
   end
   
   scope :sampled, ->(n = 50) { order(Arel.sql('RANDOM()')).limit(n) }
+  scope :by_name, -> { joins(:person).merge(Person.order(:last_name, :first_name)).order(:id) }
+  scope :matching_name, ->(query) {
+    joins(:person).where("CONCAT_WS(' ', people.first_name, people.last_name, array_to_string(people.nicknames, ' ')) ILIKE ?", "%#{sanitize_sql_like(query)}%")
+  }
+
+  delegate :name, *NAME_ATTRIBUTES, *NAME_ATTRIBUTES.map { "#{it}=" }, to: :identity
+  alias_method :full_name, :name
 
   def sport
     super || team&.sport
   end
-  
-  def name
-    "#{first_name} #{last_name}"
-  end
-  alias_method :full_name, :name
   
   def photo_url
     photo_urls&.first
@@ -117,18 +119,22 @@ class Player < ApplicationRecord
 
   private
 
-  def create_person_identity!
+  def identity
+    person || build_person(name: Person::UNNAMED)
+  end
+
+  # A rebuilt athletic profile reclaims the Person that shares its entity code.
+  def attach_person_identity
+    pending = identity
     code = "PERSON-#{entity_code.presence || SecureRandom.uuid.upcase}"
-    identity = Person.find_or_create_by!(entity_code: code) do |record|
-      record.name = name.strip.presence || "Unnamed athlete"
-      record.player = self
-    end
-    identity.with_lock do
-      if identity.player_id.present? && identity.player_id != id
-        errors.add :person, "is already linked to another athletic profile"
-        raise ActiveRecord::RecordInvalid, self
-      end
-      identity.update! player: self if identity.player_id.nil?
+    existing = Person.find_by(entity_code: code)
+    if existing.nil?
+      pending.entity_code = code
+    elsif existing.player_id.present?
+      errors.add :person, "is already linked to another athletic profile"
+    else
+      existing.assign_attributes pending.changes.slice(*NAME_ATTRIBUTES).transform_values(&:last)
+      self.person = existing
     end
   end
 end

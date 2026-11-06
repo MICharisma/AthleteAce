@@ -61,7 +61,7 @@ module Seeds
           seasons: { league_id: entities["League"].id, year_id: entities["Year"].id }
         ).distinct
         name = value.upcase
-        relation = relation.where("UPPER(players.last_name) = ? OR UPPER(CONCAT(players.last_name, '_', players.first_name)) = ?", name, name)
+        relation = relation.joins(:person).where("UPPER(people.last_name) = ? OR UPPER(CONCAT(people.last_name, '_', people.first_name)) = ?", name, name)
         unique(relation)
       end
     end

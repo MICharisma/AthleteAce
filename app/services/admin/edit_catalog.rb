@@ -16,7 +16,19 @@ module Admin
     end
 
     def self.version(record)
-      Digest::SHA256.hexdigest(record.attributes.to_json)
+      Digest::SHA256.hexdigest(values(record).to_json)
+    end
+
+    # A player's names are stored on its Person but edited as part of the player.
+    def self.values(record)
+      values = record.attributes
+      record.is_a?(Player) ? values.merge(Player::NAME_ATTRIBUTES.index_with { record.public_send(it) }) : values
+    end
+
+    def self.catalog_changes(record, saved: false)
+      read = saved ? :saved_changes : :changes
+      changes = record.public_send(read).except("updated_at")
+      record.is_a?(Player) ? changes.merge(record.person.public_send(read).slice(*Player::NAME_ATTRIBUTES)) : changes
     end
 
     def self.call(record:, actor:, attributes:, version:, request_key:)
@@ -36,9 +48,9 @@ module Admin
           name = record.name
           record.assign_attributes(submitted)
           raise ArgumentError, "Supply at least one part of the name." if (record.is_a?(Player) ? [ record.first_name, record.last_name ] : [ record.territory, record.mascot ]).all?(&:blank?)
-          return if record.changes.except("updated_at").empty?
+          return if catalog_changes(record).empty?
           record.save!
-          changes = record.saved_changes.except("updated_at")
+          changes = catalog_changes(record, saved: true)
           CatalogEdit.create!(actor: actor, actor_name: "#{actor.public_name} #{actor.handle}", record_type: record.class.name,
             record_id: record.id, entity_code: record.entity_code, record_name: name,
             before_values: changes.transform_values(&:first), after_values: changes.transform_values(&:last),
@@ -64,13 +76,14 @@ module Admin
           raise Conflict, "This request key was already used for a different edit. Reload before saving." unless existing.submitted_values == submitted
           return existing
         end
+        raise Conflict, "This entity code is already in use. Choose another code." if Player.exists?(entity_code: code)
         player = Player.new(submitted.fetch("attributes").merge(entity_code: code, sport: sport))
         raise ArgumentError, "Supply at least one part of the name." if [ player.first_name, player.last_name ].all?(&:blank?)
         player.save!
         EntityCode.create!(namespace: "MIC", catalog: "ALA", code: code, canonical_code: code, record: player)
         CatalogEdit.create!(actor: actor, actor_name: "#{actor.public_name} #{actor.handle}", record_type: "Player",
           record_id: player.id, entity_code: code, record_name: player.name, before_values: {},
-          after_values: player.attributes.slice(*FIELDS.fetch("Player"), "entity_code", "sport_id"),
+          after_values: values(player).slice(*FIELDS.fetch("Player"), "entity_code", "sport_id"),
           submitted_values: submitted, request_key: request_key)
       end
     rescue ActiveRecord::RecordNotUnique
@@ -120,6 +133,6 @@ module Admin
     rescue URI::InvalidURIError
       raise ArgumentError, "Use an http or https URL with a host."
     end
-    private_class_method :normalize, :validate_url!
+    private_class_method :normalize, :validate_url!, :catalog_changes
   end
 end

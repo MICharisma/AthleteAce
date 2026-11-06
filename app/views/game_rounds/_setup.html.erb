@@ -39,7 +39,7 @@
   <%= tag.fieldset class: "round-panel" do %>
     <%= tag.legend "02 · Find your scope", class: "round-step" %>
     <% if @setup.player_ids.any? %>
-      <p class="round-caption">Focused players · <%= Player.where(id: @setup.player_ids).order(:last_name, :first_name).map(&:name).join(" · ") %></p>
+      <p class="round-caption">Focused players · <%= Player.where(id: @setup.player_ids).by_name.map(&:name).join(" · ") %></p>
       <%= link_to "Any players", new_game_round_path(@setup.scope_params.except("player_ids")), class: "tool-link", data: { turbo_frame: "_top" } %>
     <% end %>
     <div class="round-season-select">

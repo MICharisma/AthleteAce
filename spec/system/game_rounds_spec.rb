@@ -120,7 +120,7 @@ RSpec.describe "Saved rounds", type: :system do
   end
 
   it "shows team blocks and a jersey fallback when a recorded player photo fails" do
-    player = Player.find_by!(first_name: "Aaron", last_name: "Judge")
+    player = Player.joins(:person).find_by!(people: { first_name: "Aaron", last_name: "Judge" })
     player.update!(photo_urls: [ "/missing-athlete-photo.jpg" ], current_position: "Outfield")
     JerseyNumberAssignment.create!(player: player, team: team, number: "99", start_date: Date.current - 1.year)
     team.update!(primary_color: "#FFFFFF", secondary_color: "#003087")

@@ -328,7 +328,7 @@ class UgcRestoreService
 
     # The identifier is "first last", and either part can have spaces, so try each split point
     (1...words.size).each do |split_at|
-      query = Player.where(first_name: words[0...split_at].join(" "), last_name: words[split_at..].join(" "))
+      query = Player.joins(:person).where(people: { first_name: words[0...split_at].join(" "), last_name: words[split_at..].join(" ") })
 
       if sport_identifier
         query = query.joins(team: { league: :sport }).where(sports: { name: sport_identifier })

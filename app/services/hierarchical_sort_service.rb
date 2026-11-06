@@ -6,6 +6,8 @@ class HierarchicalSortService
   SORT_STATES = %w[asc desc inactive].freeze
   RANDOM_STATES = %w[random shuffle inactive].freeze
   SQL_DIRECTIONS = %w[asc desc].freeze
+  # A league's country is its jurisdiction when that jurisdiction is a Country.
+  COUNTRY_JURISDICTION_JOIN = "LEFT OUTER JOIN countries ON countries.id = leagues.jurisdiction_id AND leagues.jurisdiction_type = 'Country'".freeze
 
   attr_reader :sort_params, :max_levels
   
@@ -243,10 +245,10 @@ class HierarchicalSortService
       'league_name' => { players: [team: :league], leagues: [] },
       'sport_name' => { players: [team: [league: :sport]], leagues: [:sport] },
       'position_name' => { players: [:positions], leagues: [] },
-      'country_name' => { players: [], leagues: [:country] },
+      'country_name' => { players: [], leagues: [COUNTRY_JURISDICTION_JOIN] },
       'alphabetical' => { players: [], leagues: [] },
-      'first_name' => { players: [], leagues: [] },
-      'last_name' => { players: [], leagues: [] },
+      'first_name' => { players: [:person], leagues: [] },
+      'last_name' => { players: [:person], leagues: [] },
       'random' => { players: [], leagues: [] },
       'shuffle' => { players: [], leagues: [] }
     }
@@ -295,8 +297,8 @@ class HierarchicalSortService
   def all_legacy_mappings
     {
       'team_name' => 'teams.mascot',
-      'first_name' => 'players.first_name',
-      'last_name' => 'players.last_name',
+      'first_name' => 'people.first_name',
+      'last_name' => 'people.last_name',
       'position_name' => 'positions.name',
       'league_name' => 'leagues.name',
       'alphabetical' => 'leagues.name',

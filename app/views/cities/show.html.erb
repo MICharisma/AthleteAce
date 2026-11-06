@@ -9,4 +9,4 @@
   </section>
 <% end %>
 <%= render_collection @city.teams.distinct.order(:territory, :mascot), parent: @city, link_to_collection: true %>
-<%= render_collection @city.players.order(:last_name, :first_name), parent: @city, link_to_collection: true, title: "Players born here", limit: 12, logo_attribute: :photo_url %>
+<%= render_collection @city.players.by_name, parent: @city, link_to_collection: true, title: "Players born here", limit: 12, logo_attribute: :photo_url %>

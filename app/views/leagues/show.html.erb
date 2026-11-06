@@ -7,6 +7,6 @@
 <%= render_collection @league.conferences %>
 <%= render_collection @league.divisions %>
 <%= render_collection @teams, parent: @league, link_to_collection: true %>
-<%= render_collection @league.players.order(:last_name, :first_name), parent: @league, link_to_collection: true, limit: 12, logo_attribute: :photo_url %>
+<%= render_collection @league.players.by_name, parent: @league, link_to_collection: true, limit: 12, logo_attribute: :photo_url %>
 <%= render_collection @league.seasons.recent %>
 <%= render_collection @league.contests.competitions.distinct, title: "Competitions", parent: @league, link_to_collection: true, limit: 12 %>

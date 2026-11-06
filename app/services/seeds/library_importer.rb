@@ -183,7 +183,7 @@ module Seeds
       end
       record.attributes.each_key do |key|
         foreign_type = model.reflect_on_all_associations(:belongs_to).any? { |association| association.polymorphic? && association.foreign_type == key }
-        if PROTECTED_ATTRIBUTES.include?(key) || key.end_with?("_id") || foreign_type || !model.column_names.include?(key)
+        if PROTECTED_ATTRIBUTES.include?(key) || key.end_with?("_id") || foreign_type || !column_model(model, key).column_names.include?(key)
           raise Error, "#{record.location}: unsupported #{record.type} attribute #{key}; associations use references"
         end
       end
@@ -244,7 +244,7 @@ module Seeds
 
     def cast_attributes(model, attributes)
       attributes.to_h do |key, value|
-        column = model.columns_hash.fetch(key)
+        column = column_model(model, key).columns_hash.fetch(key)
         if column.array && !value.nil? && !value.is_a?(Array)
           raise Error, "#{model.name}.#{key} requires an array"
         end
@@ -255,7 +255,7 @@ module Seeds
         elsif column.type == :integer && !value.nil? && !value.to_s.match?(/\A-?\d+\z/)
           raise Error, "#{model.name}.#{key} requires an integer"
         end
-        [key, model.type_for_attribute(key).cast(value)]
+        [key, column_model(model, key).type_for_attribute(key).cast(value)]
       end
     rescue ArgumentError => e
       raise Error, "Invalid attribute for #{model.name}: #{e.message}"
@@ -378,6 +378,11 @@ module Seeds
       }[model]
       return unless keys && keys.all? { |key| desired[key].present? }
       model.find_by(desired.slice(*keys))
+    end
+
+    # Player names are stored on the player's Person.
+    def column_model(model, key)
+      model == Player && Player::NAME_ATTRIBUTES.include?(key) ? Person : model
     end
 
     def association_attribute?(model, key)

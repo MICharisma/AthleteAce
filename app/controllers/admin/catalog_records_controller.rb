@@ -25,7 +25,7 @@ class Admin::CatalogRecordsController < ApplicationController
 
   def new
     prepare_new_player
-    @values = Player.new.attributes
+    @values = Admin::EditCatalog.values(Player.new)
     @request_key = SecureRandom.uuid
   end
 
@@ -47,7 +47,7 @@ class Admin::CatalogRecordsController < ApplicationController
   end
 
   def edit
-    @values = @record.attributes
+    @values = Admin::EditCatalog.values(@record)
     @version = Admin::EditCatalog.version(@record)
     @request_key = SecureRandom.uuid
   end

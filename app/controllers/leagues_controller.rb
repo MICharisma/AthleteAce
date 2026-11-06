@@ -17,7 +17,7 @@ class LeaguesController < ApplicationController
     end
     
     # Always include for display purposes
-    base_query = base_query.includes(:sport, :country)
+    base_query = base_query.preload(:sport, :jurisdiction)
     
     sql_order = @sort_service.to_sql_order(:leagues)
     
