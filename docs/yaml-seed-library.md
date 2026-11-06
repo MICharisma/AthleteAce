@@ -205,6 +205,8 @@ Preferred records put names on the Person and reference it from each Player, eit
   references: {sport: SPORT-BKT, person: PERSON-YAO_MING}
 ```
 
+Seeding never calls Rizz. `bin/rails rizz:sync_people` sends each person with an athletic profile to Rizz as its own step (it needs the `rizz-client` gem, `RIZZ_ENDPOINT` and `RIZZ_API_TOKEN`). A person's snapshot revision comes from its names, context and evidence, so unchanged people are skipped and retries are idempotent. When Rizz places a person in an entity, the person adopts its shared code (`MIC-RZZ-SCHE_MARK_7KM3`) as `entity_code`; the provisional `PERSON-` code and earlier aliases stay bound in `EntityCode`, so seed files, UGC exports and rebuilt profiles keep resolving them, and seed replays never rebind the Rizz code in the `ALA` catalog. `RizzSync` records each person's state: `review` while Rizz holds a same-name person for an identity review (syncing again after the decision completes it), `merge_needed` when Rizz places the person in an entity another local person holds, which waits for a local merge, and `failed` or `skipped` otherwise.
+
 Older shapes still import. `first_name`, `last_name`, and `nicknames` on a Player record are stored on its person; a player with no `person` reference gets one whose provisional code is `PERSON-` plus the player's code, and a rebuilt profile with the same code reclaims it. A Person record with a `player` reference (the original Steve Kerr file) adopts that player's person. Sequence lookups match a player code part against the person's short or sort name with punctuation folded to underscores, so `HART`, `HART_JOSH`, and `DE_LA_CRUZ_ELLY` all resolve.
 
 ## Curated player groups

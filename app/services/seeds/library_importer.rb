@@ -216,7 +216,9 @@ module Seeds
       raise Error, "#{record.location}: aliases identify different #{record.type} records" if targets.length > 1
       target = targets.first || legacy_person_target(record) || natural_target(model, desired)
       canonical_code = target&.entity_code.presence || bindings.first&.canonical_code || record.code
-      codes |= [canonical_code]
+      # A canonical code from another catalog (a person's MIC-RZZ code) is bound
+      # there; this catalog keeps only the record's own codes as aliases.
+      codes |= [canonical_code] unless foreign_code?(canonical_code)
       if target.nil?
         target = model.create!(desired.merge(entity_code: canonical_code))
         report[:created] << canonical_code
@@ -402,6 +404,10 @@ module Seeds
       return unless value
       association = model.reflect_on_association(key.to_sym)
       association.polymorphic? ? [ value.class.name, value.id ] : value.id
+    end
+
+    def foreign_code?(code)
+      code.to_s.start_with?("#{@namespace}-") && !code.to_s.start_with?("#{@namespace}-#{@catalog}-")
     end
 
     def local_code(code)

@@ -128,13 +128,14 @@ class Player < ApplicationRecord
   end
 
   # A player without a chosen person gets one with a provisional code derived
-  # from its own, and a rebuilt athletic profile reclaims that person.
+  # from its own, and a rebuilt athletic profile reclaims that person, through
+  # the alias once the person has adopted its Rizz code.
   def attach_person_identity
     pending = identity
     return if pending.persisted?
 
     code = "PERSON-#{entity_code.presence || SecureRandom.uuid.upcase}"
-    existing = Person.find_by(entity_code: code)
+    existing = EntityCode.resolve(Person, code)
     if existing
       existing.assign_attributes pending.changes.slice(*NAME_ATTRIBUTES).transform_values(&:last)
       self.person = existing

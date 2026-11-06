@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_05_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -843,6 +843,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_040000) do
     t.index ["target_type", "target_id"], name: "index_ratings_on_target"
   end
 
+  create_table "rizz_syncs", force: :cascade do |t|
+    t.bigint "person_id", null: false
+    t.string "state", default: "pending", null: false
+    t.uuid "rizz_entity_id"
+    t.integer "rizz_version"
+    t.string "rizz_code"
+    t.string "source_revision"
+    t.uuid "review_id"
+    t.string "last_error"
+    t.datetime "synced_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["person_id"], name: "index_rizz_syncs_on_person_id", unique: true
+    t.index ["rizz_entity_id"], name: "index_rizz_syncs_on_rizz_entity_id"
+    t.index ["state"], name: "index_rizz_syncs_on_state"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'synced'::character varying, 'review'::character varying, 'merge_needed'::character varying, 'failed'::character varying, 'skipped'::character varying]::text[])", name: "rizz_syncs_state"
+  end
+
   create_table "roles", force: :cascade do |t|
     t.bigint "player_id", null: false
     t.bigint "position_id", null: false
@@ -1346,6 +1364,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_040000) do
   add_foreign_key "quests", "aces", column: "created_by_id", on_delete: :nullify
   add_foreign_key "ratings", "aces"
   add_foreign_key "ratings", "spectrums"
+  add_foreign_key "rizz_syncs", "people"
   add_foreign_key "roles", "players"
   add_foreign_key "roles", "positions"
   add_foreign_key "roster_entries", "players"
