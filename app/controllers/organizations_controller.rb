@@ -5,6 +5,6 @@ class OrganizationsController < ApplicationController
 
   def show
     @organization = Organization.includes(organization_affiliations: { team: :league }).find(params.expect(:id))
-    @staff_tenures = @organization.staff_tenures.includes(:person, :organization, :team).chronological
+    @staff_tenures = @organization.staff_tenures.includes(:figure, :organization, :team).chronological
   end
 end

@@ -80,7 +80,7 @@ class TeamsController < ApplicationController
     elsif @tab == "roster"
       @pagy, @players = pagy(@team.players.by_name, limit: 25)
     elsif @tab == "staff"
-      @staff_tenures = @team.staff_tenures.includes(:person, :organization, :team).chronological
+      @staff_tenures = @team.staff_tenures.includes(:figure, :organization, :team).chronological
     end
   end
 

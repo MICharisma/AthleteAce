@@ -32,7 +32,7 @@ RSpec.describe "Expanded seasonal seed catalog" do
       expect(campaign.details.fetch("roster_coverage")).to eq(complete ? "complete_source_listing" : "two_player_sample")
     end
     expect(Player.where.not(team_id: nil)).to be_empty
-    petterssons = Player.joins(:person).where(people: { first_name: "Elias", last_name: "Pettersson" })
+    petterssons = Player.joins(:figure).where(figures: { first_name: "Elias", last_name: "Pettersson" })
     expect(petterssons.count).to eq(2)
     expect(petterssons.pluck(:entity_code)).to contain_exactly(
       "HCK-NHL-PLAYER-PETTERSSON_ELIAS_SOURCE_8480012", "HCK-NHL-PLAYER-PETTERSSON_ELIAS_SOURCE_8483678"
@@ -55,10 +55,10 @@ RSpec.describe "Expanded seasonal seed catalog" do
     expect(Organization.joins(:organization_affiliations).distinct.count).to eq(114)
     expect(OrganizationAffiliation.count).to eq(114)
     expect(Team.all.all? { |team| team.current_organization.present? }).to be(true)
-    person = importer.resolve_code("Person", "PERSON-KERR_STEVE")
-    expect(person.players.map(&:name)).to eq([ "Steve Kerr" ])
-    expect(person.staff_tenures.pluck(:role)).to contain_exactly("coach", "broadcaster")
-    broadcast = person.staff_tenures.broadcaster.sole
+    figure = importer.resolve_code("Figure", "FIGURE-KERR_STEVE")
+    expect(figure.players.map(&:name)).to eq([ "Steve Kerr" ])
+    expect(figure.staff_tenures.pluck(:role)).to contain_exactly("coach", "broadcaster")
+    broadcast = figure.staff_tenures.broadcaster.sole
     expect(broadcast.organization.name).to eq("TNT")
     expect(broadcast.team).to be_nil
     expect(broadcast.end_date).to be_nil

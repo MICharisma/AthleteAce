@@ -157,7 +157,7 @@ RSpec.describe HierarchicalSortService do
 
     it 'drops attributes that are not columns' do
       service = HierarchicalSortService.new('first_name asc,id/**/+(select/**/count(*)/**/from/**/aces) asc')
-      expect(service.to_sql_order(:players)).to eq('people.first_name ASC')
+      expect(service.to_sql_order(:players)).to eq('figures.first_name ASC')
     end
 
     it 'drops unknown directions' do
@@ -172,7 +172,7 @@ RSpec.describe HierarchicalSortService do
 
     it 'maps player attributes correctly' do
       service = HierarchicalSortService.new('first_name asc,last_name desc')
-      expect(service.to_sql_order).to eq('people.first_name ASC, people.last_name DESC')
+      expect(service.to_sql_order).to eq('figures.first_name ASC, figures.last_name DESC')
     end
 
     it 'maps league and sport attributes correctly' do

@@ -14,8 +14,8 @@
         <%= entity_link @player.league %>
       <% end %>
       <%= render "follows/button", record: @player %>
-      <% if @player.person %>
-        <%= link_to "Coaching, staff and broadcasting history", person_path(@player.person), class: "tool-link" %>
+      <% if @player.figure %>
+        <%= link_to "Coaching, staff and broadcasting history", figure_path(@player.figure), class: "tool-link" %>
       <% end %>
       <%= link_to "Write a shout-out draft", new_shout_out_draft_path(target_type: "Player", target_id: @player.id), class: "tool-button" %>
       <% if @player.team %>

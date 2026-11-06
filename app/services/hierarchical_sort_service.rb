@@ -247,8 +247,8 @@ class HierarchicalSortService
       'position_name' => { players: [:positions], leagues: [] },
       'country_name' => { players: [], leagues: [COUNTRY_JURISDICTION_JOIN] },
       'alphabetical' => { players: [], leagues: [] },
-      'first_name' => { players: [:person], leagues: [] },
-      'last_name' => { players: [:person], leagues: [] },
+      'first_name' => { players: [:figure], leagues: [] },
+      'last_name' => { players: [:figure], leagues: [] },
       'random' => { players: [], leagues: [] },
       'shuffle' => { players: [], leagues: [] }
     }
@@ -297,8 +297,8 @@ class HierarchicalSortService
   def all_legacy_mappings
     {
       'team_name' => 'teams.mascot',
-      'first_name' => 'people.first_name',
-      'last_name' => 'people.last_name',
+      'first_name' => 'figures.first_name',
+      'last_name' => 'figures.last_name',
       'position_name' => 'positions.name',
       'league_name' => 'leagues.name',
       'alphabetical' => 'leagues.name',

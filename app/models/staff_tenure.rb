@@ -3,7 +3,7 @@ class StaffTenure < ApplicationRecord
 
   ROLES = %w[coach staff broadcaster].freeze
 
-  belongs_to :person
+  belongs_to :figure
   belongs_to :organization
   belongs_to :team, optional: true
 

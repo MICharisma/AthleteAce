@@ -2,19 +2,19 @@ require "rails_helper"
 
 RSpec.describe StaffTenure do
   it "supports coaching and broadcasting for the same former athlete across organizations" do
-    person = create(:player).person
-    coach = create :staff_tenure, person: person, start_date: "2015", end_date: "2020"
-    broadcast = create :staff_tenure, :broadcaster, person: person, start_date: "2020-10", ongoing: true
-    expect(person.staff_tenures).to contain_exactly(coach, broadcast)
+    figure = create(:player).figure
+    coach = create :staff_tenure, figure: figure, start_date: "2015", end_date: "2020"
+    broadcast = create :staff_tenure, :broadcaster, figure: figure, start_date: "2020-10", ongoing: true
+    expect(figure.staff_tenures).to contain_exactly(coach, broadcast)
     expect(broadcast.organization).not_to eq(coach.organization)
     expect(broadcast.team).to be_nil
   end
 
   it "allows concurrent appointments, same-day transitions and return tenures" do
     appointment = create :staff_tenure, start_date: "2024-07-01", end_date: "2025-07-01"
-    concurrent = build :staff_tenure, person: appointment.person, organization: appointment.organization,
+    concurrent = build :staff_tenure, figure: appointment.figure, organization: appointment.organization,
       start_date: "2024", end_date: "2025"
-    returning = build :staff_tenure, person: appointment.person, organization: appointment.organization, start_date: "2025-07-01"
+    returning = build :staff_tenure, figure: appointment.figure, organization: appointment.organization, start_date: "2025-07-01"
     expect(concurrent).to be_valid
     expect(returning).to be_valid
   end

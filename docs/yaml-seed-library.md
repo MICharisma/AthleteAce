@@ -171,15 +171,17 @@ The library importer uses one transaction and reads the selected bundle into mem
 
 `db:seed` invokes `seeds:import`, so ordinary Rails database setup imports the new YAML library. The previous JSON orchestration is retained in `db/seeds_legacy.rb` for explicit legacy use. Mixing both libraries requires explicit reconciliation of legacy entities that lack codes. Legacy JSON Contracts require an explicit verified `organization_code`. The importer adopts uncoded rows through strong Year/Season/Campaign/Activation keys and unique parent/player keys for RosterEntry, Appearance, Contestant, and TransactionPlayer; it does not guess that matching player names or team abbreviations identify the same entity.
 
-## People and names
+## Figures and names
 
-A `Person` is the human; a `Player` is one athletic profile. Every player belongs to exactly one person, and a person can have several players (two-sport careers such as Deion Sanders) and any number of `StaffTenure` appointments (broadcasting or coaching careers). Person codes are provisional: they are expected to become aliases of codes assigned by the shared naming service (Rizz).
+The app now accepts the Figure contract below. The checked-in catalog and published schemas still use Person during the app rename phase. Full catalog imports and published-contract checks require the subsequent seed update.
 
-Names live on the person, stored by purpose so they need not fit first + last:
+A `Figure` identifies someone across athletic profiles and staff appointments. Every Player belongs to exactly one Figure. A Figure can have several Players, such as Deion Sanders' profiles for different sports, and any number of `StaffTenure` appointments. Provisional Figure codes become aliases when the shared naming service Rizz assigns a canonical code.
+
+Names live on the figure, stored by purpose so they need not fit first + last:
 
 | Attribute | Purpose | Built from parts when not supplied |
 | --- | --- | --- |
-| `name` | Display name, in the person's own order | `first_name last_name` |
+| `name` | Display name, in the figure's own order | `first_name last_name` |
 | `short_name` | Second reference in captions and games | `last_name`, else `first_name` |
 | `sort_name` | List order | `last_name, first_name` |
 | `name_segments` | Parts a game reveals one at a time, in display order | `[first_name, last_name]` |
@@ -188,11 +190,11 @@ Names live on the person, stored by purpose so they need not fit first + last:
 
 Changing `first_name` or `last_name` rebuilds every form that the same change does not set. Search ignores accents.
 
-Preferred records put names on the Person and reference it from each Player, either directly or through a `person` scope:
+Records put names on the Figure and reference it from each Player, either directly or through a `figure` scope:
 
 ```yaml
-- type: Person
-  code: PERSON-YAO_MING
+- type: Figure
+  code: FIGURE-YAO_MING
   attributes:
     name: Yao Ming
     short_name: "Yao"
@@ -202,12 +204,18 @@ Preferred records put names on the Person and reference it from each Player, eit
 - type: Player
   code: BKT-NBA-PLAYER-YAO_MING
   attributes: {debut_year: 2002}
-  references: {sport: SPORT-BKT, person: PERSON-YAO_MING}
+  references: {sport: SPORT-BKT, figure: FIGURE-YAO_MING}
 ```
 
-Seeding never calls Rizz. `bin/rails rizz:sync_people` sends each person with an athletic profile to Rizz as its own step (it needs the `rizz-client` gem, `RIZZ_ENDPOINT` and `RIZZ_API_TOKEN`). A person's snapshot revision comes from its names, context and evidence, so unchanged people are skipped and retries are idempotent. When Rizz places a person in an entity, the person adopts its shared code (`MIC-RZZ-SCHE_MARK_7KM3`) as `entity_code`; the provisional `PERSON-` code and earlier aliases stay bound in `EntityCode`, so seed files, UGC exports and rebuilt profiles keep resolving them, and seed replays never rebind the Rizz code in the `ALA` catalog. `RizzSync` records each person's state: `review` while Rizz holds a same-name person for an identity review (syncing again after the decision completes it), `merge_needed` when Rizz places the person in an entity another local person holds, which waits for a local merge, and `failed` or `skipped` otherwise.
+Seeding never calls Rizz. `bin/rails rizz:sync_figures` sends each Figure with an athletic profile as a separate step. The command requires the optional `rizz-client` gem, `RIZZ_ENDPOINT`, and `RIZZ_API_TOKEN`. The local sync retains the external SDK's `PersonRecord` and `import_athleteace_person` interfaces until the Rizz update.
 
-Older shapes still import. `first_name`, `last_name`, and `nicknames` on a Player record are stored on its person; a player with no `person` reference gets one whose provisional code is `PERSON-` plus the player's code, and a rebuilt profile with the same code reclaims it. A Person record with a `player` reference (the original Steve Kerr file) adopts that player's person. Sequence lookups match a player code part against the person's short or sort name with punctuation folded to underscores, so `HART`, `HART_JOSH`, and `DE_LA_CRUZ_ELLY` all resolve.
+A snapshot revision comes from the Figure's names, context, and evidence. Unchanged synced snapshots are skipped, and retries use the same idempotency key. An accepted shared code, such as `MIC-RZZ-SCHE_MARK_7KM3`, becomes `entity_code`. The provisional `FIGURE-` code and earlier aliases remain bound in `EntityCode`. Seed replay and rebuilt profiles can still resolve those aliases without rebinding the Rizz code in the `ALA` catalog.
+
+`RizzSync` records each Figure's state. A `review` waits for an identity decision and another sync. A `merge_needed` means another local Figure already holds the remote entity or code. Other outcomes are `synced`, `failed`, or `skipped`.
+
+Player records can supply `first_name`, `last_name`, and `nicknames`, which are stored on their Figure. A Player without a `figure` reference gets one with a provisional code built from `FIGURE-` plus the Player's code. A rebuilt profile with the same code reclaims that Figure. The importer rejects `Person` records and reverse `Figure.references.player` links.
+
+Sequence lookups match a Player code part against the Figure's short or sort name with punctuation folded to underscores. `HART`, `HART_JOSH`, and `DE_LA_CRUZ_ELLY` all resolve through these name forms.
 
 ## Curated player groups
 

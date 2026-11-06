@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   resources :players, only: [ :index, :show ] do
     resources :shout_outs, only: :index, module: :players
   end
-  resources :people, only: :show
+  resources :figures, only: :show
   resources :organizations, only: [:index, :show]
   
   # Organizational structure

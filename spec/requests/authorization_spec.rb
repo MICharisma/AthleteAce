@@ -183,7 +183,7 @@ RSpec.describe "Authorization for shared content", type: :request do
       end
 
       expect(response).to have_http_status(:success)
-      expect(queries.grep(/ORDER BY people\.first_name ASC/)).not_to be_empty
+      expect(queries.grep(/ORDER BY figures\.first_name ASC/)).not_to be_empty
       expect(queries.grep(%r{from/\*\*/aces})).to be_empty
     end
   end

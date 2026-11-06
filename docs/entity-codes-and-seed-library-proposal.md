@@ -241,7 +241,7 @@ Before launch and publication of usage guidance, sequence assignments and scopes
 
 ## 5. AthleteAce: people, organizations, and historical context
 
-Person and StaffTenure now have an application implementation. See [people and appointments](people-and-staff.md) for the identity, date-precision, source, and replay rules. Code recipes in this proposal remain examples rather than an installed lookup registry.
+Figure and StaffTenure have an application implementation. See [Figures and appointments](figures-and-staff.md) for the identity, date-precision, source, and replay rules. Code recipes in this proposal remain examples rather than an installed lookup registry.
 
 The examples use real names. Codes remain proposed identifiers rather than assertions that these rows are already present. “Existing” means a relevant domain model exists.
 

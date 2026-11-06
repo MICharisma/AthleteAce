@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_06_060000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -417,6 +417,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
     t.index ["seed_version"], name: "index_federations_on_seed_version"
   end
 
+  create_table "figures", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "entity_code", null: false
+    t.jsonb "source", default: {}, null: false
+    t.jsonb "details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "first_name"
+    t.string "last_name"
+    t.string "nicknames", default: [], null: false, array: true
+    t.string "short_name", null: false
+    t.string "sort_name", null: false
+    t.string "name_segments", default: [], null: false, array: true
+    t.string "alternate_names", default: [], null: false, array: true
+    t.index ["entity_code"], name: "index_figures_on_entity_code", unique: true
+    t.index ["sort_name"], name: "index_figures_on_sort_name"
+  end
+
   create_table "follows", force: :cascade do |t|
     t.bigint "ace_id", null: false
     t.string "followable_type", null: false
@@ -705,24 +723,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
     t.index ["entity_code"], name: "index_organizations_on_entity_code", unique: true
   end
 
-  create_table "people", force: :cascade do |t|
-    t.string "name", null: false
-    t.string "entity_code", null: false
-    t.jsonb "source", default: {}, null: false
-    t.jsonb "details", default: {}, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "first_name"
-    t.string "last_name"
-    t.string "nicknames", default: [], null: false, array: true
-    t.string "short_name", null: false
-    t.string "sort_name", null: false
-    t.string "name_segments", default: [], null: false, array: true
-    t.string "alternate_names", default: [], null: false, array: true
-    t.index ["entity_code"], name: "index_people_on_entity_code", unique: true
-    t.index ["sort_name"], name: "index_people_on_sort_name"
-  end
-
   create_table "player_group_memberships", force: :cascade do |t|
     t.bigint "player_group_id", null: false
     t.bigint "player_id", null: false
@@ -765,11 +765,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.bigint "sport_id"
     t.string "entity_code"
-    t.bigint "person_id", null: false
+    t.bigint "figure_id", null: false
     t.index ["birth_city_id"], name: "index_players_on_birth_city_id"
     t.index ["birth_country_id"], name: "index_players_on_birth_country_id"
     t.index ["entity_code"], name: "index_players_on_entity_code", unique: true
-    t.index ["person_id"], name: "index_players_on_person_id"
+    t.index ["figure_id"], name: "index_players_on_figure_id"
     t.index ["seed_version"], name: "index_players_on_seed_version"
     t.index ["sport_id"], name: "index_players_on_sport_id"
     t.index ["team_id"], name: "index_players_on_team_id"
@@ -844,7 +844,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
   end
 
   create_table "rizz_syncs", force: :cascade do |t|
-    t.bigint "person_id", null: false
+    t.bigint "figure_id", null: false
     t.string "state", default: "pending", null: false
     t.uuid "rizz_entity_id"
     t.integer "rizz_version"
@@ -855,7 +855,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
     t.datetime "synced_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["person_id"], name: "index_rizz_syncs_on_person_id", unique: true
+    t.index ["figure_id"], name: "index_rizz_syncs_on_figure_id", unique: true
     t.index ["rizz_entity_id"], name: "index_rizz_syncs_on_rizz_entity_id"
     t.index ["state"], name: "index_rizz_syncs_on_state"
     t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'synced'::character varying, 'review'::character varying, 'merge_needed'::character varying, 'failed'::character varying, 'skipped'::character varying]::text[])", name: "rizz_syncs_state"
@@ -1071,7 +1071,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
   end
 
   create_table "staff_tenures", force: :cascade do |t|
-    t.bigint "person_id", null: false
+    t.bigint "figure_id", null: false
     t.bigint "organization_id", null: false
     t.bigint "team_id"
     t.string "role", null: false
@@ -1085,8 +1085,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["entity_code"], name: "index_staff_tenures_on_entity_code", unique: true
+    t.index ["figure_id"], name: "index_staff_tenures_on_figure_id"
     t.index ["organization_id"], name: "index_staff_tenures_on_organization_id"
-    t.index ["person_id"], name: "index_staff_tenures_on_person_id"
     t.index ["team_id"], name: "index_staff_tenures_on_team_id"
     t.check_constraint "NOT ongoing OR end_date IS NULL", name: "staff_tenures_ongoing_end"
     t.check_constraint "role::text = ANY (ARRAY['coach'::character varying, 'staff'::character varying, 'broadcaster'::character varying]::text[])", name: "staff_tenures_role"
@@ -1355,7 +1355,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
   add_foreign_key "player_group_memberships", "players"
   add_foreign_key "players", "cities", column: "birth_city_id"
   add_foreign_key "players", "countries", column: "birth_country_id"
-  add_foreign_key "players", "people"
+  add_foreign_key "players", "figures"
   add_foreign_key "players", "sports"
   add_foreign_key "players", "teams"
   add_foreign_key "positions", "sports"
@@ -1364,7 +1364,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
   add_foreign_key "quests", "aces", column: "created_by_id", on_delete: :nullify
   add_foreign_key "ratings", "aces"
   add_foreign_key "ratings", "spectrums"
-  add_foreign_key "rizz_syncs", "people"
+  add_foreign_key "rizz_syncs", "figures"
   add_foreign_key "roles", "players"
   add_foreign_key "roles", "positions"
   add_foreign_key "roster_entries", "players"
@@ -1388,8 +1388,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_050000) do
   add_foreign_key "sign_in_events", "aces", on_delete: :cascade
   add_foreign_key "spectrums", "aces", column: "created_by_id", on_delete: :nullify
   add_foreign_key "stadiums", "cities"
+  add_foreign_key "staff_tenures", "figures"
   add_foreign_key "staff_tenures", "organizations"
-  add_foreign_key "staff_tenures", "people"
   add_foreign_key "staff_tenures", "teams"
   add_foreign_key "states", "countries"
   add_foreign_key "stints", "contracts"

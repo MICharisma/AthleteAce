@@ -1,6 +1,6 @@
 FactoryBot.define do
   factory :staff_tenure do
-    person
+    figure
     organization
     role { "coach" }
     title { "Assistant coach" }

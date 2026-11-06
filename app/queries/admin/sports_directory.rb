@@ -51,7 +51,7 @@ module Admin
       if query.present?
         pattern = "%#{@model.sanitize_sql_like(query)}%"
         records = if kind == "players"
-          records.joins(:person).where("#{Person::SEARCH_SQL} ILIKE unaccent(:pattern) OR players.entity_code ILIKE :pattern", pattern: pattern)
+          records.joins(:figure).where("#{Figure::SEARCH_SQL} ILIKE unaccent(:pattern) OR players.entity_code ILIKE :pattern", pattern: pattern)
         else
           records.where("CONCAT_WS(' ', teams.territory, teams.mascot, teams.abbreviation, teams.entity_code) ILIKE ?", pattern)
         end

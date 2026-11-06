@@ -28,7 +28,7 @@ class PlayersController < ApplicationController
     if sql_order
       @players = base_query.order(Arel.sql(sql_order))
     else
-      @players = base_query.joins(:person).merge(Person.order(:first_name)).order(:id)
+      @players = base_query.joins(:figure).merge(Figure.order(:first_name)).order(:id)
     end
     
     @spectrums = Spectrum.visible_to(current_ace)

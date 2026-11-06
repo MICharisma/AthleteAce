@@ -1,16 +1,15 @@
-class Person < ApplicationRecord
+class Figure < ApplicationRecord
   include SeedObservation
 
   UNNAMED = "Unnamed athlete".freeze
-  SEARCH_SQL = "unaccent(CONCAT_WS(' ', people.name, people.first_name, people.last_name, " \
-    "array_to_string(people.nicknames, ' '), array_to_string(people.alternate_names, ' ')))".freeze
+  SEARCH_SQL = "unaccent(CONCAT_WS(' ', figures.name, figures.first_name, figures.last_name, " \
+    "array_to_string(figures.nicknames, ' '), array_to_string(figures.alternate_names, ' ')))".freeze
 
-  # Rizz person codes belong to MICharisma's shared people catalog.
   RIZZ_NAMESPACE = "MIC".freeze
   RIZZ_CATALOG = "RZZ".freeze
   RIZZ_PREFIX = "#{RIZZ_NAMESPACE}-#{RIZZ_CATALOG}-".freeze
 
-  has_many :players, dependent: :restrict_with_error, inverse_of: :person
+  has_many :players, dependent: :restrict_with_error, inverse_of: :figure
   has_many :staff_tenures, dependent: :restrict_with_error
   has_one :rizz_sync, dependent: :delete
 
@@ -27,17 +26,17 @@ class Person < ApplicationRecord
     entity_code.to_s.start_with?(RIZZ_PREFIX)
   end
 
-  # Makes a Rizz person code (MIC-RZZ-...) this person's canonical code. The
-  # provisional code and every earlier alias stay bound to the person, so
+  # Makes a Rizz figure code (MIC-RZZ-...) this figure's canonical code. The
+  # provisional code and every earlier alias stay bound to the figure, so
   # seed files, UGC exports and links that use them keep resolving.
   def adopt_rizz_code!(qualified_code)
-    raise ArgumentError, "#{qualified_code.inspect} is not a Rizz person code" unless qualified_code.to_s.start_with?(RIZZ_PREFIX)
+    raise ArgumentError, "#{qualified_code.inspect} is not a Rizz figure code" unless qualified_code.to_s.start_with?(RIZZ_PREFIX)
     return false if entity_code == qualified_code
 
     transaction do
       lock!
       previous = entity_code
-      EntityCode.where(record_type: "Person", record_id: id).update_all(canonical_code: qualified_code, updated_at: Time.current)
+      EntityCode.where(record_type: "Figure", record_id: id).update_all(canonical_code: qualified_code, updated_at: Time.current)
       if previous.present?
         alias_binding = EntityCode.find_or_initialize_by(namespace: RIZZ_NAMESPACE, catalog: "ALA", code: previous)
         alias_binding.update!(canonical_code: qualified_code, record: self)

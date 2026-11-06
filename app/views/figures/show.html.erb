@@ -1,7 +1,7 @@
-<% content_for :title, @person.name %>
+<% content_for :title, @figure.name %>
 <section class="round-panel">
-  <h1 class="page-title"><%= @person.name %></h1>
-  <% @person.players.includes(:sport).each do |player| %>
+  <h1 class="page-title"><%= @figure.name %></h1>
+  <% @figure.players.includes(:sport).each do |player| %>
     <%= link_to ["Athletic profile", player.sport&.name].compact.join(": "), player_path(player), class: "tool-link" %>
   <% end %>
 </section>

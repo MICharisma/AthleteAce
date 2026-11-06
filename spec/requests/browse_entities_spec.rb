@@ -91,13 +91,13 @@ RSpec.describe "Browse entity pages", type: :request do
   it "retains organization staff, dated affiliation history, external links and details" do
     organization = create :organization, name: "Pacific Sports Group"
     affiliation = create :organization_affiliation, organization: organization, team: team, details: { source: "Club archive" }
-    person = create :person, name: "Avery Morgan"
-    create :staff_tenure, person: person, organization: organization, role: :coach, title: "Head coach"
+    figure = create :figure, name: "Avery Morgan"
+    create :staff_tenure, figure: figure, organization: organization, role: :coach, title: "Head coach"
     get organization_path(organization)
     expect(response).to have_http_status(:ok)
     expect(document.css("main h1").map(&:text)).to eq([ organization.name ])
-    expect(document.text).to include("Current Teams", "Affiliation History", person.name, "Head coach", "Present")
-    expect(document.css("a").map { |link| link["href"] }).to include(person_path(person), organization_affiliation_path(affiliation), team_path(team), organization.url)
+    expect(document.text).to include("Current Teams", "Affiliation History", figure.name, "Head coach", "Present")
+    expect(document.css("a").map { |link| link["href"] }).to include(figure_path(figure), organization_affiliation_path(affiliation), team_path(team), organization.url)
     get organization_affiliation_path(affiliation)
     expect(document.text).to include("Club archive", league.name, sport.name)
     expect(document.at_css("pre.browse-json")).to be_present

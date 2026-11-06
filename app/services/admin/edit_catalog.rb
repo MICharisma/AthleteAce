@@ -19,7 +19,6 @@ module Admin
       Digest::SHA256.hexdigest(values(record).to_json)
     end
 
-    # A player's names are stored on its Person but edited as part of the player.
     def self.values(record)
       values = record.attributes
       record.is_a?(Player) ? values.merge(Player::NAME_ATTRIBUTES.index_with { record.public_send(it) }) : values
@@ -28,7 +27,7 @@ module Admin
     def self.catalog_changes(record, saved: false)
       read = saved ? :saved_changes : :changes
       changes = record.public_send(read).except("updated_at")
-      record.is_a?(Player) ? changes.merge(record.person.public_send(read).slice(*Player::NAME_ATTRIBUTES)) : changes
+      record.is_a?(Player) ? changes.merge(record.figure.public_send(read).slice(*Player::NAME_ATTRIBUTES)) : changes
     end
 
     def self.call(record:, actor:, attributes:, version:, request_key:)

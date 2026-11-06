@@ -37,7 +37,7 @@ RSpec.describe "Admin player creation", type: :request do
     expect(response).to have_http_status(:see_other)
     edit = CatalogEdit.sole
     player = Player.find(edit.record_id)
-    expect(player.person.attributes).to include("first_name" => "Jordan", "last_name" => "Reed", "name" => "Jordan Reed")
+    expect(player.figure.attributes).to include("first_name" => "Jordan", "last_name" => "Reed", "name" => "Jordan Reed")
     expect(player.attributes).to include("team_id" => nil, "sport_id" => sport.id, "active" => nil, "entity_code" => input[:entity_code])
     expect(player.nicknames).to eq([ "JR", "Jordan R." ])
     expect(EntityCode.find_by!(namespace: "MIC", catalog: "ALA", code: input[:entity_code]).resolved_record).to eq(player)

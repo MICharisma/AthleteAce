@@ -1,10 +1,9 @@
 class Player < ApplicationRecord
   NAME_ATTRIBUTES = %w[first_name last_name nicknames].freeze
 
-  # Names live on the Person; preload it so lists of players don't query per name.
-  default_scope { preload :person }
-  belongs_to :person, autosave: true, inverse_of: :players
-  before_validation :attach_person_identity, on: :create
+  default_scope { preload :figure }
+  belongs_to :figure, autosave: true, inverse_of: :players
+  before_validation :attach_figure_identity, on: :create
   has_many :shout_outs, as: :target, dependent: :nullify
   has_many :shout_out_drafts, as: :target, dependent: :nullify
   has_many :follows, as: :followable, dependent: :destroy
@@ -68,12 +67,12 @@ class Player < ApplicationRecord
   end
   
   scope :sampled, ->(n = 50) { order(Arel.sql('RANDOM()')).limit(n) }
-  scope :by_name, -> { joins(:person).merge(Person.order(:sort_name)).order(:id) }
-  scope :matching_name, ->(query) { joins(:person).merge(Person.matching_name(query)) }
+  scope :by_name, -> { joins(:figure).merge(Figure.order(:sort_name)).order(:id) }
+  scope :matching_name, ->(query) { joins(:figure).merge(Figure.matching_name(query)) }
   # A code part names a player by short name (HART) or sort name (HART_JOSH, DE_LA_CRUZ_ELLY).
   scope :named_in_code, ->(part) {
-    code_form = ->(column) { "UPPER(BTRIM(REGEXP_REPLACE(unaccent(people.#{column}), '[^[:alnum:]]+', '_', 'g'), '_'))" }
-    joins(:person).where("#{code_form.call('short_name')} = ? OR #{code_form.call('sort_name')} = ?", part.upcase, part.upcase)
+    code_form = ->(column) { "UPPER(BTRIM(REGEXP_REPLACE(unaccent(figures.#{column}), '[^[:alnum:]]+', '_', 'g'), '_'))" }
+    joins(:figure).where("#{code_form.call('short_name')} = ? OR #{code_form.call('sort_name')} = ?", part.upcase, part.upcase)
   }
 
   delegate :name, :short_name, :sort_name, :name_segments, :alternate_names,
@@ -124,21 +123,18 @@ class Player < ApplicationRecord
   private
 
   def identity
-    person || build_person
+    figure || build_figure
   end
 
-  # A player without a chosen person gets one with a provisional code derived
-  # from its own, and a rebuilt athletic profile reclaims that person, through
-  # the alias once the person has adopted its Rizz code.
-  def attach_person_identity
+  def attach_figure_identity
     pending = identity
     return if pending.persisted?
 
-    code = "PERSON-#{entity_code.presence || SecureRandom.uuid.upcase}"
-    existing = EntityCode.resolve(Person, code)
+    code = "FIGURE-#{entity_code.presence || SecureRandom.uuid.upcase}"
+    existing = EntityCode.resolve(Figure, code)
     if existing
       existing.assign_attributes pending.changes.slice(*NAME_ATTRIBUTES).transform_values(&:last)
-      self.person = existing
+      self.figure = existing
     else
       pending.entity_code = code
     end
