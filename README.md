@@ -41,7 +41,7 @@ See [Play rounds and learning progress](docs/play-learning.md) for the six saved
 
 Sporting [competitions, games and titles](docs/competition-games.md) support league seasons, playoffs, cross-league cups, JSONB format rules, shared fixtures and separate title awards. These sporting Games are distinct from Play's quiz rounds. Player appearance ingestion remains follow-up work.
 
-[Figures, coaches, staff, and broadcasters](docs/figures-and-staff.md) share identities and names across athletic profiles and organizational appointments. Organization pages and the team staff tab show sourced appointments and their recorded dates. Apply the Figure rename migration before browsing these pages. Catalog seed conversion and the external Rizz update follow the app rename; the existing full catalog is not yet compatible.
+[Figures, coaches, staff, and broadcasters](docs/figures-and-staff.md) share identities and names across athletic profiles and organizational appointments. Organization pages and the team staff tab show sourced appointments and their recorded dates. Apply the Figure rename migration before browsing these pages. The seed catalog and published schemas use Figure identities; the external Rizz contract update remains separate.
 
 The committed development configuration uses `athlete_ace_development_seedtest_20261005`. Other checkouts must create that database or adjust their local database configuration.
 

@@ -51,7 +51,7 @@ A Figure definition can register aliases for an existing Figure code. Replays pr
 
 Figures and appointments are core catalog records in `UgcResetService`. A full catalog reset deletes them with the other core records. Portable Figure and StaffTenure definitions recreate sourced staff history after a reset. UUID identities for uncoded Players remain local identities.
 
-The catalog files and published seed schemas still use the old Person contract during the app rename phase. Full catalog imports and catalog coverage checks require the subsequent seed update. Small Figure fixtures and factories exercise the app independently of that catalog.
+The catalog and published schemas use the Figure contract. The Steve Kerr example in `yaml/figures/steve_kerr.yaml` links one Figure to an athletic profile, a TNT broadcasting appointment, and a Warriors coaching appointment. Names belong to the Figure, and the Player and StaffTenures reference its code.
 
 ## Rizz sync
 

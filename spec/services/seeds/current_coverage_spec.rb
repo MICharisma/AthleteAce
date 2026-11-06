@@ -1,4 +1,5 @@
 require "rails_helper"
+require "tmpdir"
 require Rails.root.join("lib/micharisma_seeders/lib/micharisma_seeders").to_s
 
 RSpec.describe "2026 seed coverage" do
@@ -77,5 +78,30 @@ RSpec.describe "2026 seed coverage" do
     capture = { "league" => "NHL", "provider" => "nhl" }
     player = { "source_id" => "9000000000", "first_name" => "Nick", "last_name" => "Leddy" }
     expect(builder.player_code(capture, player, {})).to eq("HCK-NHL-PLAYER-LEDDY_NICK_SOURCE_NHL_9000000000")
+  end
+
+  it "imports provider aliases before their original definitions without creating unnamed athletes" do
+    sport = create :sport, name: "Basketball", entity_code: "SPORT-BKT"
+    code = "BKT-NBA-PLAYER-KUMINGA_JONATHAN"
+    reader = MICharismaSeeders::Reader.new
+    binding = reader.read(root.join("yaml/coverage_2026/identities.yaml")).find { |record| record.code == code }
+    original = Dir.glob(root.join("yaml/**/*.yaml")).reject { |path| path.include?("/coverage_2026/") || path.end_with?("entity_sequences.yaml") }
+      .flat_map { |path| reader.read(path) }.find { |record| record.code == code }
+    records = [ binding, original ].map do |record|
+      { "type" => record.type, "code" => record.code, "attributes" => record.attributes,
+        "references" => record.scope.slice("sport", "figure").merge(record.references),
+        "aliases" => record.aliases, "source" => record.source }
+    end
+
+    Dir.mktmpdir("player-alias-seeds") do |directory|
+      path = File.join(directory, "players.json")
+      File.write(path, JSON.generate(format: "micharisma-seeds/v1", namespace: "MIC", catalog: "ALA", records: records))
+      importer = Seeds::LibraryImporter.new
+      expect(importer.call([ path ])[:conflicts]).to be_empty
+      expect(Player.sole).to have_attributes(first_name: "Jonathan", last_name: "Kuminga", sport: sport)
+      expect(Figure.sole.name).to eq("Jonathan Kuminga")
+      expect(importer.call([ path ])[:created]).to be_empty
+      expect(importer.report[:conflicts]).to be_empty
+    end
   end
 end

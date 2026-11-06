@@ -173,7 +173,7 @@ The library importer uses one transaction and reads the selected bundle into mem
 
 ## Figures and names
 
-The app now accepts the Figure contract below. The checked-in catalog and published schemas still use Person during the app rename phase. Full catalog imports and published-contract checks require the subsequent seed update.
+The app, checked-in catalog, and published schemas use the Figure contract below. The [Steve Kerr example](../db/seeds/athlete_ace_data/yaml/figures/steve_kerr.yaml) links a Figure to an athletic profile and staff appointments.
 
 A `Figure` identifies someone across athletic profiles and staff appointments. Every Player belongs to exactly one Figure. A Figure can have several Players, such as Deion Sanders' profiles for different sports, and any number of `StaffTenure` appointments. Provisional Figure codes become aliases when the shared naming service Rizz assigns a canonical code.
 

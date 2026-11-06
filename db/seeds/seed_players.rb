@@ -87,10 +87,9 @@ class SeedPlayers
     # Add team association
     attributes['team'] = team
     
-    # Names live on the player's Person, so look the player up through it.
-    existing = Player.joins(:person).find_by(
+    existing = Player.joins(:figure).find_by(
       team: team,
-      people: { first_name: player_data['first_name'], last_name: player_data['last_name'] }
+      figures: { first_name: player_data['first_name'], last_name: player_data['last_name'] }
     )
     SeedHelpers.find_or_create_with_changes(Player, { id: existing&.id }, attributes.except('team_name'))
   end
