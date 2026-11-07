@@ -209,6 +209,8 @@ Records put names on the Figure and reference it from each Player, either direct
 
 Seeding never calls Rizz. `bin/rails rizz:sync_figures` sends each Figure with an athletic profile as a separate step. The command requires the optional `rizz-client` gem, `RIZZ_ENDPOINT`, and `RIZZ_API_TOKEN`. The local sync retains the external SDK's `PersonRecord` and `import_athleteace_person` interfaces until the Rizz update.
 
+`bin/rails rizz:sync_places` adopts Rizz place codes the same way, also as a separate step. Countries match by ISO 3166-1 code and states by ISO 3166-2 code (`US-CA`, `GB-ENG`). A city matches only when exactly one Rizz locality in its state has its name. Each record takes the code at its own tier: the state DC takes `MIC-RZZ-DIV-US-DC`, and the city Washington takes its locality alias `MIC-RZZ-LOC-US-DC-WASHINGTON`. The record's `COUNTRY-`, `STATE-` or `CITY-` code stays bound as an alias, so seed files keep resolving, and a replay keeps the adopted code. Ambiguous, missing and already-held places are listed and left unchanged.
+
 A snapshot revision comes from the Figure's names, context, and evidence. Unchanged synced snapshots are skipped, and retries use the same idempotency key. An accepted shared code, such as `MIC-RZZ-SCHE_MARK_7KM3`, becomes `entity_code`. The provisional `FIGURE-` code and earlier aliases remain bound in `EntityCode`. Seed replay and rebuilt profiles can still resolve those aliases without rebinding the Rizz code in the `ALA` catalog.
 
 `RizzSync` records each Figure's state. A `review` waits for an identity decision and another sync. A `merge_needed` means another local Figure already holds the remote entity or code. Other outcomes are `synced`, `failed`, or `skipped`.

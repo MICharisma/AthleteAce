@@ -1,4 +1,6 @@
 class City < ApplicationRecord
+  include AdoptsRizzCode
+
   belongs_to :state
   has_many :players, foreign_key: :birth_city_id
   has_many :stadiums

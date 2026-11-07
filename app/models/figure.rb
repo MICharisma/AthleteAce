@@ -1,13 +1,10 @@
 class Figure < ApplicationRecord
   include SeedObservation
+  include AdoptsRizzCode
 
   UNNAMED = "Unnamed athlete".freeze
   SEARCH_SQL = "unaccent(CONCAT_WS(' ', figures.name, figures.first_name, figures.last_name, " \
     "array_to_string(figures.nicknames, ' '), array_to_string(figures.alternate_names, ' ')))".freeze
-
-  RIZZ_NAMESPACE = "MIC".freeze
-  RIZZ_CATALOG = "RZZ".freeze
-  RIZZ_PREFIX = "#{RIZZ_NAMESPACE}-#{RIZZ_CATALOG}-".freeze
 
   has_many :players, dependent: :restrict_with_error, inverse_of: :figure
   has_many :staff_tenures, dependent: :restrict_with_error
@@ -21,32 +18,6 @@ class Figure < ApplicationRecord
   validates :entity_code, uniqueness: true
 
   scope :matching_name, ->(query) { where("#{SEARCH_SQL} ILIKE unaccent(?)", "%#{sanitize_sql_like(query)}%") }
-
-  def rizz_code?
-    entity_code.to_s.start_with?(RIZZ_PREFIX)
-  end
-
-  # Makes a Rizz figure code (MIC-RZZ-...) this figure's canonical code. The
-  # provisional code and every earlier alias stay bound to the figure, so
-  # seed files, UGC exports and links that use them keep resolving.
-  def adopt_rizz_code!(qualified_code)
-    raise ArgumentError, "#{qualified_code.inspect} is not a Rizz figure code" unless qualified_code.to_s.start_with?(RIZZ_PREFIX)
-    return false if entity_code == qualified_code
-
-    transaction do
-      lock!
-      previous = entity_code
-      EntityCode.where(record_type: "Figure", record_id: id).update_all(canonical_code: qualified_code, updated_at: Time.current)
-      if previous.present?
-        alias_binding = EntityCode.find_or_initialize_by(namespace: RIZZ_NAMESPACE, catalog: "ALA", code: previous)
-        alias_binding.update!(canonical_code: qualified_code, record: self)
-      end
-      EntityCode.find_or_initialize_by(namespace: RIZZ_NAMESPACE, catalog: RIZZ_CATALOG, code: qualified_code.delete_prefix(RIZZ_PREFIX))
-        .update!(canonical_code: qualified_code, record: self)
-      update!(entity_code: qualified_code)
-    end
-    true
-  end
 
   private
 

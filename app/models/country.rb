@@ -1,4 +1,6 @@
 class Country < ApplicationRecord
+  include AdoptsRizzCode
+
   has_many :states
   has_many :cities, through: :states
   has_many :stadiums, through: :cities

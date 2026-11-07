@@ -1,4 +1,6 @@
 class State < ApplicationRecord
+  include AdoptsRizzCode
+
   belongs_to :country
   has_many :cities
   has_many :players, through: :cities
