@@ -4,7 +4,7 @@
   <div class="draft-grid">
     <section class="round-panel">
       <h2 class="profile-section-title">Who's it for?</h2>
-      <p class="draft-selected" data-draft-composer-target="selected"><%= @draft.target&.name || "Choose a player or team" %></p>
+      <p class="draft-selected" data-draft-composer-target="selected"><%= (@draft.target && person_name(@draft.target)) || "Choose a player or team" %></p>
       <%= form_with url: targets_shout_out_drafts_path, method: :get, data: { turbo_frame: "draft-target-results", draft_composer_target: "searchForm" } do |search| %>
         <%= search.label :q, "Search players and teams", class: "eyebrow" %>
         <%= search.search_field :q, maxlength: 80, class: "account-input", data: { action: "input->draft-composer#search" } %>
@@ -28,7 +28,7 @@
       <% end %>
     </section>
     <section class="round-panel draft-card" aria-labelledby="draft-preview-title">
-      <p class="eyebrow">Private preview</p><h2 id="draft-preview-title" class="profile-section-title" data-draft-composer-target="previewName"><%= @draft.target&.name || "Choose a player or team" %></h2>
+      <p class="eyebrow">Private preview</p><h2 id="draft-preview-title" class="profile-section-title" data-draft-composer-target="previewName"><%= (@draft.target && person_name(@draft.target)) || "Choose a player or team" %></h2>
       <p class="draft-message" data-draft-composer-target="preview"><%= @draft.message.presence || "Your message will appear here." %></p>
     </section>
   </div>

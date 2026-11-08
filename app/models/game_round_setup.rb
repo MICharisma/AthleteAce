@@ -84,7 +84,7 @@ class GameRoundSetup
         Player.all
       end
       scope = filter_players(scope)
-      NameCipherRound.new(players: scope.includes(:team).order(:id).to_a, season: season, subject_ids: practice_subject_ids,
+      NameCipherRound.new(players: scope.includes(:team, figure: :rizz_names).order(:id).to_a, season: season, subject_ids: practice_subject_ids,
         team_for: season ? season_pool.method(:team_for) : nil)
     end
   end
@@ -172,7 +172,7 @@ class GameRoundSetup
   end
 
   def fact_pool
-    @fact_pool ||= PlayerFactRound.new(players: (season ? filter_players(season_pool.players) : scoped_players).includes(:team, :birth_city, :birth_country).to_a,
+    @fact_pool ||= PlayerFactRound.new(players: (season ? filter_players(season_pool.players) : scoped_players).includes(:team, :birth_city, :birth_country, figure: :rizz_names).to_a,
       game_type: game_type, fact_type: fact_type, subject_ids: practice_subject_ids, season: season, team_for: season ? season_pool.method(:team_for) : nil)
   end
 
@@ -247,7 +247,7 @@ class GameRoundSetup
   end
 
   def flash_cards
-    players = subjects.includes(:team)
+    players = subjects.includes(:team, figure: :rizz_names)
     players = if selected_team_ids.size > 1
       RoundSubjectPicker.pick(players.to_a, length: length) { |player| team_for(player).id }
     else
@@ -277,7 +277,7 @@ class GameRoundSetup
 
     balanced = game_type == "player_team_match" && selected_team_ids.size > 1
     candidates = balanced ? subjects : subjects.reorder(Arel.sql("RANDOM()")).limit(length)
-    candidates = game_type == "player_team_match" ? candidates.includes(team: :league) : candidates.includes(:division, :league)
+    candidates = game_type == "player_team_match" ? candidates.includes(team: :league, figure: :rizz_names) : candidates.includes(:division, :league)
     candidates = candidates.to_a
     if balanced
       candidates = RoundSubjectPicker.pick(candidates, length: length) { |player| season ? season_pool.team_for(player).id : player.team_id }
@@ -292,6 +292,9 @@ class GameRoundSetup
 
     recorded = misses.filter_map { |miss| [ miss.fetch(:player).id, miss[:question] ] if miss[:question] }.to_h
     questions = questions_for(players, recorded_questions: recorded).map { |question| question.deep_stringify_keys.reverse_merge("game_type" => "player_team_match") }
+    # Drills reuse questions from earlier rounds; ask them with current names.
+    questions = GameNames.refresh(questions)
+    raise GameRound::InvalidAction, "There are no playable missed names to drill right now." if questions.empty?
     ace.game_rounds.create! game_type: "phased_repetition", length: questions.size, questions: questions,
       scope: { "drill" => true, "include_inactive" => true }, scope_label: "Recent misses", started_at: Time.current, question_started_at: Time.current
   end
@@ -307,7 +310,7 @@ class GameRoundSetup
       question_league = season ? season.league : subject.league
       pool = pools[question_league.id] ||= choice_pool(question_league)
       choices = ((pool - [ target ]).sample(5) + [ target ]).shuffle
-      { subject_type: subject.class.name, subject_id: subject.id, subject_name: subject.name,
+      { subject_type: subject.class.name, subject_id: subject.id, subject_name: subject.is_a?(Player) ? subject.display_name : subject.name,
         team_id: subject.is_a?(Player) ? target.id : subject.id, season_id: season_id,
         target_type: target.class.name, target_id: target.id, target_name: target.name,
         choices: choices.map { |item|
@@ -335,6 +338,12 @@ class GameRoundSetup
   end
 
   def save_round!(ace, questions, scope: scope_params, label: scope_label)
+    # Reviews reuse questions from earlier rounds; every round is asked with current names.
+    questions = GameNames.refresh(questions)
+    if questions.empty?
+      errors.add :base, "No playable questions in this scope. Try another team or league."
+      raise ActiveModel::ValidationError, self
+    end
     ace.game_rounds.create! game_type: game_type, length: questions.size, scope: scope, scope_label: label,
       questions: questions, started_at: Time.current, question_started_at: Time.current
   end
@@ -360,7 +369,7 @@ class GameRoundSetup
     scope = scope.where(id: player_id) if player_id
     scope = scope.where(id: player_ids) if player_ids.any?
     scope = scope.where(active: [ true, nil ]) unless season || include_inactive || player_group
-    scope
+    GameNames.playable(scope)
   end
 
   def practice_subject_ids

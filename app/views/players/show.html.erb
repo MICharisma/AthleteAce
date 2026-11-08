@@ -1,4 +1,4 @@
-<% content_for :title, @player.name %>
+<% content_for :title, player_display_name(@player) %>
 
 <%= tag.div class: "player-profile" do %>
   <%= render "filtered_show" %>
@@ -6,7 +6,7 @@
     <%= player_hero_portrait @player %>
     <%= tag.div class: "player-hero-details" do %>
       <%= tag.p "Player", class: "eyebrow entity-kind", data: { entity: "player" } %>
-      <%= tag.h1 @player.name, class: "page-title" %>
+      <%= tag.h1 player_display_name(@player), class: "page-title" %>
       <%= tag.p player_status_line(@player), class: "player-status-line" %>
       <%= tag.div class: "profile-chips" do %>
         <%= entity_link @player.team %>
@@ -41,12 +41,12 @@
         <% end %>
       <% end %>
       <% if @memory_stats[:seen].zero? %>
-        <%= tag.p "You haven’t answered a question about #{@player.name} yet.", class: "profile-empty" %>
+        <%= tag.p "You haven’t answered a question about #{player_display_name(@player)} yet.", class: "profile-empty" %>
       <% end %>
     <% else %>
       <%= tag.p class: "profile-empty" do %>
         <%= link_to "Sign in", new_ace_session_path, class: "tool-link" %>
-        <%= " to track your practice with #{@player.name}." %>
+        <%= " to track your practice with #{player_display_name(@player)}." %>
       <% end %>
     <% end %>
   <% end %>
@@ -62,7 +62,7 @@
   <% end %>
 
   <section class="profile-section player-shout-outs" aria-labelledby="player-shout-outs-title">
-    <div class="play-section-heading"><h2 id="player-shout-outs-title" class="profile-section-title">Shout-outs for <%= @player.name %></h2><%= link_to "All player shout-outs", player_shout_outs_path(@player), class: "tool-link" %></div>
+    <div class="play-section-heading"><h2 id="player-shout-outs-title" class="profile-section-title">Shout-outs for <%= player_display_name(@player) %></h2><%= link_to "All player shout-outs", player_shout_outs_path(@player), class: "tool-link" %></div>
     <p class="round-caption"><%= pluralize @weekly_shout_out_count, "live shout-out" %> approved this week · UTC</p>
     <% if @shout_outs.any? %>
       <p class="round-caption">Top live posts, in bid-weighted order with a random boost for each visitor.</p>

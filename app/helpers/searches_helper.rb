@@ -8,7 +8,7 @@ module SearchesHelper
     return record.public_name if record.is_a?(Ace)
     return "#{record.target_name}: #{record.message.truncate(100)}" if record.is_a?(ShoutOut) && current_side == "feed"
     return moderation_item_name(record) if record.is_a?(Highlight)
-    record.name
+    person_name(record)
   end
 
   def shell_search_path(record)

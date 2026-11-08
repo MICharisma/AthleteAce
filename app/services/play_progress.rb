@@ -60,7 +60,7 @@ class PlayProgress
     ordered = memories.select { |memory| memory[:misses].positive? }
       .sort_by { |memory| [ -memory[:misses], -memory[:last_seen].to_f, memory[:player_id] ] }
     ids = ordered.map { |memory| memory[:player_id] }
-    players = Player.where(id: ids).includes(team: :league).index_by(&:id)
+    players = Player.where(id: ids).includes(team: :league, figure: :rizz_names).index_by(&:id)
     latest = attempts.where(id: ordered.map { |memory| memory[:attempt_id] }).includes(:game_round).index_by(&:subject_entity_id)
     recorded = latest.transform_values do |attempt|
       attempt.game_round&.questions&.[](attempt.round_position)
@@ -69,7 +69,7 @@ class PlayProgress
     playable = GameRoundSetup.new(include_inactive: true).subjects.where(id: ids).pluck(:id)
     ordered.filter_map do |memory|
       player = players[memory[:player_id]]
-      next unless player
+      next if player.nil? || player.name_withheld?
 
       question = recorded[player.id]
       team = question ? recorded_teams[question["team_id"] || (question["target_id"] if question["target_type"] == "Team")] : player.team
@@ -83,7 +83,7 @@ class PlayProgress
   def players_today
     since = now.in_time_zone(time_zone).beginning_of_day
     ids = attempts.where(subject_entity_type: "Player", created_at: since..now).select(:subject_entity_id)
-    Player.where(id: ids).includes(:team).by_name.limit(4)
+    Player.where(id: ids).includes(:team, figure: :rizz_names).by_name.limit(4)
   end
 
   private

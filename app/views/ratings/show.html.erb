@@ -13,7 +13,7 @@
         <h2 class="text-xl font-semibold mb-2">Target</h2>
         <p class="text-ink-2">
           <% if @rating.target_type == 'Player' %>
-            <%= link_to @rating.target.name, player_path(@rating.target), class: "text-accent-text hover:underline" %>
+            <%= link_to @rating.target.display_name, player_path(@rating.target), class: "text-accent-text hover:underline" %>
             <span class="text-ink-3 text-sm">(Player)</span>
           <% elsif @rating.target_type == 'Team' %>
             <%= link_to @rating.target.name, team_path(@rating.target), class: "text-accent-text hover:underline" %>

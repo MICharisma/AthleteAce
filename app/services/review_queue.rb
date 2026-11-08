@@ -23,7 +23,10 @@ class ReviewQueue
           choices = review.target_type == model.name ? review.question.fetch("choices").map { |choice| choice.fetch("id") } : []
           subject + choices
         end
-        model.where(id: ids).pluck(:id).to_set
+        # A player Rizz now withholds a name for can't be asked about or offered as a choice.
+        scope = model.where(id: ids)
+        scope = GameNames.playable(scope) if model == Player
+        scope.pluck(:id).to_set
       end
       candidates.select do |review|
         choices = review.question.fetch("choices")

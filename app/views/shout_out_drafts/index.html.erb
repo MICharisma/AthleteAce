@@ -5,7 +5,7 @@
   <div class="draft-grid">
     <% @drafts.each do |draft| %>
       <article class="round-panel draft-card">
-        <h2 class="profile-section-title"><%= draft.target&.name || "Target no longer available" %></h2>
+        <h2 class="profile-section-title"><%= (draft.target && person_name(draft.target)) || "Target no longer available" %></h2>
         <p class="draft-message"><%= draft.message %></p>
         <p class="round-caption">Saved <%= time_ago_in_words(draft.updated_at) %> ago</p>
         <div class="page-actions"><%= link_to "Edit draft", edit_shout_out_draft_path(draft), class: "tool-button" %><%= button_to "Delete draft", shout_out_draft_path(draft), method: :delete, class: "tool-button" %></div>

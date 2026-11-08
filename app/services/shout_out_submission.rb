@@ -12,8 +12,11 @@ class ShoutOutSubmission
         return existing
       end
       raise ActiveRecord::RecordInvalid, draft unless draft.valid?
-      team = draft.target.is_a?(Team) ? draft.target : draft.target.team
-      post = draft.shout_outs.create!(created_by: draft.ace, target: draft.target, target_name: draft.target.name,
+      player = draft.target if draft.target.is_a?(Player)
+      # The post keeps the name it was published under: Rizz's, when enabled.
+      raise ArgumentError, "This player's name isn't available right now, so they can't get a shout-out." if player&.name_withheld?
+      team = player ? player.team : draft.target
+      post = draft.shout_outs.create!(created_by: draft.ace, target: draft.target, target_name: player ? player.display_name : draft.target.name,
         team_id: team&.id, league_id: team&.league_id, message: draft.message, draft_revision: revision,
         bid_cents: bid_cents, payment_method: payment_method)
       post.reserve_credit! if payment_method == "credit"

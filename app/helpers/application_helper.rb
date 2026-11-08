@@ -121,11 +121,21 @@ module ApplicationHelper
   # @param logo_attribute [Symbol] The attribute for the logo URL (defaults to :logo_url).
   # @param options [Hash] Additional HTML options for the container span.
   # @return [ActiveSupport::SafeBuffer] HTML string for the container with name and logo placeholder.
+  # The name to show for a record: a player's or figure's Rizz name when the
+  # integration is on, and any other record's own name.
+  def person_name(record)
+    record.respond_to?(:display_name) ? record.display_name : record.name
+  end
+
   def display_name_with_lazy_logo(record, name_attribute: :name, logo_attribute: :logo_url, **options)
     return '' unless record
 
     logo_url_value = record.respond_to?(logo_attribute) ? record.public_send(logo_attribute) : nil
-    entity_name = record.respond_to?(name_attribute) ? record.public_send(name_attribute) : "N/A"
+    entity_name = if record.respond_to?(:display_name) && %i[name full_name].include?(name_attribute)
+      record.display_name
+    else
+      record.respond_to?(name_attribute) ? record.public_send(name_attribute) : "N/A"
+    end
 
     default_options = {
       class: "lazy-logo-container", # Keep semantic class name

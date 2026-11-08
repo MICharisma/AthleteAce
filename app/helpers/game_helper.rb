@@ -96,7 +96,7 @@ module GameHelper
     tag.div(class: "subject-card", data: data_attrs) do
       # Question text based on game type
       question = if game_type == "team_match"
-        "Who does #{subject.full_name || subject.name} play for?"
+        "Who does #{person_name(subject)} play for?"
       else
         subject.territory.present? ? "Which division do the #{subject.name} belong to?" : "Which division does #{subject.name} belong to?"
       end
@@ -116,7 +116,7 @@ module GameHelper
   def render_card_entity(entity, entity_type)
     subtitle = entity_type == :player ? entity.primary_position&.name : nil
     entity_avatar(entity, size: :large) +
-      tag.h3(entity.name, class: "entity-name") +
+      tag.h3(person_name(entity), class: "entity-name") +
       (subtitle.present? ? tag.div(subtitle, class: "entity-subtitle") : "")
   end
 
