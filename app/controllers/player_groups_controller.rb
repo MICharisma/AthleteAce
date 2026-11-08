@@ -13,7 +13,7 @@ class PlayerGroupsController < ApplicationController
 
   def show
     @progress = PlayProgress.new(ace: current_ace, players: @player_group.players) if current_ace
-    @pagy, @players = pagy(@player_group.players.by_name)
+    @pagy, @players = pagy(@player_group.players.includes(figure: :rizz_names).by_name)
   end
 
   def new

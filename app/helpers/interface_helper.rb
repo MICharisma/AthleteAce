@@ -28,13 +28,14 @@ module InterfaceHelper
     return "" unless record
 
     link_to record, class: "entity-chip", data: { entity: record.model_name.singular } do
-      icon_for_resource(record.model_name.singular, size: 16) + tag.span(record.name)
+      icon_for_resource(record.model_name.singular, size: 16) + tag.span(person_name(record))
     end
   end
 
   def entity_avatar record, size: :small
     image_url = record.is_a?(Player) ? record.photo_url : record.logo_url
-    initials = record.name.split.filter_map { |word| word[0] }.first(3).join.upcase
+    # No initials for a name Rizz withholds.
+    initials = record.try(:name_withheld?) ? "" : person_name(record).split.filter_map { |word| word[0] }.first(3).join.upcase
     tag.span class: "entity-avatar entity-avatar-#{size}", data: {
       entity: record.model_name.singular, controller: "entity-image"
     } do

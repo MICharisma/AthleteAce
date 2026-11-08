@@ -78,6 +78,8 @@ class Player < ApplicationRecord
   delegate :name, :short_name, :sort_name, :name_segments, :alternate_names,
     *NAME_ATTRIBUTES, *NAME_ATTRIBUTES.map { "#{it}=" }, to: :identity
   alias_method :full_name, :name
+  # The name to show: Rizz's when the integration is on (Figure#display_name).
+  delegate :display_name, :name_withheld?, to: :identity
 
   def sport
     super || team&.sport

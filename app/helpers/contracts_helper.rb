@@ -61,7 +61,7 @@ module ContractsHelper
     tag.div class: "contract-basic-info" do
       tag.h2("Contract Information", class: "contract-section-title") +
       tag.div(class: "contract-info-grid") do
-        contract_info_item("Player", link_to(contract.player.name, player_path(contract.player))) +
+        contract_info_item("Player", link_to(contract.player.display_name, player_path(contract.player))) +
         contract_info_item("Organization", link_to(contract.organization.name, organization_path(contract.organization))) +
         contract_info_item("Start Date", contract.start_date&.strftime("%B %d, %Y") || "Not specified") +
         contract_info_item("End Date", contract.end_date&.strftime("%B %d, %Y") || "Not specified") +

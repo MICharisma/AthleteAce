@@ -1,4 +1,8 @@
 module PlayersHelper
+  def player_display_name(player)
+    player.figure.display_name
+  end
+
   # Display player name with logo
   def player_name_display player
     tag.div class: "record-name" do
@@ -41,7 +45,7 @@ module PlayersHelper
   def player_photo_display player
     tag.div class: "player-photo-container" do
       if player.photo_urls.present?
-        tag.img src: player.photo_urls.sample, alt: player.full_name, class: "player-photo"
+        tag.img src: player.photo_urls.sample, alt: player.display_name, class: "player-photo"
       else
         tag.div class: "player-photo-placeholder" do
           icon "shirt-sport", size: 48

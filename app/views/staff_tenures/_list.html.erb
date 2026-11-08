@@ -4,7 +4,7 @@
     <ul class="wallet-history">
       <% staff_tenures.each do |tenure| %>
         <li id="<%= dom_id(tenure) %>">
-          <p><%= link_to tenure.figure.name, figure_path(tenure.figure), class: "tool-link" %> · <%= tenure.title %> · <%= tenure.role.humanize %></p>
+          <p><%= link_to tenure.figure.display_name, figure_path(tenure.figure), class: "tool-link" %> · <%= tenure.title %> · <%= tenure.role.humanize %></p>
           <p><%= link_to tenure.organization.name, organization_path(tenure.organization), class: "tool-link" %><% if tenure.team %> · Team context: <%= link_to tenure.team.name, team_path(tenure.team, tab: "staff"), class: "tool-link" %><% else %> · Organization-wide<% end %></p>
           <p class="round-caption"><%= tenure.start_date.presence || "Unknown start" %> to <%= tenure.end_date.presence || (tenure.ongoing? ? "Present" : "Unknown end") %></p>
           <% if tenure.source["url"].present? %>

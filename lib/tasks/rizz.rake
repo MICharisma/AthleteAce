@@ -17,4 +17,14 @@ namespace :rizz do
       puts "  #{outcome.state} #{outcome.record.class.name} #{outcome.record.id} #{outcome.record.entity_code}: #{outcome.detail}"
     end
   end
+
+  desc "Fetch the names Rizz authorizes for every figure into rizz_names (needs RIZZ_ENDPOINT, RIZZ_API_TOKEN, RIZZ_SCOPE)"
+  task refresh_names: :environment do
+    puts RizzNames.new.revalidate.map { |purpose, result| "#{purpose}: #{result}" }.join(", ")
+  end
+
+  desc "Apply Rizz name changes from its event feed to rizz_names"
+  task poll_names: :environment do
+    puts RizzNames.new.poll.map { |purpose, result| "#{purpose}: #{result}" }.join(", ")
+  end
 end

@@ -13,7 +13,7 @@ module PlayerProfileHelper
           tag.li do
             separator = index.positive? ? icon("arrow-right", size: 14) : ""
             content = if crumb[:current]
-              tag.span crumb[:label], aria: { current: "page" }
+              tag.span player_display_name(player), aria: { current: "page" }
             else
               link_to crumb[:path], class: "entity-chip", data: { entity: crumb[:type].to_s.underscore.singularize } do
                 icon_for_resource(crumb[:type].to_s.underscore, size: 16) + tag.span(crumb[:label])
@@ -32,7 +32,7 @@ module PlayerProfileHelper
     number = JerseyNumberLookup.new(player: player, team: team).call
     tag.div class: "profile-portrait", style: style, data: { controller: "entity-image" } do
       fallback = tag.div class: "profile-jersey", data: { entity_image_target: "fallback" }, aria: { hidden: true } do
-        jersey_portrait_fallback(player.name, number&.number)
+        jersey_portrait_fallback(player_display_name(player), number&.number)
       end
       photo = if player.photo_url.present?
         tag.img src: player.photo_url, alt: "", class: "profile-photo hidden",

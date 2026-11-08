@@ -3,8 +3,8 @@ class NameCipherRound
   attr_reader :players
 
   def initialize(players:, season: nil, team_for: nil, subject_ids: nil)
-    @players = players.select { |player| player.name.upcase.scan(/\p{L}/).uniq.size > 1 }
-      .uniq { |player| player.name.squish.downcase }
+    @players = players.select { |player| player.display_name.upcase.scan(/\p{L}/).uniq.size > 1 }
+      .uniq { |player| player.display_name.squish.downcase }
     @choice_players = @players
     @players = @players.select { |player| subject_ids.include?(player.id) } if subject_ids
     @season = season
@@ -20,25 +20,26 @@ class NameCipherRound
     RoundSubjectPicker.pick(players, length: length, &team_key).map do |player|
       choices = ((@choice_players - [ player ]).sample(3) + [ player ]).shuffle
       team = team_for(player)
-      { subject_type: "Player", subject_id: player.id, subject_name: player.name,
-        target_type: "Player", target_id: player.id, target_name: player.name,
-        scrambled_name: scramble(player.name), team_id: team&.id, team_name: team&.name,
+      name = player.display_name
+      { subject_type: "Player", subject_id: player.id, subject_name: name,
+        target_type: "Player", target_id: player.id, target_name: name,
+        scrambled_name: self.class.scramble(name), team_id: team&.id, team_name: team&.name,
         season_name: @season&.name,
-        choices: choices.map { |choice| { id: choice.id, name: choice.name } } }.compact
+        choices: choices.map { |choice| { id: choice.id, name: choice.display_name } } }.compact
     end
+  end
+
+  def self.scramble(name)
+    characters = name.upcase.chars
+    letters = characters.grep(/\p{L}/)
+    shuffled = letters.shuffle
+    shuffled = letters.rotate if shuffled == letters
+    characters.map { |character| character.match?(/\p{L}/) ? shuffled.shift : character }.join
   end
 
   private
 
   def team_for(player)
     @team_for ? @team_for.call(player) : player.team
-  end
-
-  def scramble(name)
-    characters = name.upcase.chars
-    letters = characters.grep(/\p{L}/)
-    shuffled = letters.shuffle
-    shuffled = letters.rotate if shuffled == letters
-    characters.map { |character| character.match?(/\p{L}/) ? shuffled.shift : character }.join
   end
 end

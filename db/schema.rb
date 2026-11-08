@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_060000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -843,6 +843,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_060000) do
     t.index ["target_type", "target_id"], name: "index_ratings_on_target"
   end
 
+  create_table "rizz_feed_cursors", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "cursor"
+    t.string "purpose", null: false
+    t.datetime "updated_at", null: false
+    t.index ["purpose"], name: "index_rizz_feed_cursors_on_purpose", unique: true
+  end
+
+  create_table "rizz_names", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "display_name"
+    t.datetime "fetched_at"
+    t.bigint "figure_id", null: false
+    t.uuid "form_id"
+    t.string "purpose", null: false
+    t.string "rizz_code"
+    t.uuid "rizz_entity_id"
+    t.uuid "rule_id"
+    t.jsonb "search_forms", default: [], null: false
+    t.string "sort_key"
+    t.string "state", default: "current", null: false
+    t.datetime "updated_at", null: false
+    t.string "view_version"
+    t.index ["figure_id", "purpose"], name: "index_rizz_names_on_figure_id_and_purpose", unique: true
+    t.index ["purpose", "rizz_entity_id"], name: "index_rizz_names_on_purpose_and_rizz_entity_id"
+    t.check_constraint "state::text = ANY (ARRAY['current'::character varying, 'invalidated'::character varying]::text[])", name: "rizz_names_state"
+  end
+
   create_table "rizz_syncs", force: :cascade do |t|
     t.bigint "figure_id", null: false
     t.string "state", default: "pending", null: false
@@ -1364,6 +1392,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_060000) do
   add_foreign_key "quests", "aces", column: "created_by_id", on_delete: :nullify
   add_foreign_key "ratings", "aces"
   add_foreign_key "ratings", "spectrums"
+  add_foreign_key "rizz_names", "figures", on_delete: :cascade
   add_foreign_key "rizz_syncs", "figures"
   add_foreign_key "roles", "players"
   add_foreign_key "roles", "positions"

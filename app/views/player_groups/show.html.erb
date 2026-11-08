@@ -35,7 +35,7 @@
   <ul class="round-panel">
     <% @players.each do |player| %>
       <li>
-        <%= link_to player.name, player_path(player), class: "tool-link" %>
+        <%= link_to player.display_name, player_path(player), class: "tool-link" %>
         <% if @progress %>
           <%= tag.span({unpracticed: "Not practiced", missed: "Needs practice", correct: "Answered correctly", known: "Known"}.fetch(@progress.player_status(player.id)), class: "round-caption") %>
         <% end %>
