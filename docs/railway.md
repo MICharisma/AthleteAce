@@ -20,7 +20,12 @@ Set these web-service variables:
 | `PORT` | `3000` |
 | `HTTP_PORT` | `80` |
 | `SOLID_QUEUE_IN_PUMA` | `true` |
+| `SKIP_SEEDS` | `1` |
 | `SECRET_KEY_BASE` | A staging-only secret stored in Doppler `athleteace/stg` |
+| `BUNDLE_GITHUB__COM` | `x-access-token:<read-only Rizz repository token>` from Doppler |
+| `RIZZ_ENDPOINT` | The Rizz staging HTTPS origin |
+| `RIZZ_SCOPE` | `athleteace.staging` |
+| `RIZZ_API_TOKEN` | The separate AthleteAce client credential provisioned in Rizz |
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
 | `CACHE_DATABASE_URL` | `postgresql://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/athleteace_staging_cache` |
 | `QUEUE_DATABASE_URL` | `postgresql://${{Postgres.PGUSER}}:${{Postgres.PGPASSWORD}}@${{Postgres.PGHOST}}:${{Postgres.PGPORT}}/athleteace_staging_queue` |
@@ -35,15 +40,16 @@ the application write to Railway's root-owned volume, as described in
 [Railway's volume permissions](https://docs.railway.com/volumes#permissions).
 Route the public Railway
 domain to port `80`. Set the health check to `/up` and the pre-deploy command to
-`./bin/rails db:prepare`. Allow up to 3,600 seconds for the pre-deploy command because
-the first database preparation also imports the seed catalog.
+`./bin/rails db:prepare`. `SKIP_SEEDS=1` leaves seed ingestion disabled while Rails
+creates and migrates all four databases. After Rizz is ready and the consumer
+connection is verified, run `SKIP_SEEDS=0 bin/rails db:seed` explicitly.
 
 ## Check the first deployment
 
 Deploy the reviewed setup branch. Require a successful image build, database
-preparation, and a `200` response from `/up`. A failed build, nonzero pre-deploy
+creation and migration, and a `200` response from `/up`. A failed build, nonzero pre-deploy
 exit, or another health response means the deployment failed. Check the home page
-and a seeded Figure or Team page before using the environment for integration work.
+before importing seeds. After ingestion, check a seeded Figure or Team page.
 
 Configure Google sign-in using [the Google sign-in instructions](google-sign-in.md).
 Store `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Doppler `athleteace/stg`,
@@ -52,4 +58,7 @@ copy them to the Railway staging service, and register its HTTPS
 disabled until both variables are present. Email confirmation also needs the
 [production mail settings](play-learning.md).
 
-Rizz integration and its private client gem are not part of this initial deployment.
+The private Rizz client gem is pinned to its reviewed commit in the Gemfile. Keep
+`SKIP_SEEDS=1` until Rizz is healthy, the AthleteAce credential works, and the Rizz
+place catalog has been loaded. After importing seeds, use `rizz:sync_places` and
+`rizz:sync_figures` to adopt the Rizz codes.
