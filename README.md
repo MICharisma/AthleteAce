@@ -3,6 +3,8 @@
 AthleteAce runs on Ruby 4.0.7, Rails 8.1.4, and PostgreSQL. Ruby is pinned in
 `.ruby-version` and `mise.toml`.
 
+See [Railway deployment](docs/railway.md) for staging configuration and the first-deploy checks.
+
 ## Local accounts
 
 In development, registration on a host ending in `.test` confirms the account immediately without a confirmation email. Signing in on that host also confirms an existing unconfirmed account after a correct password and retains the saved return page.

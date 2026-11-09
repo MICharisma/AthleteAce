@@ -9,6 +9,11 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=4.0.7
+
+FROM scratch AS submodules
+ADD https://github.com/MICharisma/athlete_ace_data.git#1cf108d7c09964f658303ecc65d46de741487b44 /db/seeds/athlete_ace_data
+ADD https://github.com/mikeymicrophone/micharisma_seeders.git#f1b4b5dd24c9aaed37866fb6b738c36dbbf40b80 /lib/micharisma_seeders
+
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
@@ -41,6 +46,7 @@ RUN bundle install && \
 
 # Copy application code
 COPY . .
+COPY --from=submodules / /rails/
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
