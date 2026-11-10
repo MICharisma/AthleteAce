@@ -49,6 +49,11 @@ RUN bundle install && \
 COPY . .
 COPY --from=submodules / /rails/
 
+RUN cp db/seeds/athlete_ace_data/yaml/coverage_2026/visual_assets.yaml /tmp/visual_assets.yaml && \
+    ruby db/seeds/athlete_ace_data/scripts/build_visual_assets.rb --download && \
+    cmp /tmp/visual_assets.yaml db/seeds/athlete_ace_data/yaml/coverage_2026/visual_assets.yaml && \
+    rm /tmp/visual_assets.yaml
+
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 

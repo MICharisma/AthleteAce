@@ -11,6 +11,12 @@ Dockerfile. It fetches the public seed catalog and importer at the commits recor
 by the application's submodules. When either submodule changes, update its Dockerfile
 commit too. The private UGC backup repository is not required to boot the application.
 
+The build downloads the captured visual assets and generates their SVG and GLB
+representations with the seed catalog's `scripts/build_visual_assets.rb --download`.
+It compares the resulting manifest with the committed version and fails if any
+captured checksum, size, or metadata changes. The generated media is included in
+the image; it is not committed to the seed repository.
+
 Set these web-service variables:
 
 | Variable | Value |
@@ -62,3 +68,11 @@ The private Rizz client gem is pinned to its reviewed commit in the Gemfile. Kee
 `SKIP_SEEDS=1` until Rizz is healthy, the AthleteAce credential works, and the Rizz
 place catalog has been loaded. After importing seeds, use `rizz:sync_places` and
 `rizz:sync_figures` to adopt the Rizz codes.
+
+After ingestion, run `bin/rails seeds:assets:verify` to check every imported
+canonical media file against its recorded size and SHA-256. A missing or changed
+file fails this check. Once figure synchronization finishes, run
+`bin/rails rizz:refresh_names` to populate the authorized display-name cache.
+The production job schedule polls name changes every five minutes and revalidates
+the cache at 4am each day. Figures awaiting identity review remain in Rizz's
+review workflow.
