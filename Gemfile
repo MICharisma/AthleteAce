@@ -82,7 +82,7 @@ gem "tailwindcss-rails", "~> 4.6"
 
 gem "nokogiri", "~> 1.19"
 
-gem "ransack", "~> 5.0"
+gem "ransack", "~> 6.1"
 
 gem "stripe"
 gem "csv"
