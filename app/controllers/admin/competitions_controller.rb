@@ -26,7 +26,7 @@ class Admin::CompetitionsController < ApplicationController
     @game_count = @competition.contest_games.count
     @title_count = @competition.title_awards.count
     records = if @tab == "titles"
-      @competition.title_awards.includes(winner: { campaign: [ :team, { season: [ :year, :league ] } ] }).order(:key, :id)
+      @competition.title_awards.includes(:player, winner: { campaign: [ :team, { season: [ :year, :league ] } ] }).order(:key, :id)
     else
       @competition.contestants.includes(campaign: [ :team, { season: [ :year, :league ] } ]).order(:id)
     end

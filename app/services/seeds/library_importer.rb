@@ -36,7 +36,7 @@ module Seeds
       "UniformCampaign" => %w[uniform campaign], "AssetRepresentation" => %w[subject],
       "Stint" => %w[player team], "Roster" => %w[campaign], "RosterEntry" => %w[roster player],
       "Contestant" => %w[contest campaign], "Appearance" => %w[player contestant],
-      "ContestGame" => %w[contest game], "TitleAward" => %w[contest winner],
+      "ContestGame" => %w[contest game], "TitleAward" => %w[contest winner player],
       "TransactionPlayer" => %w[event player], "PlayerGroupMembership" => %w[player_group player],
       "Membership" => %w[team league conference division],
       "Position" => %w[sport], "PositionAssignment" => %w[subject position]

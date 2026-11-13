@@ -30,6 +30,7 @@ class Player < ApplicationRecord
   has_many :appearances, dependent: :destroy
   has_many :transaction_players, dependent: :destroy
   has_many :activations, dependent: :destroy
+  has_many :title_awards, dependent: :restrict_with_error
   has_many :campaigns, -> { distinct }, through: :activations
   
   # Ransack configuration

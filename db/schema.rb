@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_030000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -1225,7 +1225,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_020000) do
 
   create_table "title_awards", force: :cascade do |t|
     t.bigint "contest_id", null: false
-    t.bigint "winner_id", null: false
+    t.bigint "winner_id"
     t.string "key", null: false
     t.string "name", null: false
     t.date "awarded_on"
@@ -1234,9 +1234,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_020000) do
     t.string "entity_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "player_id"
     t.index ["contest_id", "key"], name: "index_title_awards_on_contest_id_and_key", unique: true
     t.index ["contest_id"], name: "index_title_awards_on_contest_id"
     t.index ["entity_code"], name: "index_title_awards_on_entity_code", unique: true
+    t.index ["player_id"], name: "index_title_awards_on_player_id"
+    t.check_constraint "winner_id IS NOT NULL OR player_id IS NOT NULL", name: "title_awards_have_a_recipient"
   end
 
   create_table "transaction_players", force: :cascade do |t|
@@ -1457,6 +1460,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_020000) do
   add_foreign_key "teams", "stadiums"
   add_foreign_key "title_awards", "contestants", column: ["contest_id", "winner_id"], primary_key: ["contest_id", "id"]
   add_foreign_key "title_awards", "contests"
+  add_foreign_key "title_awards", "players"
   add_foreign_key "transaction_players", "organizations", column: "from_organization_id"
   add_foreign_key "transaction_players", "organizations", column: "to_organization_id"
   add_foreign_key "transaction_players", "players"

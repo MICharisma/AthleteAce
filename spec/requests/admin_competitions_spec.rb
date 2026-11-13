@@ -92,6 +92,13 @@ RSpec.describe "Admin competition inspection", type: :request do
     get admin_competition_path(competition, tab: "titles")
     expect(table_rows.size).to eq(2)
     expect(table_rows.text).to include("Table winners", "Playoff champions", "2024-12-01", "Unknown", "Harbor Herons 2024")
+    star = create(:player, first_name: "Ava", last_name: "Heron", team: team, sport: league.sport)
+    TitleAward.create!(contest: competition, player: star, key: "mvp", name: "Most valuable player")
+    TitleAward.create!(contest: competition, player: star, winner: entrant, key: "finals_mvp", name: "Finals MVP")
+    get admin_competition_path(competition, tab: "titles")
+    rows = table_rows.to_h { |row| [ row.css("td").first.text, row.css("td")[1].text ] }
+    expect(rows.find { |title, _| title.start_with?("Most valuable player") }.last).to eq(star.display_name)
+    expect(rows.find { |title, _| title.start_with?("Finals MVP") }.last).to eq("#{star.display_name} · Harbor Herons 2024")
   end
 
   it "shows empty and unknown data without substituting a champion or rules" do

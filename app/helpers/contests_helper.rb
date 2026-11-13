@@ -96,8 +96,9 @@ module ContestsHelper
             end
           end) +
           tag.h2("Titles awarded", class: "section-title") +
-          safe_join(contest.title_awards.includes(winner: { campaign: :team }).order(:key).map do |award|
-            tag.p { tag.strong(award.name) + " · " + link_to_name(award.team) }
+          safe_join(contest.title_awards.includes(:player, winner: { campaign: :team }).order(:key).map do |award|
+            recipients = [ (link_to(award.player.display_name, award.player) if award.player), (link_to_name(award.team) if award.team) ].compact
+            tag.p { tag.strong(award.name) + " · " + safe_join(recipients, " · ") }
           end)
       end
     end
