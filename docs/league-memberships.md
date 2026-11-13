@@ -44,6 +44,10 @@ records:
 
 The importer preserves coded records on replay. Adoption of an uncoded membership matches the team, league, optional conference, optional division, and start date. Separate dated returns to the same group remain separate records.
 
+Annual classifications belong on `Campaign`, separate from current `Membership` records. The [championship-history batch](../db/seeds/athlete_ace_data/sources/championship_history/README.md) accepts inclusive starting-year ranges in its generator input and expands each range into ordinary team/season Campaign definitions. Split a range when a division, conference, or annual team name changes. Its captured seasons include the NHL's temporary 2020–21 divisions rather than applying today's alignment to every year.
+
+For an existing catalog, `rails seeds:championship_history` fills blank Campaign conference/division fields before importing the batch. It preserves recorded nonblank assignments and rolls back on disagreement. Ordinary `db:seed` retains its existing preserve-and-report policy. No date-based change to a current Membership is inferred from these annual records.
+
 Legacy JSON membership files can omit `conference_name` and `division_name`. They resolve teams within the named league. Their division lookup uses the supplied conference, or divisions directly under the league when no conference is supplied.
 
 ## Migration
