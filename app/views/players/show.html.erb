@@ -78,7 +78,7 @@
       <% {
         "Plays for" => [@player.team], "Organization" => [@player.current_organization],
         "Sport" => [@player.sport], "Stadium" => [@player.team&.stadium],
-        "Location" => [@player.team&.city, @player.team&.state], "Positions" => @player.positions
+        "Location" => [@player.team&.city, @player.team&.state], "Positions" => @player.observed_positions
       }.each do |label, records| %>
         <% if records.compact.any? %>
           <%= tag.div do %>

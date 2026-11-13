@@ -22,7 +22,7 @@ module Seeds
       "TitleAward" => TitleAward, "Federation" => Federation,
       "Contestant" => Contestant, "Appearance" => Appearance,
       "PlayerGroup" => PlayerGroup, "PlayerGroupMembership" => PlayerGroupMembership,
-      "Membership" => Membership
+      "Membership" => Membership, "Position" => Position, "PositionAssignment" => PositionAssignment
     }.freeze
     SCOPE_ASSOCIATIONS = {
       "State" => %w[country], "City" => %w[state], "Stadium" => %w[city],
@@ -38,11 +38,13 @@ module Seeds
       "Contestant" => %w[contest campaign], "Appearance" => %w[player contestant],
       "ContestGame" => %w[contest game], "TitleAward" => %w[contest winner],
       "TransactionPlayer" => %w[event player], "PlayerGroupMembership" => %w[player_group player],
-      "Membership" => %w[team league conference division]
+      "Membership" => %w[team league conference division],
+      "Position" => %w[sport], "PositionAssignment" => %w[subject position]
     }.freeze
     POLYMORPHIC_TYPES = {
       [ "League", "jurisdiction" ] => %w[Country State City Federation],
       [ "AssetRepresentation", "subject" ] => %w[Logo Uniform UniformPiece],
+      [ "PositionAssignment", "subject" ] => %w[Player RosterEntry Appearance],
       [ "Contest", "context" ] => %w[League Conference Division Sport Federation Organization],
       [ "Game", "context" ] => %w[League Conference Division Sport Federation Organization]
     }.freeze
@@ -375,6 +377,11 @@ module Seeds
         return model.find_by(team: desired["team"], league: desired["league"],
           conference: desired["conference"], division: desired["division"], start_date: desired["start_date"])
       end
+      # A sequenced slot is held by one position; an unsequenced one is the pair.
+      if model == PositionAssignment && desired["subject"] && desired["position"]
+        slot = desired["sequence"] ? { sequence: desired["sequence"] } : { position: desired["position"], sequence: nil }
+        return model.find_by(subject: desired["subject"], **slot)
+      end
       if model == JerseyNumberAssignment && desired["start_date"] && desired["player"] && desired["team"] && desired["number"]
         return model.where(player: desired["player"], team: desired["team"], number: desired["number"])
           .overlapping(desired["start_date"], desired["start_date"]).first
@@ -384,7 +391,7 @@ module Seeds
         PlayerGroupMembership => %w[player_group player], RosterEntry => %w[roster player], Contestant => %w[contest campaign],
         Appearance => %w[contestant player], TransactionPlayer => %w[event player],
         ContestGame => %w[contest game], TitleAward => %w[contest key],
-        UniformCampaign => %w[uniform campaign]
+        UniformCampaign => %w[uniform campaign], Position => %w[sport name]
       }[model]
       return unless keys && keys.all? { |key| desired[key].present? }
       model.find_by(desired.slice(*keys))

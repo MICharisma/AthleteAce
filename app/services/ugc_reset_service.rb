@@ -11,13 +11,13 @@ class UgcResetService
     Logo, Uniform, UniformPiece, UniformCampaign, AssetRepresentation,
     
     # Organizational structure
-    Organization, OrganizationAffiliation, Membership, Position, Role,
+    Organization, OrganizationAffiliation, Membership, Position,
     
     # Time-based models
     Year, Season, Campaign, Contest, Contestant, ContestGame, TitleAward,
     
     # Contract system  
-    Contract, Activation, Transaction, TransactionPlayer, Stint, Roster, RosterEntry, Appearance,
+    Contract, Activation, Transaction, TransactionPlayer, Stint, Roster, RosterEntry, Appearance, PositionAssignment,
     
     # Other seeded models
     Federation

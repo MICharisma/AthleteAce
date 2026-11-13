@@ -18,9 +18,10 @@ class Player < ApplicationRecord
   
   has_many :player_group_memberships, dependent: :destroy
   has_many :player_groups, through: :player_group_memberships
-  has_many :roles, dependent: :destroy
+  # Career-summary positions; rosters and appearances carry observed ones.
+  has_many :position_assignments, as: :subject, dependent: :destroy
   has_many :jersey_number_assignments, dependent: :destroy
-  has_many :positions, through: :roles
+  has_many :positions, through: :position_assignments
   has_many :contracts, dependent: :destroy
   has_many :contract_teams, through: :contracts, source: :team
   has_many :contract_organizations, -> { distinct }, through: :contracts, source: :organization
@@ -63,7 +64,7 @@ class Player < ApplicationRecord
   end
   
   def self.ransackable_associations(auth_object = nil)
-    ["birth_city", "birth_country", "positions", "ratings", "roles", "sport", "team"]
+    ["birth_city", "birth_country", "position_assignments", "positions", "ratings", "sport", "team"]
   end
   
   scope :sampled, ->(n = 50) { order(Arel.sql('RANDOM()')).limit(n) }
@@ -90,18 +91,25 @@ class Player < ApplicationRecord
   end
   alias_method :logo_url, :photo_url
 
+  # Prefer a curated career primary, then the latest roster listing, then the
+  # position played most often in recorded games.
   def primary_position
-    roles.find_by(primary: true)&.position
+    career_primary_position || latest_roster_position || most_played_position
   end
   alias_method :position, :primary_position
-  
-  def secondary_positions
-    positions.where.not(id: primary_position&.id)
+
+  # Every distinct position recorded for this player at any scope.
+  def observed_positions
+    Position.where(id: PositionAssignment.for_player(self).select(:position_id)).order(:name)
   end
-  
+
+  def secondary_positions
+    observed_positions.where.not(id: primary_position&.id)
+  end
+
   def add_position(position, primary: false)
-    roles.where(primary: true).update_all(primary: false) if primary
-    roles.create position: position, primary: primary
+    position_assignments.where(primary: true).update_all(primary: false) if primary
+    position_assignments.create position: position, primary: primary
   end
 
   def calculate_attempt_stats(attempts, since = 1.week.ago)
@@ -123,6 +131,23 @@ class Player < ApplicationRecord
   end
 
   private
+
+  def career_primary_position
+    position_assignments.find_by(primary: true)&.position
+  end
+
+  def latest_roster_position
+    entry = roster_entries.joins(:roster, :position_assignments)
+      .order(Arel.sql("rosters.effective_on DESC NULLS LAST, rosters.observed_at DESC NULLS LAST, roster_entries.id DESC"))
+      .first
+    entry&.position_assignments&.in_order&.first&.position
+  end
+
+  def most_played_position
+    Position.joins(:position_assignments)
+      .merge(PositionAssignment.where(subject_type: "Appearance", subject_id: appearances.select(:id)))
+      .group(:id).order(Arel.sql("COUNT(*) DESC"), :name).first
+  end
 
   def identity
     figure || build_figure

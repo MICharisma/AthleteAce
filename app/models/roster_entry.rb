@@ -5,6 +5,9 @@ class RosterEntry < ApplicationRecord
   belongs_to :roster
   belongs_to :player
   belongs_to :stint, optional: true
+  # What this roster listed: basketball G/F, a fencer's weapon, a gymnast's events.
+  has_many :position_assignments, as: :subject, dependent: :destroy
+  has_many :positions, through: :position_assignments
 
   validates :player_id, uniqueness: { scope: :roster_id }
   validate do

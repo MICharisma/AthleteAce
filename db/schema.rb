@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -781,6 +781,30 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_010000) do
     t.index ["team_id"], name: "index_players_on_team_id"
   end
 
+  create_table "position_assignments", force: :cascade do |t|
+    t.string "subject_type", null: false
+    t.bigint "subject_id", null: false
+    t.bigint "position_id", null: false
+    t.integer "sequence"
+    t.boolean "primary", default: false, null: false
+    t.jsonb "statistics", default: {}, null: false
+    t.jsonb "source", default: {}, null: false
+    t.jsonb "details", default: {}, null: false
+    t.string "entity_code"
+    t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
+    t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_position_assignments_on_entity_code", unique: true
+    t.index ["position_id"], name: "index_position_assignments_on_position_id"
+    t.index ["subject_type", "subject_id", "position_id"], name: "index_position_assignments_on_subject_and_unsequenced_position", unique: true, where: "(sequence IS NULL)"
+    t.index ["subject_type", "subject_id", "sequence"], name: "index_position_assignments_on_subject_and_sequence", unique: true, where: "(sequence IS NOT NULL)"
+    t.index ["subject_type", "subject_id"], name: "index_position_assignments_on_subject"
+    t.index ["subject_type", "subject_id"], name: "index_position_assignments_on_subject_primary", unique: true, where: "\"primary\""
+    t.check_constraint "sequence IS NULL OR sequence > 0", name: "position_assignments_have_positive_sequences"
+    t.check_constraint "subject_type::text = ANY (ARRAY['Player'::character varying, 'RosterEntry'::character varying, 'Appearance'::character varying]::text[])", name: "position_assignments_have_known_subjects"
+  end
+
   create_table "positions", force: :cascade do |t|
     t.string "name", null: false
     t.string "abbreviation"
@@ -790,9 +814,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_010000) do
     t.datetime "updated_at", null: false
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
+    t.string "entity_code"
+    t.string "kind", default: "position", null: false
+    t.bigint "parent_id"
+    t.index ["entity_code"], name: "index_positions_on_entity_code", unique: true
     t.index ["name", "sport_id"], name: "index_positions_on_name_and_sport_id", unique: true
+    t.index ["parent_id"], name: "index_positions_on_parent_id"
     t.index ["seed_version"], name: "index_positions_on_seed_version"
     t.index ["sport_id"], name: "index_positions_on_sport_id"
+    t.check_constraint "kind::text = ANY (ARRAY['position'::character varying, 'apparatus'::character varying, 'event'::character varying, 'weapon'::character varying]::text[])", name: "positions_have_known_kinds"
+    t.check_constraint "parent_id IS NULL OR parent_id <> id", name: "positions_are_not_their_own_parent"
   end
 
   create_table "practice_reviews", force: :cascade do |t|
@@ -893,21 +924,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_010000) do
     t.index ["rizz_entity_id"], name: "index_rizz_syncs_on_rizz_entity_id"
     t.index ["state"], name: "index_rizz_syncs_on_state"
     t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'synced'::character varying, 'review'::character varying, 'merge_needed'::character varying, 'failed'::character varying, 'skipped'::character varying]::text[])", name: "rizz_syncs_state"
-  end
-
-  create_table "roles", force: :cascade do |t|
-    t.bigint "player_id", null: false
-    t.bigint "position_id", null: false
-    t.boolean "primary", default: false, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
-    t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
-    t.index ["player_id", "position_id"], name: "index_roles_on_player_id_and_position_id", unique: true
-    t.index ["player_id", "primary"], name: "index_roles_on_player_id_and_primary"
-    t.index ["player_id"], name: "index_roles_on_player_id"
-    t.index ["position_id"], name: "index_roles_on_position_id"
-    t.index ["seed_version"], name: "index_roles_on_seed_version"
   end
 
   create_table "roster_entries", force: :cascade do |t|
@@ -1395,6 +1411,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_010000) do
   add_foreign_key "players", "figures"
   add_foreign_key "players", "sports"
   add_foreign_key "players", "teams"
+  add_foreign_key "position_assignments", "positions"
+  add_foreign_key "positions", "positions", column: "parent_id"
   add_foreign_key "positions", "sports"
   add_foreign_key "practice_reviews", "aces"
   add_foreign_key "practice_reviews", "game_attempts", column: "last_attempt_id", on_delete: :cascade
@@ -1403,8 +1421,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_010000) do
   add_foreign_key "ratings", "spectrums"
   add_foreign_key "rizz_names", "figures", on_delete: :cascade
   add_foreign_key "rizz_syncs", "figures"
-  add_foreign_key "roles", "players"
-  add_foreign_key "roles", "positions"
   add_foreign_key "roster_entries", "players"
   add_foreign_key "roster_entries", "rosters"
   add_foreign_key "roster_entries", "stints"

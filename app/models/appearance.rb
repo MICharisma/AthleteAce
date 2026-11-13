@@ -5,6 +5,9 @@ class Appearance < ApplicationRecord
   belongs_to :player
   belongs_to :contestant
   belongs_to :stint, optional: true
+  # What the player did in this game, in order (PH, LF, 1B; a gymnast's routines).
+  has_many :position_assignments, as: :subject, dependent: :destroy
+  has_many :positions, through: :position_assignments
   has_one :contest, through: :contestant
   has_one :campaign, through: :contestant
   has_one :team, through: :campaign
