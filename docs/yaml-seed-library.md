@@ -219,6 +219,18 @@ Player records can supply `first_name`, `last_name`, and `nicknames`, which are 
 
 Sequence lookups match a Player code part against the Figure's short or sort name with punctuation folded to underscores. `HART`, `HART_JOSH`, and `DE_LA_CRUZ_ELLY` all resolve through these name forms.
 
+## Displayed names from Rizz
+
+Migration `20261107180000` adds `rizz_names` and a feed cursor for each display purpose. These projections remain separate from Figure source fields. Profiles, search, and games read the local projections without making Rizz requests while rendering.
+
+Setting `RIZZ_ENDPOINT` enables projected display and search. Name refresh and polling also require the optional `rizz-client` gem, `RIZZ_API_TOKEN`, and `RIZZ_SCOPE`. The scope must match the identity import's namespace prefix. Projection references use `<RIZZ_SCOPE>:person` and the local Figure ID.
+
+`bin/rails rizz:refresh_names` fetches `referring` and `short` names for Figures with athletic profiles. `bin/rails rizz:poll_names` consumes the event feed and refetches changed rows. In production, the recurring jobs poll every five minutes and revalidate daily at 4 a.m. The jobs do nothing when `RIZZ_ENDPOINT` is unset. They require a running recurring-job scheduler.
+
+Each display purpose falls back to source fields when it has no stored projection, including after a `not_found` response removes a row. A stored `referring` projection controls default display, search, and playable scopes. Its authorized name and search forms replace source names in those reads. An invalidated referring projection or a current referring projection without a name displays `Player`, matches no name search, and is excluded from playable scopes. The `short` projection controls short display independently. Disabling the integration returns display and search to source fields.
+
+Saved rounds keep the names recorded when they start. Newly created rounds, reviews, and missed-name drills refresh reused questions with current names and omit withheld players. If no playable questions remain, round creation fails with an empty-scope message. Rizz updates do not rewrite Figure source fields or existing saved rounds.
+
 ## Curated player groups
 
 `PlayerGroup` stores a public name, description, and optional source/details mappings. `PlayerGroupMembership` references a group and a player, with one membership per pair. Both accept stable entity codes through the standard importer. The [Brunson/Hart example](../db/seeds/athlete_ace_data/yaml/player_groups/knicks_names.yaml) defines a manually selected practice list using existing player codes. Membership can span teams, sports, and seasons; no current roster or starter claim is implied.
