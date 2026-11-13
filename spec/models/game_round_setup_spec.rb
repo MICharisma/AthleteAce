@@ -114,6 +114,25 @@ RSpec.describe GameRoundSetup do
     expect(ace.game_rounds).to be_empty
   end
 
+  it "includes conference-only teams in the conference scope" do
+    conference = create(:conference, league: league)
+    Membership.create!(team: team, conference: conference)
+
+    setup = described_class.new(conference_id: conference.id)
+    expect(setup.teams).to contain_exactly(team)
+  end
+
+  it "builds division questions in leagues without conferences" do
+    divisions = create_list(:division, 2, league: league, conference: nil)
+    Membership.create!(team: team, division: divisions.first)
+    Membership.create!(team: other_team, division: divisions.last)
+    setup = described_class.new(game_type: "guess_the_division", league_id: league.id)
+
+    expect(setup.subjects).to contain_exactly(team, other_team)
+    round = setup.start!(ace)
+    expect(round.questions.flat_map { |question| question.fetch("choices").map { |choice| choice.fetch("id") } }.uniq).to match_array(divisions.map(&:id))
+  end
+
   it "reports empty scopes without substituting unrelated questions" do
     expect { described_class.new(team_id: other_team.id).start! ace }.to raise_error(ActiveModel::ValidationError, /No playable questions/)
     expect { described_class.new(game_type: "guess_the_division").start! ace }.to raise_error(ActiveModel::ValidationError)

@@ -17,9 +17,9 @@ class SeedMemberships
         file_data[:data]['memberships'].each do |membership_data|
           # Find team (try by territory + mascot first, then just mascot)
           team = if membership_data['territory_name']
-            Team.find_by(territory: membership_data['territory_name'], mascot: membership_data['team_name'])
+            league.teams.find_by(territory: membership_data['territory_name'], mascot: membership_data['team_name'])
           else
-            Team.find_by(mascot: membership_data['team_name'])
+            league.teams.find_by(mascot: membership_data['team_name'])
           end
           
           if team.nil?
@@ -27,15 +27,14 @@ class SeedMemberships
             next
           end
           
-          # Find conference and division
-          conference = Conference.find_by(name: membership_data['conference_name'], league: league)
-          if conference.nil?
+          conference = membership_data['conference_name'] ? league.conferences.find_by(name: membership_data['conference_name']) : nil
+          if membership_data['conference_name'] && conference.nil?
             SeedHelpers.log_and_puts "Warning: Conference not found: #{membership_data['conference_name']}"
             next
           end
           
-          division = Division.find_by(name: membership_data['division_name'], conference: conference)
-          if division.nil?
+          division = membership_data['division_name'] ? league.divisions.find_by(name: membership_data['division_name'], conference: conference) : nil
+          if membership_data['division_name'] && division.nil?
             SeedHelpers.log_and_puts "Warning: Division not found: #{membership_data['division_name']}"
             next
           end
@@ -48,6 +47,8 @@ class SeedMemberships
           # Prepare attributes
           attributes = membership_data.except('team_name', 'territory_name', 'conference_name', 'division_name')
           attributes['team'] = team
+          attributes['league'] = league
+          attributes['conference'] = conference
           attributes['division'] = division
           
           # Parse date fields
@@ -63,8 +64,8 @@ class SeedMemberships
           
           SeedHelpers.find_or_create_with_changes(
             Membership,
-            { team: team, division: division },
-            attributes.except('team', 'division')
+            { team: team, league: league, conference: conference, division: division, start_date: attributes['start_date'] },
+            attributes.except('team', 'league', 'conference', 'division', 'start_date')
           )
         end
       end

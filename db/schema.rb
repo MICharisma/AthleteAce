@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -377,14 +377,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
     t.string "name"
     t.string "abbreviation"
     t.string "logo_url"
-    t.bigint "conference_id", null: false
+    t.bigint "conference_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "league_id", null: false
     t.index ["conference_id"], name: "index_divisions_on_conference_id"
     t.index ["entity_code"], name: "index_divisions_on_entity_code", unique: true
+    t.index ["league_id"], name: "index_divisions_on_league_id"
     t.index ["seed_version"], name: "index_divisions_on_seed_version"
   end
 
@@ -601,7 +603,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
 
   create_table "memberships", force: :cascade do |t|
     t.bigint "team_id", null: false
-    t.bigint "division_id", null: false
+    t.bigint "division_id"
     t.date "start_date"
     t.date "end_date"
     t.boolean "active", default: true
@@ -610,8 +612,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "league_id", null: false
+    t.bigint "conference_id"
+    t.index ["conference_id"], name: "index_memberships_on_conference_id"
     t.index ["division_id"], name: "index_memberships_on_division_id"
     t.index ["entity_code"], name: "index_memberships_on_entity_code", unique: true
+    t.index ["league_id"], name: "index_memberships_on_league_id"
     t.index ["seed_version"], name: "index_memberships_on_seed_version"
     t.index ["team_id"], name: "index_memberships_on_team_id"
   end
@@ -844,28 +850,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
   end
 
   create_table "rizz_feed_cursors", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "cursor"
     t.string "purpose", null: false
+    t.string "cursor"
+    t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["purpose"], name: "index_rizz_feed_cursors_on_purpose", unique: true
   end
 
   create_table "rizz_names", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "display_name"
-    t.datetime "fetched_at"
     t.bigint "figure_id", null: false
-    t.uuid "form_id"
     t.string "purpose", null: false
-    t.string "rizz_code"
-    t.uuid "rizz_entity_id"
-    t.uuid "rule_id"
-    t.jsonb "search_forms", default: [], null: false
-    t.string "sort_key"
     t.string "state", default: "current", null: false
-    t.datetime "updated_at", null: false
+    t.uuid "rizz_entity_id"
+    t.string "rizz_code"
+    t.string "display_name"
+    t.string "sort_key"
+    t.jsonb "search_forms", default: [], null: false
+    t.uuid "form_id"
+    t.uuid "rule_id"
     t.string "view_version"
+    t.datetime "fetched_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["figure_id", "purpose"], name: "index_rizz_names_on_figure_id_and_purpose", unique: true
     t.index ["purpose", "rizz_entity_id"], name: "index_rizz_names_on_purpose_and_rizz_entity_id"
     t.check_constraint "state::text = ANY (ARRAY['current'::character varying, 'invalidated'::character varying]::text[])", name: "rizz_names_state"
@@ -1350,6 +1356,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
   add_foreign_key "credit_accounts", "aces"
   add_foreign_key "credit_entries", "credit_accounts"
   add_foreign_key "divisions", "conferences"
+  add_foreign_key "divisions", "leagues"
   add_foreign_key "follows", "aces"
   add_foreign_key "game_attempts", "aces"
   add_foreign_key "game_attempts", "game_rounds"
@@ -1365,7 +1372,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_180000) do
   add_foreign_key "jersey_number_assignments", "teams"
   add_foreign_key "leagues", "sports"
   add_foreign_key "logos", "teams"
+  add_foreign_key "memberships", "conferences"
   add_foreign_key "memberships", "divisions"
+  add_foreign_key "memberships", "leagues"
   add_foreign_key "memberships", "teams"
   add_foreign_key "moderation_decisions", "aces", column: "actor_id", on_delete: :nullify
   add_foreign_key "moderation_escalations", "aces", column: "requested_by_id", on_delete: :nullify

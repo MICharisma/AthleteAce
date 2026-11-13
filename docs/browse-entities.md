@@ -10,4 +10,6 @@ Year pages link to recorded seasons. Season pages retain status, dates, teams, c
 
 Organization pages retain current teams, dated affiliation history, and sourced staff appointments. Affiliation, membership, contract, and activation pages retain their dates and related entities. Stored JSON details wrap within their panels.
 
+[League memberships](league-memberships.md) support leagues with no groups, conferences without divisions, and divisions with or without conferences. Membership pages always show the league. Conference and division team sections show active affiliations; membership history retains inactive records.
+
 The catalog uses the shared heading, panel, action, and color tokens in light and dark themes. Existing sorting, filters, directory pagination, rating controls, attribution, and moderation visibility rules remain in place. Achievement and spectrum actions retain their existing permissions. Player and team corrections and account management remain in Admin. This pass adds no management permissions or editing endpoints.

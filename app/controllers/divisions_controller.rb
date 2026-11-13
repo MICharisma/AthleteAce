@@ -12,10 +12,10 @@ class DivisionsController < ApplicationController
     
     required_joins = @sort_service.required_joins(:divisions)
     if required_joins.any?
-      base_query = base_query.joins(required_joins)
+      base_query = base_query.left_joins(required_joins)
     end
     
-    base_query = base_query.includes(:conference, conference: {league: :sport})
+    base_query = base_query.includes(:conference, league: :sport)
     
     sql_order = @sort_service.to_sql_order(:divisions)
     

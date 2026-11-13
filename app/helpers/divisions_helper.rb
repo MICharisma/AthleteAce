@@ -11,7 +11,7 @@ module DivisionsHelper
       [resource.league, resource.conference, resource]
     end
 
-    logo_links = bank_items.map { |item| display_name_with_lazy_logo item }
+    logo_links = bank_items.compact.map { |item| display_name_with_lazy_logo item }
     tag.div class: "logo-bank #{resource.class.name.underscore}" do
       safe_join logo_links
     end

@@ -40,6 +40,7 @@ module Seeds
         unique(relation)
       when "Division"
         relation = Division.where("abbreviation = ? OR name = ?", value, value.tr("_", " "))
+        relation = relation.where(league: entities["League"]) if entities["League"]
         relation = relation.where(conference: entities["Conference"]) if entities["Conference"]
         unique(relation)
       when "Team"
@@ -82,6 +83,9 @@ module Seeds
       end
       if division && conference && division.conference_id != conference.id
         raise LibraryImporter::Error, "Division is outside selected conference"
+      end
+      if division && league && division.league_id != league.id
+        raise LibraryImporter::Error, "Division is outside selected league"
       end
       return unless team && league && year
       campaign = Campaign.joins(:season).find_by(team: team, seasons: { league_id: league.id, year_id: year.id })

@@ -26,7 +26,7 @@ class DivisionGameSetupService
     correct_division = team.division # Relies on has_one :division, through: :active_membership
     
     # Ensure all required associations are present
-    unless correct_division && team.conference && team.league
+    unless correct_division && team.league && (difficulty != :conference || team.conference)
       Rails.logger.error "Game setup failed: Team #{team.id} (#{team.name}) missing required associations."
       Rails.logger.error "  - Division: #{correct_division&.id}"
       Rails.logger.error "  - Conference: #{team.conference&.id}"
@@ -50,7 +50,7 @@ class DivisionGameSetupService
     # Log the choices for debugging
     Rails.logger.info "Generated #{choices.length} choices for team #{team.name}:"
     choices.each do |div|
-      Rails.logger.info "  - #{div.name} (Conference: #{div.conference&.name}, League: #{div.conference&.league&.name})"
+      Rails.logger.info "  - #{div.name} (Conference: #{div.conference&.name}, League: #{div.league.name})"
     end
 
     GameSetup.new(
@@ -64,7 +64,9 @@ class DivisionGameSetupService
   private
 
   def select_team_for_game
-    Team.joins(division: :conference).joins(:league).distinct.sample
+    teams = Team.joins(:division, :league)
+    teams = teams.where.not(divisions: { conference_id: nil }) if difficulty == :conference
+    teams.distinct.sample
   end
 
   def generate_choices(team, correct_division)
@@ -72,14 +74,8 @@ class DivisionGameSetupService
 
     choice_pool_scope = case difficulty
                         when :conference
-                          # Get divisions from the team's current conference.
-                          # Filter these divisions to ensure they belong to conferences
-                          # that are part of the team's actual league.
-                          # This assumes Division has `belongs_to :conference` and Conference has `belongs_to :league`.
                           if team.conference && team_league
-                            team.conference.divisions
-                                .joins(conference: :league)
-                                .where(conferences: { league_id: team_league.id })
+                            team.conference.divisions.where(league: team_league)
                           else
                             # Fallback or error if essential associations are missing
                             Rails.logger.error "Team #{team.id} is missing conference or league for conference-difficulty game setup."

@@ -1,7 +1,9 @@
 FactoryBot.define do
   factory :membership do
     association :team
-    association :division
+    division { association(:division, conference: association(:conference, league: team.league)) }
+    league { division&.league || conference&.league || team.league }
+    conference { division&.conference }
     start_date { 1.year.ago }
     end_date { nil }
     active { true }

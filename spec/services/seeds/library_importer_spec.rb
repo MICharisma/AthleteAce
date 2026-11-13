@@ -127,6 +127,42 @@ RSpec.describe Seeds::LibraryImporter do
     Player.find_each { |player| expect(player.id).not_to eq(original_player_ids.fetch(player.entity_code)) }
   end
 
+  it "imports and replays league-only, conference-only, and conference-free division memberships" do
+    seed_pilot
+    fulham = importer.resolve_code("Team", "SOC-EPL-TEAM-FUL")
+    legacy = Membership.create!(team: fulham)
+    path = write_document(records: [
+      definition("Conference", "BKT-NBA-CONFERENCE-EAST", { "name" => "Eastern Conference", "abbreviation" => "East" },
+        { "league" => "BKT-LEAGUE-NBA" }),
+      definition("Division", "BKT-NBA-DIVISION-NORTH", { "name" => "North" }, {}, scope: { "league" => "BKT-LEAGUE-NBA" }),
+      definition("Membership", "SOC-EPL-FUL-MEMBERSHIP", {}, { "team" => "SOC-EPL-TEAM-FUL" }),
+      definition("Membership", "BKT-NBA-NYK-MEMBERSHIP-EAST", {}, { "team" => "BKT-NBA-TEAM-NYK" },
+        scope: { "league" => "BKT-LEAGUE-NBA", "conference" => "BKT-NBA-CONFERENCE-EAST" }),
+      definition("Membership", "BKT-NBA-POR-MEMBERSHIP-NORTH", { "start_date" => "2025-07-01" },
+        { "team" => "BKT-NBA-TEAM-POR", "division" => "BKT-NBA-DIVISION-NORTH" }),
+      definition("Membership", "BKT-NBA-POR-MEMBERSHIP-NORTH-OLD", { "active" => false, "start_date" => "2023-07-01", "end_date" => "2024-06-30" },
+        { "team" => "BKT-NBA-TEAM-POR", "division" => "BKT-NBA-DIVISION-NORTH" })
+    ].reverse)
+
+    report = importer.call([path])
+    expect(report[:conflicts]).to be_empty
+    expect(report[:created].size).to eq(5)
+    expect(legacy.reload.entity_code).to eq("SOC-EPL-FUL-MEMBERSHIP")
+    expect(legacy.league).to eq(fulham.league)
+    conference = importer.resolve_code("Conference", "BKT-NBA-CONFERENCE-EAST")
+    expect(conference.teams.pluck(:entity_code)).to eq(["BKT-NBA-TEAM-NYK"])
+    division = importer.resolve_code("Division", "BKT-NBA-DIVISION-NORTH")
+    expect(division.conference).to be_nil
+    expect(division.memberships.count).to eq(2)
+    expect(division.teams.pluck(:entity_code)).to eq(["BKT-NBA-TEAM-POR"])
+    original_ids = Membership.order(:id).pluck(:id)
+
+    report = importer.call([path])
+    expect(report[:created]).to be_empty
+    expect(report[:conflicts]).to be_empty
+    expect(Membership.order(:id).pluck(:id)).to eq(original_ids)
+  end
+
   it "repairs code bindings after deletion even if an unrelated player reuses the numeric ID" do
     seed_pilot
     original = importer.resolve_code("Player", "BKT-NBA-LAL-2017-HART_JOSH")

@@ -3,5 +3,5 @@
   <%= link_to "Practice", new_game_round_path(division_id: @division.id), class: "game-button" %>
   <%= link_to "Back to Divisions", divisions_path, class: "tool-button" %>
 <% end %>
-<%= browse_metadata "Conference" => entity_link(@division.conference), "League" => entity_link(@division.conference.league), "Abbreviation" => @division.abbreviation %>
+<%= browse_metadata "Conference" => entity_link(@division.conference), "League" => entity_link(@division.league), "Abbreviation" => @division.abbreviation %>
 <%= render_collection @teams, parent: @division, link_to_collection: true %>

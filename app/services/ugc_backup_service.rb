@@ -216,7 +216,7 @@ class UgcBackupService
     when League
       target.sport&.name
     when Division
-      target.conference&.league&.sport&.name
+      target.league&.sport&.name
     when Conference
       target.league&.sport&.name
     when Sport
@@ -239,7 +239,7 @@ class UgcBackupService
     when League
       target.name
     when Division
-      target.conference&.league&.name
+      target.league&.name
     when Conference
       target.league&.name
     else

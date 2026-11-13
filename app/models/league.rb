@@ -2,8 +2,8 @@ class League < ApplicationRecord
   belongs_to :sport
   belongs_to :jurisdiction, polymorphic: true
   has_many :conferences, dependent: :destroy
-  has_many :divisions, through: :conferences
-  has_many :memberships, through: :divisions
+  has_many :divisions, dependent: :destroy
+  has_many :memberships, dependent: :destroy
   has_many :teams
   has_many :players, through: :teams
   has_many :stadiums, through: :teams

@@ -1,8 +1,9 @@
 class Conference < ApplicationRecord
   belongs_to :league
   has_many :divisions, dependent: :destroy
-  has_many :memberships, through: :divisions
-  has_many :teams, through: :memberships
+  has_many :memberships, dependent: :destroy
+  has_many :active_memberships, -> { active }, class_name: "Membership"
+  has_many :teams, -> { distinct }, through: :active_memberships
   has_many :players, through: :teams
   has_many :campaigns, through: :teams
   has_many :contests, through: :campaigns

@@ -58,7 +58,7 @@ class Campaign < ApplicationRecord
   def division_matches_season_context
     return unless division && season
 
-    if division.conference&.league_id != season.league_id
+    if division.league_id != season.league_id
       errors.add :division, "must belong to the season's league"
     end
     if conference && division.conference != conference

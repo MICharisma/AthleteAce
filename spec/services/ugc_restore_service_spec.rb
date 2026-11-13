@@ -69,4 +69,20 @@ RSpec.describe UgcRestoreService do
 
     expect(Rating.where(target: player).count).to eq(2)
   end
+
+  it "backs up and restores an uncoded division through its league without a conference" do
+    division = create(:division, name: "North", conference: nil)
+    create(:division, name: "North", conference: nil)
+    rating = create(:rating, target: division)
+    UgcBackupService.new(backup_dir).backup_all
+    exported = YAML.load_file(backup_dir.join("aces_and_ratings.yml"),
+      permitted_classes: [Time, Date, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true)
+    expect(exported.fetch(:ratings).sole).to include("target_league_identifier" => division.league.name,
+      "target_sport_identifier" => division.league.sport.name, "target_conference_identifier" => nil)
+    rating.delete
+
+    described_class.new(backup_dir).restore_all
+
+    expect(Rating.sole.target).to eq(division)
+  end
 end

@@ -26,7 +26,7 @@ class Team < ApplicationRecord
   has_many :title_awards, through: :campaigns
   has_one :active_membership, -> { where(active: true) }, class_name: 'Membership'
   has_one :division, through: :active_membership
-  has_one :conference, through: :division
+  has_one :conference, through: :active_membership
   has_many :contestants, through: :campaigns
   has_many :contests, through: :contestants
   has_many :activations, through: :campaigns

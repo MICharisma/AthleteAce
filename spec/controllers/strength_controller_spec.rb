@@ -69,7 +69,8 @@ RSpec.describe StrengthController, type: :controller do
 
         before do
           2.times { create(:membership, team: team_with_player(league: conference.league), division: division) }
-          create(:membership, team: team_with_player, division: create(:division))
+          other_division = create(:division)
+          create(:membership, team: team_with_player(league: other_division.league), division: other_division)
         end
 
         it 'restricts players and choices to the conference' do

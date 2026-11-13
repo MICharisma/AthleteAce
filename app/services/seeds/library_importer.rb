@@ -26,7 +26,7 @@ module Seeds
     }.freeze
     SCOPE_ASSOCIATIONS = {
       "State" => %w[country], "City" => %w[state], "Stadium" => %w[city],
-      "League" => %w[sport], "Conference" => %w[league], "Division" => %w[conference],
+      "League" => %w[sport], "Conference" => %w[league], "Division" => %w[league conference],
       "Team" => %w[league], "Season" => %w[league year], "Player" => %w[sport figure],
       "OrganizationAffiliation" => %w[organization team],
       "StaffTenure" => %w[figure organization team],
@@ -38,7 +38,7 @@ module Seeds
       "Contestant" => %w[contest campaign], "Appearance" => %w[player contestant],
       "ContestGame" => %w[contest game], "TitleAward" => %w[contest winner],
       "TransactionPlayer" => %w[event player], "PlayerGroupMembership" => %w[player_group player],
-      "Membership" => %w[team division]
+      "Membership" => %w[team league conference division]
     }.freeze
     POLYMORPHIC_TYPES = {
       [ "League", "jurisdiction" ] => %w[Country State City Federation],
@@ -297,6 +297,12 @@ module Seeds
         raise MissingReference, "#{record.location}: missing campaign for #{team.entity_code}/#{season.entity_code}" unless campaign
         values["campaign"] = campaign
       end
+      if record.type == "Division"
+        values["league"] ||= values["conference"]&.league
+      elsif record.type == "Membership"
+        values["conference"] ||= values["division"]&.conference
+        values["league"] ||= values["division"]&.league || values["conference"]&.league || values["team"]&.league
+      end
       values
     end
 
@@ -365,6 +371,10 @@ module Seeds
     end
 
     def natural_target(model, desired)
+      if model == Membership && desired["team"] && desired["league"]
+        return model.find_by(team: desired["team"], league: desired["league"],
+          conference: desired["conference"], division: desired["division"], start_date: desired["start_date"])
+      end
       if model == JerseyNumberAssignment && desired["start_date"] && desired["player"] && desired["team"] && desired["number"]
         return model.where(player: desired["player"], team: desired["team"], number: desired["number"])
           .overlapping(desired["start_date"], desired["start_date"]).first
@@ -374,7 +384,7 @@ module Seeds
         PlayerGroupMembership => %w[player_group player], RosterEntry => %w[roster player], Contestant => %w[contest campaign],
         Appearance => %w[contestant player], TransactionPlayer => %w[event player],
         ContestGame => %w[contest game], TitleAward => %w[contest key],
-        UniformCampaign => %w[uniform campaign], Membership => %w[team division]
+        UniformCampaign => %w[uniform campaign]
       }[model]
       return unless keys && keys.all? { |key| desired[key].present? }
       model.find_by(desired.slice(*keys))

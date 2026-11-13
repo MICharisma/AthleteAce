@@ -1,10 +1,11 @@
 class Division < ApplicationRecord
   include Ratable
   
-  belongs_to :conference
+  belongs_to :league
+  belongs_to :conference, optional: true
   has_many :memberships, dependent: :destroy
-  has_many :teams, through: :memberships
-  has_one :league, through: :conference
+  has_many :active_memberships, -> { active }, class_name: "Membership"
+  has_many :teams, -> { distinct }, through: :active_memberships
   has_many :campaigns, through: :teams
   has_many :contestants, through: :campaigns
   has_many :contests, through: :contestants
@@ -12,6 +13,8 @@ class Division < ApplicationRecord
   has_many :activations, through: :contracts
   
   validates :name, presence: true
+  before_validation :assign_league
+  validate :conference_matches_league
   
   def display_name
     if abbreviation.present?
@@ -29,5 +32,16 @@ class Division < ApplicationRecord
   def self.ransackable_associations auth_object = nil
     reflect_on_all_associations.map { |a| a.name.to_s }
   end
-  
+
+  private
+
+  def assign_league
+    self.league ||= conference&.league
+  end
+
+  def conference_matches_league
+    if conference && league && conference.league_id != league.id
+      errors.add :conference, "must belong to the division's league"
+    end
+  end
 end

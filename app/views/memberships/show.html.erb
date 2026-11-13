@@ -1,3 +1,4 @@
-<% content_for :title, "#{@membership.team.name} in #{@membership.division.name}" %>
-<%= browse_header "#{@membership.team.name} in #{@membership.division.name}" %>
+<% membership_group = @membership.division || @membership.conference || @membership.league %>
+<% content_for :title, "#{@membership.team.name} in #{membership_group.name}" %>
+<%= browse_header "#{@membership.team.name} in #{membership_group.name}" %>
 <%= browse_metadata "Team" => entity_link(@membership.team), "Division" => entity_link(@membership.division), "Conference" => entity_link(@membership.conference), "League" => entity_link(@membership.league), "Status" => (@membership.active? ? "Active" : "Inactive"), "Start Date" => @membership.start_date, "End Date" => (@membership.end_date || "Present") %>

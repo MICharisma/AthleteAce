@@ -1,4 +1,5 @@
 require "rails_helper"
+require Rails.root.join("lib/micharisma_seeders/lib/micharisma_seeders").to_s
 
 RSpec.describe Seeds::EntitySequenceResolver do
   let(:league) { create(:nfl, entity_code: "FTB-LEAGUE-NFL", sport: create(:football, entity_code: "SPORT-FTB")) }
@@ -25,5 +26,20 @@ RSpec.describe Seeds::EntitySequenceResolver do
     Campaign.create!(team: other, season: campaign.season, conference: conference, division: division, abbreviation: "OAK")
     parser = MICharismaEntityParser.select_entity_sequence("01_10", registry: registry, adapter: described_class.new)
     expect { parser.resolve("FTB-NFL-AFC-WEST-2019-OAK") }.to raise_error(Seeds::LibraryImporter::Error, /Ambiguous/)
+  end
+
+  it "scopes divisions directly to a league without requiring a conference" do
+    division = create(:division, league: league, conference: nil, abbreviation: "NORTH")
+    create(:division, conference: nil, abbreviation: "NORTH")
+
+    expect(described_class.new.resolve_sequence("sport" => "FTB", "league" => "NFL", "division" => "NORTH")).to eq(division)
+  end
+
+  it "rejects a coded division outside the selected league even without a conference slot" do
+    create(:division, conference: nil, entity_code: "DIVISION-OUTSIDE")
+
+    expect {
+      described_class.new.resolve_sequence("league" => "FTB-LEAGUE-NFL", "division" => "DIVISION-OUTSIDE")
+    }.to raise_error(Seeds::LibraryImporter::Error, /outside selected league/)
   end
 end

@@ -402,11 +402,11 @@ class UgcRestoreService
     end
     
     if league_identifier
-      query = query.joins(conference: :league).where(leagues: { name: league_identifier })
+      query = query.joins(:league).where(leagues: { name: league_identifier })
     end
     
     if sport_identifier
-      query = query.joins(conference: { league: :sport }).where(sports: { name: sport_identifier })
+      query = query.joins(league: :sport).where(sports: { name: sport_identifier })
     end
     
     query.first

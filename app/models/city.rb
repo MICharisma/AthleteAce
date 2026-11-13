@@ -7,8 +7,8 @@ class City < ApplicationRecord
   has_many :teams, through: :stadiums
   has_many :memberships, through: :teams
   has_many :divisions, through: :memberships
-  has_many :conferences, through: :divisions
-  has_many :leagues, through: :conferences
+  has_many :conferences, through: :memberships
+  has_many :leagues, -> { distinct }, through: :teams
   has_many :sports, through: :leagues
   has_many :campaigns, through: :teams
   has_many :contests, through: :campaigns

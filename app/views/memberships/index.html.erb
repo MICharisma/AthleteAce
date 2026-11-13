@@ -8,6 +8,7 @@
         <%= link_to "View", membership, class: "tool-button" %>
       </div>
       <%= entity_link membership.team %>
+      <%= entity_link membership.league %>
       <%= entity_link membership.division %>
       <%= entity_link membership.conference %>
       <p class="text-sm text-ink-3"><%= membership.start_date&.strftime("%Y-%m-%d") || "Unknown start" %> to <%= membership.end_date&.strftime("%Y-%m-%d") || "Present" %></p>

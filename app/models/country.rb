@@ -10,7 +10,7 @@ class Country < ApplicationRecord
   has_many :players, through: :teams
   has_many :conferences, through: :leagues
   has_many :divisions, through: :leagues
-  has_many :memberships, through: :divisions
+  has_many :memberships, through: :leagues
   has_many :campaigns, through: :teams
   has_many :contests, through: :campaigns
 

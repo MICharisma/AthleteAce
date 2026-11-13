@@ -122,7 +122,7 @@ class GameRoundSetup
     scope = Team.joins(:league)
     scope = scope.where(leagues: { sport_id: sport_id }) if sport_id
     scope = scope.where(league_id: league_id) if league_id
-    scope = scope.joins(:division).where(divisions: { conference_id: conference_id }) if conference_id
+    scope = scope.joins(:conference).where(conferences: { id: conference_id }) if conference_id
     scope = scope.joins(:division).where(divisions: { id: division_id }) if division_id
     scope = scope.joins(:stadium).where(stadiums: { city_id: city_id }) if city_id
     scope = scope.joins(stadium: :city).where(cities: { state_id: state_id }) if state_id
@@ -156,7 +156,7 @@ class GameRoundSetup
     return practice_players(filter_players(season_pool.players)) if season && %w[player_team_match flash_cards].include?(game_type)
 
     if game_type == "guess_the_division"
-      playable_leagues = Division.joins(:conference).group("conferences.league_id").having("COUNT(DISTINCT divisions.id) >= 2").select("conferences.league_id")
+      playable_leagues = Division.group(:league_id).having("COUNT(DISTINCT divisions.id) >= 2").select(:league_id)
       scope = scoped_teams.joins(:division).where(league_id: playable_leagues)
       if player_group || player_ids.any?
         players = practice_players(filter_players(Player.all, include_inactive: true))
