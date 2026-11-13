@@ -53,6 +53,7 @@ Key filterable URLs: `/teams/123/players`, `/teams/123/players/456` (one level o
 - **Replay**: Missing records are created, existing values are preserved, and differences are reported. Team palette enrichment separately refreshes recorded colors.
 - **Entry point**: `db/seeds.rb` invokes `seeds:import`. The old JSON orchestration remains in `db/seeds_legacy.rb` for explicit legacy use.
 - **Reference**: See `docs/yaml-seed-library.md` for input contracts, migration requirements, and coverage.
+- **Curation skills**: `db/seeds/athlete_ace_data/skills/` (symlinked into `.claude/skills/`) guide gathering web data and curating it into seeds; start with `seed-curation`.
 
 ### UGC Preservation System
 - **Backup Location**: `db/seeds/athlete_ace_ugc/backups/` (Git submodule for version control)
