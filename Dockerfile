@@ -11,7 +11,7 @@
 ARG RUBY_VERSION=4.0.7
 
 FROM scratch AS submodules
-ADD https://github.com/MICharisma/athlete_ace_data.git#18b5db06c83e3bc41c9a0709c06006bed9db7c8c /db/seeds/athlete_ace_data
+ADD https://github.com/MICharisma/athlete_ace_data.git#6261d34da96a765bd87809c6d445ad9a9b55f66a /db/seeds/athlete_ace_data
 ADD https://github.com/mikeymicrophone/micharisma_seeders.git#f1b4b5dd24c9aaed37866fb6b738c36dbbf40b80 /lib/micharisma_seeders
 
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base

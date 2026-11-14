@@ -59,10 +59,9 @@ To check offline reproducibility, run each generator with `--check`. A differing
 ```sh
 mise exec -- bundle exec ruby db/seeds/athlete_ace_data/scripts/build_2026.rb --check
 mise exec -- ruby db/seeds/athlete_ace_data/scripts/build_visual_assets.rb --check
-mise exec -- ruby db/seeds/athlete_ace_data/scripts/build_pseudo_games.rb --check
 ```
 
-The simulated basketball library now stores persistent number assignments in `pseudo/hbl_numbers.yml`. Adjacent same-number periods merge across seasons. Its game roster entries and appearances no longer repeat those numbers.
+The fictional leagues and their builders (`build_pseudo.rb`, `build_pseudo_games.rb`) live only on the data repository's `pseudo` branch, which is `main` plus `pseudo/`. Check out that branch in the submodule to run them. The simulated basketball library there stores persistent number assignments in `pseudo/hbl_numbers.yml`. Adjacent same-number periods merge across seasons. Its game roster entries and appearances no longer repeat those numbers.
 
 ## Seed home venues and their geography
 
