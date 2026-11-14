@@ -1,11 +1,24 @@
 require "rails_helper"
+require "tmpdir"
 
 RSpec.describe "Expanded seasonal seed catalog" do
   let(:root) { Rails.root.join("db/seeds/athlete_ace_data") }
   let(:library) { root.join("yaml") }
   let(:capture) { JSON.parse(File.read(root.join("sources/coverage_2025.json"))) }
   let(:registry) { MICharismaSeeders::SequenceRegistry.read(library.join("entity_sequences.yaml")) }
-  let(:paths) { Dir.glob(library.join("**/*.yaml")).sort.reject { |path| path.end_with?("entity_sequences.yaml") || %w[/coverage_2026/ /ncaa_ivy_2026/ /positions/ /position_assignments_2026/ /f1_2026/].any? { path.include?(it) } } }
+  # The 2025 coverage library: the pilot sample, 2025 coverage, participation
+  # and play roster batches, with the catalog records they use, one manifest
+  # per original file.
+  BATCHES = %w[nba_hart_2022_2023.yaml nfl_sanders_2019.yaml nhl_leddy_2021_2022.yaml figures player_groups
+    coverage_2025 participation play_roster_expansion].freeze
+  before(:context) { @rows = Seeds::BatchClosure.new.rows(*BATCHES) }
+  around do |example|
+    Dir.mktmpdir("catalog-coverage") do |directory|
+      @paths = Seeds::BatchClosure.write_files(@rows, directory)
+      example.run
+    end
+  end
+  let(:paths) { @paths }
   let(:importer) { Seeds::LibraryImporter.new(registry: registry) }
   let(:full_rosters) { { "NBA" => "NYK", "NFL" => "SF", "NHL" => "STL" } }
 

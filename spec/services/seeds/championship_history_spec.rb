@@ -5,37 +5,17 @@ require Rails.root.join("db/seeds/athlete_ace_data/scripts/build_championship_hi
 RSpec.describe "Championship history seeds" do
   before(:context) do
     @root = Rails.root.join("db/seeds/athlete_ace_data")
-    registry = MICharismaSeeders::SequenceRegistry.read(@root.join("yaml/entity_sequences.yaml"))
-    reader = MICharismaSeeders::Reader.new(registry: registry)
-    paths = Dir.glob(@root.join("yaml/**/*.{yml,yaml,json}")).reject { |path| path.end_with?("entity_sequences.yaml") }
-    all = reader.read_many(paths)
-    index = Hash.new { |hash, key| hash[key] = [] }
-    all.each { |row| ([ row.code ] + row.aliases).each { |code| index[code] << row } }
-    pending = all.select { |row| row.location.include?("/yaml/championship_history/") }
-    selected = {}
-    until pending.empty?
-      row = pending.shift
-      next if selected.key?(row.location)
-
-      selected[row.location] = row
-      (row.references.values + row.scope.values).each do |reference|
-        code = reference.is_a?(Hash) ? reference.fetch("code") : reference
-        pending.concat(index.fetch(code))
-      end
-    end
-    @records = selected.values.map do |row|
-      { type: row.type, code: row.code, aliases: row.aliases, attributes: row.attributes,
-        references: row.references, scope: row.scope, source: row.source }.compact
-    end
+    @rows = Seeds::BatchClosure.new.rows("championship_history")
+    @campaigns = @rows.select { |row| row.type == "Campaign" }
   end
 
   def import_history
     Dir.mktmpdir do |directory|
       path = File.join(directory, "history.json")
-      File.write(path, JSON.generate(format: "micharisma-seeds/v1", namespace: "MIC", catalog: "ALA", records: @records))
+      Seeds::BatchClosure.write(@rows, path)
       first = Seeds::LibraryImporter.new.call([ path ])
       expect(first[:conflicts].all? { |conflict| (conflict.fetch(:differences).keys - %w[conference division]).empty? }).to be(true)
-      alignments = Seeds::CampaignAlignmentImporter.new(source: @root.join("yaml/championship_history/campaigns.yml")).call
+      alignments = Seeds::CampaignAlignmentImporter.new(records: @campaigns).call
       expect(alignments[:conflicts]).to be_empty
       expect(Seeds::LibraryImporter.new.call([ path ])[:conflicts]).to be_empty
       yield path
@@ -87,7 +67,7 @@ RSpec.describe "Championship history seeds" do
       campaign = Campaign.find_by!(entity_code: "BKT-NBA-SEASON_2020_2021-TEAM-NYK")
       original_division = campaign.division
       campaign.update!(conference: nil, division: nil)
-      importer = Seeds::CampaignAlignmentImporter.new(source: @root.join("yaml/championship_history/campaigns.yml"))
+      importer = Seeds::CampaignAlignmentImporter.new(records: @campaigns)
       report = importer.call
       expect(report[:updated]).to eq([ campaign.entity_code ])
       expect(report[:conflicts]).to be_empty
