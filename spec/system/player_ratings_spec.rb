@@ -144,6 +144,7 @@ RSpec.describe "Player profiles and rating controls", type: :system do
     visit player_path(player)
     row = row_for familiarity
     slider = row.find("input")
+    page.execute_script("arguments[0].scrollIntoView({block: 'center'})", slider)
     distance = ((slider.native.rect.width - 24) / 20).round
     browser = page.driver.browser
     browser.action.move_to(row.find(".rating-drag-handle").native).click_and_hold.perform
@@ -206,10 +207,7 @@ RSpec.describe "Player profiles and rating controls", type: :system do
     header_rect = page.evaluate_script("arguments[0].getBoundingClientRect().toJSON()", header)
     scroll_before = page.evaluate_script("window.scrollY")
     x, y = header_rect.fetch("x") + 20, header_rect.fetch("y") + 5
-    browser.execute_cdp("Input.dispatchTouchEvent", type: "touchStart", touchPoints: [{ x: x, y: y }])
-    browser.execute_cdp("Input.dispatchTouchEvent", type: "touchMove", touchPoints: [{ x: x, y: y + 30 }])
-    browser.execute_cdp("Input.dispatchTouchEvent", type: "touchMove", touchPoints: [{ x: x, y: y + 90 }])
-    browser.execute_cdp("Input.dispatchTouchEvent", type: "touchEnd", touchPoints: [])
+    browser.execute_cdp("Input.synthesizeScrollGesture", x: x, y: y, yDistance: 90, speed: 250, gestureSourceType: "touch")
     Selenium::WebDriver::Wait.new(timeout: 2).until { page.evaluate_script("window.scrollY") < scroll_before }
     expect(ace.rating_for(player, familiarity).value).to eq(5400)
   ensure
@@ -242,5 +240,46 @@ RSpec.describe "Player profiles and rating controls", type: :system do
     expect(page).not_to have_css(".profile-jersey", visible: true)
   ensure
     page.current_window.resize_to 1400, 1400
+  end
+
+  it "suggests dimensions without replacing an existing draft or rating for the user" do
+    create(:rating, ace: ace, target: player, spectrum: familiarity, value: 4300)
+    Rails.configuration.x.shared_ratings.suggestion_provider = ->(**) { [skill.rating_dimension.key] }
+    visit player_path(player)
+    page.execute_script <<~JS
+      window.existingRatingInput = document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input');
+      window.existingRatingInput.value = 4000;
+      window.existingRatingInput.dispatchEvent(new Event('input', { bubbles: true }));
+    JS
+    within ".dimension-picker" do
+      click_button "Suggest for me"
+      expect(page).to have_content("AI suggestions")
+      within(".dimension-suggestions") { click_button "Skill", exact: true }
+    end
+    expect(page).to have_css("#rating_spectrum_#{skill.id}_player_#{player.id} input:focus")
+    expect(row_for(familiarity)).to have_css(".slider-value", text: "+4,000")
+    expect(page.evaluate_script("window.existingRatingInput === document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input')")).to be(true)
+    expect(ace.ratings.count).to eq(1)
+    expect(ace.rating_for(player, familiarity).value).to eq(4300)
+    row_for(skill).find("input").send_keys :arrow_right
+    expect_saved skill, "+1,000", "Aces average +1,000 · 1 rating"
+  ensure
+    Rails.configuration.x.shared_ratings.suggestion_provider = nil
+  end
+
+  it "opens an additional browse dimension without replacing the current editor" do
+    visit players_path
+    expect(page).not_to have_css(".slider-label", text: "Skill", exact_text: true)
+    page.execute_script <<~JS
+      window.existingRatingInput = document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input');
+      window.existingRatingInput.value = 4000;
+      window.existingRatingInput.dispatchEvent(new Event('input', { bubbles: true }));
+    JS
+    within(".rating-slider-group-container .dimension-picker") { select "Skill", from: "Choose a dimension" }
+    expect(row_for(skill)).to have_css("input:focus")
+    expect(page).to have_css(".rating-slider-instance", count: 2)
+    expect(row_for(familiarity)).to have_css(".slider-value", text: "+4,000")
+    expect(page.evaluate_script("window.existingRatingInput === document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input')")).to be(true)
+    expect(ace.ratings.count).to eq(0)
   end
 end

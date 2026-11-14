@@ -55,6 +55,7 @@ module RatingsHelper
     tag.div class: "rating-container" do
       tag.div id: dom_id(record, :rating_slider_group), class: "rating-slider-group-container", data: {
         controller: "rating-slider", rating_slider_precision_value: "coarse",
+        action: "dimension-suggestions:select->rating-slider#openDimension",
         rating_spectrum_url: polymorphic_path([record, :ratings], action: :for_spectrums)
       } do
         controls = tag.div class: "rating-toolbar" do
@@ -69,7 +70,8 @@ module RatingsHelper
         sign_in = unless ace_signed_in?
           tag.p(class: "rating-sign-in") { link_to("Sign in", new_ace_session_path) + " to add your rating." }
         end
-        safe_join [controls, sign_in, tag.div(id: rating_rows_id(record)) {
+        picker = render("ratings/dimension_picker", record: record) if current_ace
+        safe_join [controls, sign_in, picker, tag.div(id: rating_rows_id(record)) {
           render "ratings/slider_rows", record: record, spectrums: spectrums
         }].compact
       end

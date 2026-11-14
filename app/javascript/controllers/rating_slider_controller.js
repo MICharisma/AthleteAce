@@ -36,6 +36,41 @@ export default class extends Controller {
     return this.precisionValue === "fine" ? slider.ratingDimension.fine_step : slider.ratingDimension.coarse_step
   }
 
+  async openDimension(event) {
+    const key = event.detail.key
+    const focus = () => {
+      const slider = this.sliderTargets.find(input => input.ratingDimension.key === key)
+      if (!slider) return false
+      slider.scrollIntoView({ block: "center", behavior: "smooth" })
+      slider.focus({ preventScroll: true })
+      return true
+    }
+    if (focus()) return
+    const picker = event.target.closest(".dimension-picker")
+    const option = [...picker.querySelectorAll("option")].find(option => option.value === key)
+    if (!option) return
+    this.loadingDimensions ||= new Set()
+    if (this.loadingDimensions.has(key)) return
+    this.loadingDimensions.add(key)
+    const status = picker.querySelector(".dimension-open-status")
+    try {
+      const url = new URL(this.element.dataset.ratingSpectrumUrl, location.origin)
+      url.pathname = url.pathname.replace(/for_spectrums$/, "dimension")
+      url.searchParams.set("spectrum_id", key.split(".").at(-1))
+      const response = await fetch(url, { headers: { Accept: "text/vnd.turbo-stream.html" } })
+      if (!response.ok) throw new Error("Dimension unavailable")
+      const stream = await response.text()
+      if (!this.element.isConnected) return
+      if (!focus()) await Turbo.renderStreamMessage(stream)
+      requestAnimationFrame(focus)
+      status.textContent = ""
+    } catch {
+      if (this.element.isConnected) status.textContent = "Couldn’t open that dimension. Choose another to try again."
+    } finally {
+      this.loadingDimensions.delete(key)
+    }
+  }
+
   startDrag(event) {
     if (this.drag) {
       event.preventDefault()

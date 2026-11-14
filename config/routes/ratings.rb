@@ -12,6 +12,8 @@ Rails.application.routes.draw do
       resources :ratings, only: [:new, :create] do
         collection do
           get :for_spectrums
+          get :dimension
+          post :suggest_dimensions
         end
       end
     end

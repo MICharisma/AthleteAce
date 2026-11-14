@@ -66,3 +66,9 @@
 .spectrum-buttons button { @apply min-h-11 px-3 rounded-lg border border-line-2 text-sm cursor-pointer; }
 .spectrum-buttons button[aria-pressed="true"] { @apply bg-accent-tint border-accent-text text-accent-text font-semibold; }
 .spectrum-picker-panel [role="status"] { @apply text-xs text-ink-3 mt-2; }
+.dimension-picker { @apply p-4 border-b border-line text-sm text-ink; }
+.dimension-picker button { @apply min-h-11 px-3 border border-line rounded-md cursor-pointer; }
+.dimension-suggestions { @apply flex flex-wrap gap-2 mb-2; }
+.dimension-picker label { @apply block mt-2 text-xs text-ink-2; }
+.dimension-picker select { @apply min-h-11 max-w-full bg-surface border border-line rounded-md px-2; }
+.dimension-picker [role=status] { @apply text-xs text-ink-3 mt-1; }

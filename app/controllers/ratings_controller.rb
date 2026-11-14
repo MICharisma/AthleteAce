@@ -1,7 +1,7 @@
 class RatingsController < ApplicationController
   before_action :authenticate_ace!, except: :for_spectrums
   before_action :set_rating, only: [:show, :edit, :update, :destroy]
-  before_action :set_target, only: [:new, :create, :for_spectrums]
+  before_action :set_target, only: [:new, :create, :for_spectrums, :dimension, :suggest_dimensions]
   before_action :authorize_rating, only: [:edit, :update, :destroy]
 
   # GET /ratings
@@ -124,6 +124,17 @@ class RatingsController < ApplicationController
           partial: "ratings/slider_rows", locals: { record: @target, spectrums: Spectrum.visible_to(current_ace).where(id: spectrum_ids).order(:name) })
       end
     end
+  end
+
+  def suggest_dimensions
+    response.headers["Cache-Control"] = "no-store"
+    render json: RatingDimensions.new(ace: current_ace, target: @target).suggestions
+  end
+
+  def dimension
+    spectrum = Spectrum.visible_to(current_ace).find(params[:spectrum_id])
+    render turbo_stream: turbo_stream.append(helpers.rating_rows_id(@target),
+      partial: "ratings/slider", locals: { record: @target, spectrum: spectrum })
   end
 
   private
