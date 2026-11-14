@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_010000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_020000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -190,13 +190,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_010000) do
     t.string "entity_code", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "moderation_status", default: "pending", null: false
+    t.integer "moderation_revision", default: 1, null: false
+    t.string "revision_transaction"
     t.index ["entity_code"], name: "index_attributed_statements_on_entity_code", unique: true
     t.index ["figure_id"], name: "index_attributed_statements_on_figure_id"
     t.index ["figure_practice_relationship_id"], name: "index_attributed_statements_on_figure_practice_relationship_id"
+    t.index ["moderation_status"], name: "index_attributed_statements_on_moderation_status"
     t.index ["observer_id"], name: "index_attributed_statements_on_observer_id"
     t.index ["staff_tenure_id"], name: "index_attributed_statements_on_staff_tenure_id"
     t.index ["topic_id"], name: "index_attributed_statements_on_topic_id"
     t.check_constraint "attribution_kind::text = ANY (ARRAY['direct_quote'::character varying, 'attributed_paraphrase'::character varying, 'self_stated_value'::character varying, 'observer_characterization'::character varying]::text[])", name: "attributed_statements_attribution_kind"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "attributed_statements_moderation_status"
   end
 
   create_table "businesses", force: :cascade do |t|
@@ -505,10 +510,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_010000) do
     t.string "entity_code", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "moderation_status", default: "pending", null: false
+    t.integer "moderation_revision", default: 1, null: false
+    t.string "revision_transaction"
     t.index ["business_id"], name: "index_figure_business_relationships_on_business_id"
     t.index ["entity_code"], name: "index_figure_business_relationships_on_entity_code", unique: true
     t.index ["figure_id"], name: "index_figure_business_relationships_on_figure_id"
+    t.index ["moderation_status"], name: "index_figure_business_relationships_on_moderation_status"
     t.check_constraint "compensation::text = ANY (ARRAY['documented_paid'::character varying, 'documented_unpaid'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_compensation"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "figure_business_relationships_moderation_status"
     t.check_constraint "predicate::text = ANY (ARRAY['founded'::character varying, 'owns'::character varying, 'invests_in'::character varying, 'endorses'::character varying, 'promotes'::character varying, 'sponsored_by'::character varying]::text[])", name: "figure_business_relationships_predicate"
     t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_temporal_state"
   end
@@ -526,9 +536,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_010000) do
     t.string "entity_code", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "moderation_status", default: "pending", null: false
+    t.integer "moderation_revision", default: 1, null: false
+    t.string "revision_transaction"
     t.index ["entity_code"], name: "index_figure_practice_relationships_on_entity_code", unique: true
     t.index ["figure_id"], name: "index_figure_practice_relationships_on_figure_id"
+    t.index ["moderation_status"], name: "index_figure_practice_relationships_on_moderation_status"
     t.index ["protocol_id"], name: "index_figure_practice_relationships_on_protocol_id"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "figure_practice_relationships_moderation_status"
     t.check_constraint "predicate::text = ANY (ARRAY['participates_in'::character varying, 'recommends'::character varying, 'teaches'::character varying, 'endorses'::character varying]::text[])", name: "figure_practice_relationships_predicate"
     t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_practice_relationships_temporal_state"
   end

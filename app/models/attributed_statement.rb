@@ -3,6 +3,7 @@
 class AttributedStatement < ApplicationRecord
   include PartialDates
   include Attested
+  include ReviewedClaim
 
   KINDS = %w[direct_quote attributed_paraphrase self_stated_value observer_characterization].freeze
 
@@ -20,6 +21,15 @@ class AttributedStatement < ApplicationRecord
   validate :attribution_is_consistent
 
   private
+
+  def review_targets
+    {
+      "topic" => identity(topic), "observer" => identity(observer), "observer_name" => observer_name,
+      "figure_practice_relationship" => identity(figure_practice_relationship),
+      "staff_tenure" => staff_tenure && identity(staff_tenure, "role", "title", "start_date", "end_date")
+        .merge("team" => staff_tenure.team&.entity_code, "organization" => staff_tenure.organization.entity_code)
+    }
+  end
 
   def attribution_is_consistent
     if observer_characterization?

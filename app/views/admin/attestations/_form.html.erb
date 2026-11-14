@@ -1,0 +1,22 @@
+<% kind = params[:kind] %>
+<% if @error %><div role="alert" class="round-panel"><p><%= @error %></p></div><% end %>
+<section class="round-panel">
+  <%= form_with scope: :attestation, url: @attestation.persisted? ? admin_claim_attestation_path(kind, @claim, @attestation) : admin_claim_attestations_path(kind, @claim), method: @attestation.persisted? ? :patch : :post, class: "people-actions catalog-form" do |form| %>
+    <% unless @attestation.persisted? %><%= claim_text_field form, :entity_code, @attestation.entity_code, label: "Entity code" %><% end %>
+    <%= claim_select form, :content_form, Attestation::CONTENT_FORMS.map { [ it.humanize, it ] }, @attestation.content_form, label: "Form" %>
+    <%= claim_text_area form, :body, @attestation.body, label: "Text", hint: "Required for text: the author's exact wording." %>
+    <%= claim_text_field form, :url, @attestation.url, label: "Source URL", hint: "Required for links; the original page for images and videos." %>
+    <%= claim_text_field form, :media_url, @attestation.media_url, label: "Media URL", hint: "Image or video URL, when different from the source page." %>
+    <%= claim_text_area form, :excerpt, @attestation.excerpt, label: "Excerpt or caption" %>
+    <%= claim_text_field form, :locator, @attestation.locator, label: "Locator", hint: "Paragraph, page or timestamp, like 04:12-04:40." %>
+    <%= claim_text_field form, :author_code, @attestation.author&.entity_code, label: "Author Figure code", hint: "When the original author or speaker is a Figure. You are recorded separately as the person entering it." %>
+    <%= claim_text_field form, :author_name, @attestation.author_name, label: "Author name", hint: "As the source credits them. Leave blank if unknown." %>
+    <%= claim_text_field form, :source_title, @attestation.source_title %>
+    <%= claim_text_field form, :publisher, @attestation.publisher %>
+    <%= claim_text_field form, :published_on, @attestation.published_on, label: "Published", hint: FigureClaimsHelper::PARTIAL_DATE_HINT %>
+    <div><%= form.label :captured_at, "Captured" %><%= form.datetime_local_field :captured_at, value: @attestation.captured_at&.strftime("%Y-%m-%dT%H:%M"), class: "account-input" %></div>
+    <%= claim_text_area form, :context, @attestation.context, hint: "What exactly this supports, and how." %>
+    <p class="round-caption">Saving evidence returns the claim to pending review.</p>
+    <div class="page-actions"><%= form.submit "Save attestation", class: "tool-button" %><%= link_to "Cancel", admin_figure_claim_path(kind, @claim), class: "tool-link" %></div>
+  <% end %>
+</section>

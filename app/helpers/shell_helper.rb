@@ -18,7 +18,7 @@ module ShellHelper
       [ [ "Queue", "shield-check", moderation_path ], [ "Reports", "flag", reports_path ], [ "Escalations", "shield", escalations_path ], [ "Decision log", "history", moderation_log_path ] ]
     when "admin"
       [ [ "Overview", "home", admin_path ], [ "People", "id-badge-2", admin_people_path ], [ "Revenue", "list-numbers", shout_out_revenue_path ], [ "Sports data", "layout-grid", admin_catalog_records_path ],
-        [ "Content catalog", "script", admin_content_catalog_path ] ]
+        [ "Content catalog", "script", admin_content_catalog_path ], [ "Figure claims", "file-certificate", admin_figure_claims_path ] ]
     end
   end
 
@@ -30,6 +30,7 @@ module ShellHelper
     when "admin"
       return "Content catalog" if %w[content_catalog quests achievements spectrums highlights].include?(controller_name)
       return "People" if controller_name == "people"
+      return "Figure claims" if %w[figure_claims attestations claim_identities].include?(controller_name)
       return "Revenue" if controller_name == "shout_out_revenues"
       %w[admin moderation_oversight].include?(controller_name) ? "Overview" : (params[:section] == "content" ? "Content catalog" : "Sports data")
     when "feed"

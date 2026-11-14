@@ -56,7 +56,8 @@ module Seeds
       [ "Game", "context" ] => %w[League Conference Division Sport Federation Organization],
       [ "Attestation", "claim" ] => Attestation::CLAIM_TYPES
     }.freeze
-    PROTECTED_ATTRIBUTES = %w[id type entity_code created_at updated_at seed_version last_seeded_at].freeze
+    PROTECTED_ATTRIBUTES = %w[id type entity_code created_at updated_at seed_version last_seeded_at
+      moderation_status moderation_revision revision_transaction].freeze
 
     attr_reader :report
 

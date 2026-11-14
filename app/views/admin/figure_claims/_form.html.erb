@@ -1,0 +1,47 @@
+<% kind = params[:kind] %>
+<% if @error %><div role="alert" class="round-panel"><p><%= @error %></p><% if @claim.persisted? %><%= link_to "Reload current claim", admin_edit_figure_claim_path(kind, @claim), class: "tool-link" %><% end %></div><% end %>
+<section class="round-panel">
+  <%= form_with scope: :claim, url: @claim.persisted? ? admin_figure_claim_path(kind, @claim) : admin_create_figure_claim_path(kind), method: @claim.persisted? ? :patch : :post, class: "people-actions catalog-form" do |form| %>
+    <% if @claim.persisted? %><%= hidden_field_tag :revision, @claim.moderation_revision %><% else %>
+      <%= claim_text_field form, :entity_code, @claim.entity_code, label: "Entity code", hint: "Keep the generated code or enter a semantic one, like BUSINESS_TIE-REYES-HARBOR_COFFEE." %>
+    <% end %>
+    <%= claim_text_field form, :figure_code, @figure_code, label: "Figure entity code", hint: "The Figure this claim is about, such as FIGURE-KERR_STEVE.", required: true %>
+    <% case kind %>
+    <% when "business" %>
+      <%= claim_select form, :business_id, @businesses.map { [ "#{it.name} · #{it.entity_code}", it.id ] }, @claim.business_id, label: "Business", blank: "Choose a business" %>
+      <%= claim_select form, :predicate, FigureBusinessRelationship::PREDICATES.map { [ it.humanize, it ] }, @claim.predicate, label: "Relationship" %>
+      <%= claim_select form, :compensation, FigureBusinessRelationship::COMPENSATIONS.map { [ it.humanize, it ] }, @claim.compensation, label: "Compensation" %>
+      <%= claim_text_area form, :compensation_description, @claim.compensation_description, hint: "The source's own description. Endorsements, promotions and sponsorships only." %>
+      <%= claim_text_field form, :vehicle_name, @claim.vehicle_name, label: "Investment vehicle", hint: "A fund or holding company named by the source. Investments only." %>
+    <% when "practice" %>
+      <%= claim_select form, :predicate, FigurePracticeRelationship::PREDICATES.map { [ it.humanize, it ] }, @claim.predicate, label: "Relationship" %>
+      <%= claim_select form, :protocol_id, @protocols.map { [ "#{it.name} · #{it.entity_code}", it.id ] }, @claim.protocol_id, label: "Protocol", blank: "No protocol" %>
+      <fieldset class="claim-practices"><legend>Practices this Figure connects here</legend>
+        <%= hidden_field_tag "claim[practice_ids][]", "" %>
+        <% selected = params.dig(:claim, :practice_ids)&.map(&:to_i) || @claim.practice_connections.map(&:practice_id) %>
+        <% @practices.each do |practice| %>
+          <label><%= check_box_tag "claim[practice_ids][]", practice.id, selected.include?(practice.id), id: "claim_practice_#{practice.id}" %> <%= practice.name %></label>
+        <% end %>
+      </fieldset>
+      <%= claim_text_area form, :interpretation, @claim.interpretation, label: "Their explanation", hint: "The Figure's own wording connecting the protocol and practices." %>
+    <% when "statement" %>
+      <%= claim_select form, :attribution_kind, AttributedStatement::KINDS.map { [ it.humanize, it ] }, @claim.attribution_kind, label: "Attribution" %>
+      <%= claim_text_area form, :text, @claim.text, hint: "Exact wording for quotes, including qualifiers." %>
+      <%= claim_text_field form, :observer_code, @claim.observer&.entity_code, label: "Observer Figure code", hint: "Observer characterizations only." %>
+      <%= claim_text_field form, :observer_name, @claim.observer_name, label: "Observer name", hint: "When the observer has no Figure." %>
+      <%= claim_select form, :topic_id, @topics.map { [ it.name, it.id ] }, @claim.topic_id, label: "Topic", blank: "No topic" %>
+      <%= claim_select form, :figure_practice_relationship_id, @practice_claims.map { [ "#{it.protocol&.name || 'Practices'} · #{it.entity_code}", it.id ] }, @claim.figure_practice_relationship_id, label: "Practice context", blank: "None" %>
+      <%= claim_select form, :staff_tenure_id, @staff_tenures.map { [ "#{it.title} · #{it.organization.name}", it.id ] }, @claim.staff_tenure_id, label: "Role at the time", blank: "None" %>
+      <%= claim_text_field form, :statement_date, @claim.statement_date, hint: FigureClaimsHelper::PARTIAL_DATE_HINT %>
+    <% end %>
+    <% unless kind == "statement" %>
+      <%= claim_text_field form, :start_date, @claim.start_date, hint: FigureClaimsHelper::PARTIAL_DATE_HINT %>
+      <%= claim_text_field form, :end_date, @claim.end_date, hint: FigureClaimsHelper::PARTIAL_DATE_HINT %>
+      <%= claim_select form, :temporal_state, TemporalClaim::STATES.map { [ it.humanize, it ] }, @claim.temporal_state, label: "State" %>
+      <%= claim_text_field form, :as_of_date, @claim.as_of_date, label: "As of", hint: "Required for reported current. #{FigureClaimsHelper::PARTIAL_DATE_HINT}" %>
+    <% end %>
+    <%= claim_text_area form, :context, @claim.context %>
+    <p class="round-caption">Saving a change returns a published claim to pending review.</p>
+    <div class="page-actions"><%= form.submit "Save claim", class: "tool-button" %><%= link_to "Cancel", @claim.persisted? ? admin_figure_claim_path(kind, @claim) : admin_figure_claims_path, class: "tool-link" %></div>
+  <% end %>
+</section>

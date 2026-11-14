@@ -1,0 +1,8 @@
+@layer components {
+  .claim-details { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: .5rem 1.5rem; margin: 0; }
+  .claim-details dt { color: var(--color-ink-2); font-size: .85rem; }
+  .claim-details dd { margin: 0; overflow-wrap: anywhere; }
+  .claim-details blockquote, .claim-evidence blockquote { margin: 0; padding-left: .75rem; border-left: 3px solid var(--color-line); }
+  .claim-practices { display: grid; gap: .4rem; border: 0; padding: 0; margin: 0; }
+  @media (max-width: 640px) { .claim-details { grid-template-columns: 1fr; } .claim-details dd { margin-bottom: .5rem; } }
+}

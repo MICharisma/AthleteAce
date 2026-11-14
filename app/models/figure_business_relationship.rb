@@ -4,6 +4,7 @@
 class FigureBusinessRelationship < ApplicationRecord
   include TemporalClaim
   include Attested
+  include ReviewedClaim
 
   PREDICATES = %w[founded owns invests_in endorses promotes sponsored_by].freeze
   COMPENSATIONS = %w[documented_paid documented_unpaid unknown].freeze
@@ -19,6 +20,10 @@ class FigureBusinessRelationship < ApplicationRecord
   validate :predicate_fits_details
 
   private
+
+  def review_targets
+    { "business" => identity(business, "url", "founded_year") }
+  end
 
   def predicate_fits_details
     # Founding is an event: it stays true after the founder exits.

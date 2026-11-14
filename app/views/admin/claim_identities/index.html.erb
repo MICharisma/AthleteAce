@@ -1,0 +1,12 @@
+<% content_for :title, "Claim identities" %>
+<div class="moderation-page people-page">
+  <%= link_to "Back to claims", admin_figure_claims_path, class: "tool-link" %>
+  <header class="browse-header"><div><p class="eyebrow">Admin · Figure claims</p><h1 class="page-title">Businesses, practices, protocols & topics</h1><p>Claims point at these records. Same-name records stay separate; give a materially different method its own Protocol.</p></div></header>
+  <% { "business" => "Businesses", "practice" => "Practices", "protocol" => "Protocols", "topic" => "Topics" }.each do |kind, title| %>
+    <section class="round-panel" aria-labelledby="identities-<%= kind %>">
+      <h2 id="identities-<%= kind %>" class="profile-section-title"><%= title %> (<%= @records[kind].size %>)</h2>
+      <%= link_to "Add #{kind}", admin_new_claim_identity_path(kind), class: "tool-button" %>
+      <ul class="wallet-history"><% @records[kind].each do |record| %><li><%= record.name %> · <span class="round-caption"><%= record.entity_code %></span><% if record.try(:routine).present? %><p><%= record.routine %></p><% end %></li><% end %></ul>
+    </section>
+  <% end %>
+</div>

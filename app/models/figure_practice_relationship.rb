@@ -4,6 +4,7 @@
 class FigurePracticeRelationship < ApplicationRecord
   include TemporalClaim
   include Attested
+  include ReviewedClaim
 
   PREDICATES = %w[participates_in recommends teaches endorses].freeze
 
@@ -18,5 +19,17 @@ class FigurePracticeRelationship < ApplicationRecord
   # A claim needs a Protocol or at least one Practice before it can publish.
   def targeted?
     protocol_id.present? || practice_connections.exists?
+  end
+
+  private
+
+  # The reviewed method and the full Practice set belong to this claim.
+  def review_targets
+    { "protocol" => identity(protocol, "description", "routine"),
+      "practices" => practices.reload.map { identity(it) } }
+  end
+
+  def target_problems
+    targeted? ? [] : [ "Name a Protocol or at least one Practice." ]
   end
 end
