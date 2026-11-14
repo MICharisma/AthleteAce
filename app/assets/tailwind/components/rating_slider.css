@@ -16,6 +16,14 @@
 .rating-slider-instance[data-rated="false"] .slider-value { @apply font-normal text-ink-3; }
 .slider-track { @apply relative h-11 mt-1; }
 .rating-slider-input { @apply absolute inset-0 w-full h-11 appearance-none bg-transparent cursor-pointer; }
+.rating-slider-input { touch-action: pan-y; }
+.rating-handle-track { @apply absolute inset-x-3 inset-y-0 pointer-events-none; }
+.rating-drag-handle { position: absolute; left: var(--rating-position); top: 0; width: 44px; height: 44px; transform: translateX(-50%); pointer-events: auto; touch-action: none; cursor: grab; }
+.rating-slider-instance[aria-busy="true"] .rating-drag-handle { pointer-events: none; }
+.rating-adjustment-help { @apply flex flex-wrap items-center gap-2 mt-1 text-xs text-ink-3; }
+.drag-precision { @apply font-semibold text-ink-2; }
+.rate-neutral { @apply min-h-11 px-2 underline cursor-pointer; }
+.rate-neutral:focus-visible { @apply outline-2 outline-offset-2 outline-accent-text; }
 .rating-slider-input::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--color-track); }
 .rating-slider-input::-moz-range-track { height: 6px; border-radius: 3px; background: var(--color-track); }
 .rating-slider-input::-webkit-slider-thumb {

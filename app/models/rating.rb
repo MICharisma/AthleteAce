@@ -1,4 +1,10 @@
 class Rating < ApplicationRecord
+  SCALE = SharedRatings::Dimension.new(
+    key: "athleteace.rating", version: 1, question: "How do you rate this entity?",
+    low_label: "Low", high_label: "High", minimum: -10_000, maximum: 10_000,
+    coarse_step: 1000, fine_step: 100, neutral_value: 0, neutral_label: "Neutral"
+  )
+
   belongs_to :ace
   belongs_to :spectrum
   belongs_to :target, polymorphic: true
@@ -7,8 +13,8 @@ class Rating < ApplicationRecord
   validates :value, presence: true, 
                    numericality: { 
                      only_integer: true, 
-                     greater_than_or_equal_to: -10_000, 
-                     less_than_or_equal_to: 10_000 
+                     greater_than_or_equal_to: SCALE.minimum,
+                     less_than_or_equal_to: SCALE.maximum
                    }
   
   # Scopes

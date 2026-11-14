@@ -44,6 +44,18 @@ RSpec.describe "Ratings", type: :request do
       expect(response.parsed_body["errors"]).to eq(["Value must be less than or equal to 10000"])
     end
 
+    it "keeps one version when an identical save is retried after its response is lost" do
+      attributes = { rating: { spectrum_id: spectrum.id, value: 4300 } }
+      post player_ratings_path(player), params: attributes, as: :json
+      original_id = response.parsed_body.dig("rating", "id")
+      post player_ratings_path(player), params: attributes, as: :json
+
+      expect(response).to have_http_status(:created)
+      expect(response.parsed_body.dig("rating", "id")).to eq(original_id)
+      expect(ace.ratings.count).to eq(1)
+      expect(ace.ratings.active.sole.value).to eq(4300)
+    end
+
     it "re-renders the form when the rating is invalid" do
       post player_ratings_path(player), params: { rating: { spectrum_id: spectrum.id, value: 99_999 } }
 
@@ -105,6 +117,10 @@ RSpec.describe "Shared rating rows", type: :request do
     expect(document.at_css(".slider-value").text).to eq("+4,300")
     expect(document.at_css(".rating-summary").text).to include("Aces average +3,000 · 2 ratings")
     expect(document.at_css(".average-marker")["style"]).to eq("left: 65.0%")
+    definition = JSON.parse(document.at_css(".rating-slider-instance")["data-dimension"])
+    expect(definition).to include("minimum" => Rating::SCALE.minimum, "maximum" => Rating::SCALE.maximum,
+      "coarse_step" => 1000, "fine_step" => 100, "neutral_value" => 0,
+      "low_label" => spectrum.low_label, "high_label" => spectrum.high_label)
   end
 
   it "never shows another ace's rating as yours and distinguishes an unrated zero" do

@@ -1,5 +1,8 @@
 source "https://rubygems.org"
 
+gem "shared-ratings", path: ENV.fetch("SHARED_RATINGS_PATH", "../../packages/shared-ratings"),
+  require: ["shared-ratings", "shared_ratings/engine"]
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
@@ -86,4 +89,8 @@ gem "ransack", "~> 5.0"
 
 gem "stripe"
 gem "csv"
-gem "rizz-client", git: "https://github.com/MICharisma/rizz.git", ref: "5f64cfea8e3e044a1696f36cc77ac55bbc9dfedd", glob: "clients/rizz-client/*.gemspec"
+if ENV["RIZZ_CLIENT_PATH"]
+  gem "rizz-client", path: ENV.fetch("RIZZ_CLIENT_PATH")
+else
+  gem "rizz-client", git: "https://github.com/MICharisma/rizz.git", ref: "5f64cfea8e3e044a1696f36cc77ac55bbc9dfedd", glob: "clients/rizz-client/*.gemspec"
+end

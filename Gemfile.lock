@@ -8,6 +8,11 @@ GIT
       json (~> 2.7)
       net-http (~> 0.4)
 
+PATH
+  remote: ../../packages/shared-ratings
+  specs:
+    shared-ratings (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -536,6 +541,7 @@ DEPENDENCIES
   rspec-rails (~> 8.0)
   rubocop-rails-omakase
   selenium-webdriver (~> 4.49)
+  shared-ratings!
   shoulda-matchers (~> 8.0)
   simplecov (~> 1.3)
   solid_cable
