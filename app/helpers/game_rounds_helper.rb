@@ -12,6 +12,8 @@ module GameRoundsHelper
     end
     return "Unscramble this player’s name. Choose the original below." if mode == "name_ciphers"
     return "Which division is this team in?" if mode == "guess_the_division"
+    return "Which league is this team in?" if mode == "guess_the_league"
+    return "Which sport does this team play?" if mode == "guess_the_sport"
 
     season_name = round.question["season_name"]
     season_name.present? ? "Which team is this player listed with for #{season_name}?" : "Which team is this player on?"

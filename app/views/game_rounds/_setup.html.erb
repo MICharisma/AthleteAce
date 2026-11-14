@@ -16,7 +16,7 @@
   <%= tag.fieldset class: "round-panel" do %>
     <%= tag.legend "01 · Pick a game", class: "round-step" %>
     <%= tag.div class: "round-game-options" do %>
-      <% [["player_team_match", "Player → team", "shield"], ["guess_the_division", "Team → division", "target"], ["name_ciphers", "Unscramble the player’s name", "bolt"], ["multiple_choice", "Four choices about a player", "target"], ["phased_repetition", "Review names when they are due", "history"], ["image_recognition", "Name the face", "shirt-sport"], ["flash_cards", "See each player’s team", "stack-2"]].each do |value, description, glyph| %>
+      <% [["player_team_match", "Player → team", "shield"], ["guess_the_division", "Team → division", "target"], ["guess_the_league", "Team → league", "tournament"], ["guess_the_sport", "Team → sport", "target"], ["name_ciphers", "Unscramble the player’s name", "bolt"], ["multiple_choice", "Four choices about a player", "target"], ["phased_repetition", "Review names when they are due", "history"], ["image_recognition", "Name the face", "shirt-sport"], ["flash_cards", "See each player’s team", "stack-2"]].each do |value, description, glyph| %>
         <%= tag.label class: "round-option round-game-option" do %>
           <%= form.radio_button :game_type, value, checked: @setup.game_type == value, data: { action: "change->round-setup#gameChanged" } %>
           <%= icon glyph, size: 24 %>
@@ -54,7 +54,7 @@
         <p class="round-caption">Practicing the members saved when you adopted this quest.</p>
         <p class="round-caption">Remaining members use your quest progress since adoption.</p>
       <% end %>
-      <p class="round-caption">Groups include their inactive members. Other filters narrow the group. Team → division uses the members' current teams.</p>
+      <p class="round-caption">Groups include their inactive members. Other filters narrow the group. Team games use the members' current teams.</p>
       <%= link_to "Browse player groups", player_groups_path, class: "tool-link", data: { turbo_frame: "_top" } %>
     </div>
     <%= tag.p @setup.scope_label, class: "round-scope-summary" %>
@@ -155,7 +155,12 @@
         <%= tag.p "With a delay, each card shows the team, then the position, then moves on. Nothing is scored or saved.", class: "round-caption" %>
       <% end %>
     <% end %>
-    <%= tag.p "#{pluralize available, @setup.game_type == 'guess_the_division' ? 'team' : 'player'} available.", class: "round-caption" %>
+    <%= tag.p "#{pluralize available, @setup.team_game? ? 'team' : 'player'} available.", class: "round-caption" %>
+    <% if @setup.game_type == "guess_the_league" %>
+      <p class="round-caption">Filters choose the teams to ask about. Answer choices are recorded leagues with teams in the same sport. At least two distinct league names are needed.</p>
+    <% elsif @setup.game_type == "guess_the_sport" %>
+      <p class="round-caption">Filters choose the teams to ask about. Answer choices are recorded sports with teams. At least two distinct sport names are needed.</p>
+    <% end %>
     <%= tag.p "Choose the original name from up to four options. At least two distinct player names are needed.", class: "round-caption" if @setup.game_type == "name_ciphers" %>
     <% if available.positive? && @setup.seasonal_game? %>
       <%= tag.details class: "round-pool-coverage" do %>

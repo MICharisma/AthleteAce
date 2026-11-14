@@ -26,6 +26,6 @@
   <% else %>
     <section class="round-panel"><h2 class="profile-section-title">No preview question available</h2><p>This scope needs recorded players and at least two teams. Explore Browse or choose another scope.</p><%= link_to "Browse", browse_path, class: "tool-button" %></section>
   <% end %>
-  <section class="round-panel"><h2 class="profile-section-title">Six ways to play</h2><ul><% GameRound::GAMES.each_value do |name| %><li><%= name %></li><% end %></ul></section>
+  <section class="round-panel"><h2 class="profile-section-title">Ways to play</h2><ul><% GameRound::GAMES.each_value do |name| %><li><%= name %></li><% end %></ul></section>
   <div class="round-summary-actions"><%= link_to "Sign in to play", new_ace_session_path, class: "game-button" %><%= link_to "New here? Create a free account", new_ace_registration_path, class: "tool-button" %></div>
 </div>

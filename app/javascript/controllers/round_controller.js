@@ -2,6 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["choice", "next", "heading", "feedback"]
+  static values = { autoAdvance: Boolean }
 
   connect() {
     this.busy = false
@@ -10,7 +11,21 @@ export default class extends Controller {
   headingTargetConnected(element) { element.focus({ preventScroll: true }) }
   feedbackTargetConnected(element) { element.focus({ preventScroll: true }) }
 
-  submitting() { this.busy = true }
+  nextTargetConnected(element) {
+    if (!this.autoAdvanceValue) return
+
+    const elapsed = this.selectedAt === undefined ? 0 : performance.now() - this.selectedAt
+    this.advanceTimer = setTimeout(() => element.click(), Math.max(0, 1500 - elapsed))
+  }
+
+  nextTargetDisconnected() { clearTimeout(this.advanceTimer) }
+  disconnect() { clearTimeout(this.advanceTimer) }
+
+  submitting() {
+    this.busy = true
+    this.selectedAt = performance.now()
+    clearTimeout(this.advanceTimer)
+  }
   submitted() { this.busy = false }
 
   key(event) {
@@ -22,7 +37,7 @@ export default class extends Controller {
         event.preventDefault()
         choice.click()
       }
-    } else if (event.key === "Enter" && this.hasNextTarget) {
+    } else if (event.key === "Enter" && this.hasNextTarget && !this.autoAdvanceValue) {
       event.preventDefault()
       this.nextTarget.click()
     }

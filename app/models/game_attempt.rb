@@ -3,10 +3,12 @@ class GameAttempt < ApplicationRecord
   GAME_TYPES = {
     "player_team_match" => [ "Player", "Team" ],
     "guess_the_division" => [ "Team", "Division" ],
+    "guess_the_league" => [ "Team", "League" ],
+    "guess_the_sport" => [ "Team", "Sport" ],
     "name_ciphers" => [ "Player", "Player" ],
     "multiple_choice" => [ "Player", %w[Team City Country] ],
     "image_recognition" => [ "Player", "Player" ],
-    "phased_repetition" => [ %w[Player Team], %w[Player Team Division City Country] ]
+    "phased_repetition" => [ %w[Player Team], %w[Player Team Division League Sport City Country] ]
   }.freeze
 
   belongs_to :ace
@@ -18,7 +20,7 @@ class GameAttempt < ApplicationRecord
 
   validates :game_type, inclusion: { in: GAME_TYPES.keys }
   validate :round_matches_attempt
-  validate { errors.add(:game_round, "is required for this game") if %w[name_ciphers multiple_choice image_recognition phased_repetition].include?(game_type) && !game_round }
+  validate { errors.add(:game_round, "is required for this game") if %w[name_ciphers multiple_choice image_recognition phased_repetition guess_the_league guess_the_sport].include?(game_type) && !game_round }
   validate :entity_types_match_game
   validates :subject_entity, :target_entity, presence: { message: :required }, if: :entity_types_valid?
 

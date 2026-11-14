@@ -1,5 +1,5 @@
 class ReviewQueue
-  MODELS = { "Player" => Player, "Team" => Team, "Division" => Division, "City" => City, "Country" => Country }.freeze
+  MODELS = { "Player" => Player, "Team" => Team, "Division" => Division, "League" => League, "Sport" => Sport, "City" => City, "Country" => Country }.freeze
 
   def initialize(ace:, teams: nil, player_id: nil, players: nil, now: Time.current)
     @ace, @teams, @player_id, @players, @now = ace, teams, player_id, players, now

@@ -39,7 +39,7 @@ Moderators and admins can open a matching ace's identity, recent submissions, re
 
 The five most recently opened or submitted searches are stored in the browser, separately for each account and side. Use **Clear recent searches** to remove them. Search results are fetched anew and are not stored in this history. The search control also links to a full search page when JavaScript is unavailable.
 
-See [Play rounds and learning progress](docs/play-learning.md) for the six saved games, due reviews, roster-based quest completion, time zones, anonymous preview, and production mail configuration.
+See [Play rounds and learning progress](docs/play-learning.md) for the saved games, due reviews, roster-based quest completion, time zones, anonymous preview, and production mail configuration.
 
 Sporting [competitions, games and titles](docs/competition-games.md) support league seasons, playoffs, cross-league cups, JSONB format rules, shared fixtures and separate title awards. These sporting Games are distinct from Play's quiz rounds. Player appearance ingestion remains follow-up work.
 

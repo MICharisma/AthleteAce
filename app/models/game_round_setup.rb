@@ -74,6 +74,10 @@ class GameRoundSetup
     %w[player_team_match name_ciphers multiple_choice image_recognition flash_cards].include?(game_type)
   end
 
+  def team_game?
+    %w[guess_the_division guess_the_league guess_the_sport].include?(game_type)
+  end
+
   def cipher_pool
     @cipher_pool ||= begin
       scope = if season
@@ -151,6 +155,7 @@ class GameRoundSetup
   end
 
   def subjects
+    return Team.where(id: team_fact_pool.teams.map(&:id)) if %w[guess_the_league guess_the_sport].include?(game_type)
     return Player.where(id: fact_pool.players.map(&:id)) if %w[multiple_choice image_recognition].include?(game_type)
     return Player.where(id: cipher_pool.players.map(&:id)) if game_type == "name_ciphers"
     return practice_players(filter_players(season_pool.players)) if season && %w[player_team_match flash_cards].include?(game_type)
@@ -176,6 +181,17 @@ class GameRoundSetup
       game_type: game_type, fact_type: fact_type, subject_ids: practice_subject_ids, season: season, team_for: season ? season_pool.method(:team_for) : nil)
   end
 
+  def team_fact_pool
+    @team_fact_pool ||= begin
+      scope = scoped_teams
+      if player_group || player_ids.any? || player_id
+        players = practice_players(filter_players(Player.all, include_inactive: true))
+        scope = scope.where(id: players.select(:team_id))
+      end
+      TeamFactRound.new teams: scope.includes(league: :sport).to_a, game_type: game_type
+    end
+  end
+
   def scoped_players
     scope = (player_group || player_ids.any?) && !team_scope? ? Player.all : Player.where(team_id: scoped_teams.select(:id))
     filter_players(scope)
@@ -188,6 +204,7 @@ class GameRoundSetup
   def available_count
     @available_count ||= if valid?
       case game_type
+      when "guess_the_league", "guess_the_sport" then team_fact_pool.available_count
       when "name_ciphers" then cipher_pool.available_count
       when "multiple_choice", "image_recognition" then fact_pool.available_count
       when "phased_repetition" then review_queue.entries.size
@@ -266,6 +283,9 @@ class GameRoundSetup
 
     if %w[multiple_choice image_recognition].include?(game_type)
       return save_round!(ace, fact_pool.questions(length: length, balance_teams: selected_team_ids.size > 1))
+    end
+    if %w[guess_the_league guess_the_sport].include?(game_type)
+      return save_round!(ace, team_fact_pool.questions(length: length))
     end
     if game_type == "phased_repetition"
       return save_round!(ace, review_queue.questions(length: length), label: "Due review · #{scope_label}")

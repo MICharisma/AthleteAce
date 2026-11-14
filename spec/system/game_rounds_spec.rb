@@ -29,6 +29,45 @@ RSpec.describe "Saved rounds", type: :system do
     expect(page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth")).to be(true)
   end
 
+  it "advances 1.5 seconds after selection and stops the timer when paused" do
+    visit new_game_round_path(league_id: league.id)
+    click_button "Start round"
+    expect(page).to have_css(".round-game-progress", text: "1 / 2")
+    round = ace.game_rounds.last
+    page.execute_script <<~JS
+      document.addEventListener("click", event => {
+        if (event.target.closest(".round-choice")) window.answerSelectedAt = performance.now()
+      })
+      document.addEventListener("turbo:submit-start", event => {
+        if (event.detail.formSubmission.submitter.matches(".round-next")) {
+          window.advanceDelay = performance.now() - window.answerSelectedAt
+        }
+      })
+    JS
+
+    find(".round-choice[value='#{round.questions.first.fetch('target_id')}']").click
+    expect(page).to have_css(".round-feedback", text: /Correct/i)
+    expect(page).not_to have_button("Next")
+    expect(page).to have_css(".round-game-progress", text: "2 / 2")
+    expect(page.evaluate_script("window.advanceDelay")).to be_between(1450, 3000)
+
+    click_button "I don’t know — show me"
+    expect(page).to have_css(".round-feedback", text: /Not quite/i)
+    click_button "Pause round"
+    expect(page).to have_button("Resume round")
+    page.evaluate_async_script("setTimeout(arguments[0], 1700)")
+    expect(page).to have_button("Resume round")
+    expect(round.reload.position).to eq(1)
+    expect(round).not_to be_completed
+
+    click_button "Resume round"
+    expect(page).to have_css(".round-feedback", text: /Not quite/i)
+    expect(page).not_to have_button("Round summary")
+    expect(page).to have_css("h1", text: /Round complete/i)
+    expect(round.reload).to be_completed
+    expect(round.game_attempts.count).to eq(2)
+  end
+
   it "filters setup, saves progress through pause and refresh, finishes, and drills misses" do
     other_league = create(:league, name: "Basketball League", sport: create(:sport, name: "Basketball"))
     create(:team, league: other_league)
@@ -59,8 +98,7 @@ RSpec.describe "Saved rounds", type: :system do
     page.refresh
     expect(page).to have_css(".round-feedback", text: /Not quite/i)
     expect(round.game_attempts.count).to eq(1)
-    # Enter is handled inside the focused feedback, with no document-wide key handler.
-    find(".round-feedback").send_keys :enter
+    expect(page).not_to have_button("Next")
     expect(page).to have_css(".round-game-progress", text: "2 / 2")
     click_button "Pause round"
     expect(page).to have_button("Resume round")
@@ -81,7 +119,6 @@ RSpec.describe "Saved rounds", type: :system do
         find(".round-choice[value='#{target}']").click
       end
       expect(page).to have_css(".round-feedback", text: /Correct/i)
-      click_button(position == round.length - 1 ? "Round summary" : "Next")
     end
     expect(page).to have_css("h1", text: /Round complete/i)
     expect(page).to have_content("1 / 2")
@@ -94,7 +131,7 @@ RSpec.describe "Saved rounds", type: :system do
     expect(page).to have_css(".round-game-progress", text: "1 / 1")
     expect(page).to have_css(".round-subject", text: /#{Regexp.escape(snapshot.first.fetch('subject_name'))}/i)
     click_button "I don’t know — show me"
-    click_button "Round summary"
+    expect(page).to have_css("h1", text: /Round complete/i)
     expect(page).to have_content("0 / 1")
     expect(ace.game_attempts.count).to eq(3)
   end

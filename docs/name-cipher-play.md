@@ -9,8 +9,9 @@ Two distinct names are required. Names with no rearrangeable letters are omitted
 and identical displayed names are deduplicated. Letter counts, spaces and punctuation
 are retained; the scrambled letters are saved with the choices before play begins.
 
-The mode shares Team Match's answer feedback, keyboard shortcuts, pause/resume,
-summary, replay and per-round misses drill. Answers are scored against the saved
+The mode shares Team Match's answer feedback, pause/resume,
+summary, replay and per-round misses drill. Use keys 1–6 to answer, then select Next
+or press Enter to continue. Answers are scored against the saved
 choices on the server. The standalone attempts endpoint does not accept cipher
 attempts without a saved round.
 
@@ -27,5 +28,5 @@ after a transfer. Unassigned players contribute to overall history without a tea
 The Play home names-known metric and cross-round misses include all player games,
 including Name Ciphers. Cipher misses can also be drilled from their round summary.
 
-See [Play rounds and learning progress](play-learning.md) for the six saved modes,
+See [Play rounds and learning progress](play-learning.md) for the saved modes,
 review scheduling, quest roster completion, time zones, and anonymous preview.

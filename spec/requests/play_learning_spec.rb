@@ -7,7 +7,7 @@ RSpec.describe "Play learning flows", type: :request do
   let!(:player) { create(:player, team: team) }
   let!(:other_player) { create(:player, team: rival) }
 
-  it "offers six saved games plus flash cards and exposes only the signed-in ace's review count" do
+  it "offers all saved games plus flash cards and exposes only the signed-in ace's review count" do
     sign_in ace
     get new_game_round_path
     expect(response).to have_http_status(:ok)

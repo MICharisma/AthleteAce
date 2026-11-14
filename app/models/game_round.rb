@@ -2,7 +2,8 @@ class GameRound < ApplicationRecord
   class InvalidAction < StandardError; end
 
   GAMES = { "player_team_match" => "Team Match", "guess_the_division" => "Guess the Division", "name_ciphers" => "Name Ciphers",
-    "multiple_choice" => "Multiple Choice", "phased_repetition" => "Phased Repetition", "image_recognition" => "Image Recognition" }.freeze
+    "multiple_choice" => "Multiple Choice", "phased_repetition" => "Phased Repetition", "image_recognition" => "Image Recognition",
+    "guess_the_league" => "Guess the League", "guess_the_sport" => "Guess the Sport" }.freeze
   LENGTHS = [ 10, 20, 30 ].freeze
 
   belongs_to :ace
