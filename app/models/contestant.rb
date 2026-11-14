@@ -3,7 +3,11 @@ class Contestant < ApplicationRecord
   belongs_to :campaign
   has_many :appearances, dependent: :destroy
   has_many :title_awards, foreign_key: :winner_id, dependent: :restrict_with_error
+  SIDES = %w[home away].freeze
+
   validates :campaign_id, uniqueness: { scope: :contest_id }
+  validates :side, inclusion: { in: SIDES }, uniqueness: { scope: :contest_id }, allow_nil: true
+  validate { errors.add :side, "applies only to games" if side && contest && contest.kind != "game" }
   validate :preserve_appearance_context
   validate :competition_membership_matches
   before_destroy :preserve_game_entry
@@ -15,6 +19,8 @@ class Contestant < ApplicationRecord
   scope :by_placing, -> { order(:placing) }
   scope :winners, -> { where(placing: 1) }
   scope :runner_ups, -> { where(placing: 2) }
+  scope :home, -> { where(side: "home") }
+  scope :away, -> { where(side: "away") }
   
   def winner?
     placing == 1

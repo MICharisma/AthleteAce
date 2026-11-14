@@ -2,6 +2,8 @@ class Contest < ApplicationRecord
   belongs_to :context, polymorphic: true
   belongs_to :champion, class_name: 'Team', optional: true
   belongs_to :season, optional: true
+  # Where it was played, when a source names it. See #venue.
+  belongs_to :stadium, optional: true
   has_one :championship_season, class_name: "Season", foreign_key: :championship_contest_id
 
   has_many :title_awards, dependent: :destroy
@@ -32,6 +34,37 @@ class Contest < ApplicationRecord
   
   def runner_up
     contestants.runner_ups.first
+  end
+
+  def home_entry
+    contestants.loaded? ? contestants.find { it.side == "home" } : contestants.find_by(side: "home")
+  end
+
+  def away_entry
+    contestants.loaded? ? contestants.find { it.side == "away" } : contestants.find_by(side: "away")
+  end
+
+  # The home entry's venue for that season, falling back to the team's.
+  def home_venue
+    campaign = home_entry&.campaign
+    campaign&.stadium || campaign&.team&.stadium
+  end
+
+  # Where the contest was played: the recorded venue, else the home venue.
+  def venue
+    stadium || home_venue
+  end
+
+  # :recorded when a source named the venue, :home_venue when inferred, nil when unknown.
+  def venue_basis
+    if stadium then :recorded
+    elsif home_venue then :home_venue
+    end
+  end
+
+  # A recorded venue other than the home entry's: abroad, neutral sites, outdoor games.
+  def away_from_home_venue?
+    stadium.present? && home_venue.present? && stadium != home_venue
   end
   
   def final_standings

@@ -11,6 +11,7 @@ class Stadium < ApplicationRecord
   has_many :campaigns, through: :teams
   has_many :contracts, through: :teams
   has_many :contests, through: :teams # this should be through games eventually
+  has_many :hosted_contests, class_name: "Contest", dependent: :restrict_with_error
   has_many :activations, through: :contracts
 
   delegate :state, :country, to: :city

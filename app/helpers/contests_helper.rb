@@ -111,10 +111,30 @@ module ContestsHelper
       ("Leg #{metadata['leg']}" if metadata["leg"]) ].compact.join(" · ")
   end
 
+  # "Veikkaus Arena · Helsinki, Uusimaa, Finland"
+  def venue_place(stadium)
+    city = stadium.city
+    [ stadium.name, [ city.name, city.state.name, city.state.country.name ].compact_blank.uniq.join(", ") ].join(" · ")
+  end
+
+  # Why the venue is known, and whether it is away from the home team's venue.
+  def venue_basis_note(contest)
+    case contest.venue_basis
+    when :recorded then contest.away_from_home_venue? ? "Away from the home team's venue (#{contest.home_venue.name})" : "Recorded venue"
+    when :home_venue then "Home team's venue; this game's venue is not recorded"
+    end
+  end
+
   def contest_info_section(contest)
     tag.div class: "contest-info-section" do
       tag.h2("Contest Information", class: "section-title") +
       tag.div(class: "info-grid") do
+        if contest.venue
+          tag.div(class: "info-item") do
+            tag.dt("Venue") +
+            tag.dd(link_to(venue_place(contest.venue), stadium_path(contest.venue)) + tag.p(venue_basis_note(contest), class: "round-caption"))
+          end
+        end.to_s.html_safe +
         if contest.context.present?
           tag.div(class: "info-item") do
             tag.dt("Context") +

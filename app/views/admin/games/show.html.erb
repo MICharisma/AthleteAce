@@ -1,9 +1,9 @@
 <% content_for :title, contest_display_name(@game) %>
 <div class="moderation-page people-page">
   <%= link_to "Back to games", admin_games_path, class: "tool-link" %>
-  <header class="browse-header"><div><p class="eyebrow">Admin · Sports data · Game</p><h1 class="page-title"><%= contest_display_name(@game) %></h1><p><%= @game.begin_date&.iso8601 || "Date unknown" %> · <%= @game.entity_code.presence || "No entity code" %></p></div></header>
+  <header class="browse-header"><div><p class="eyebrow">Admin · Sports data · Game</p><h1 class="page-title"><%= contest_display_name(@game) %></h1><p><%= @game.begin_date&.iso8601 || "Date unknown" %> · <%= @game.entity_code.presence || "No entity code" %></p><p><%= @game.venue ? venue_place(@game.venue) : "Venue unknown" %><% if @game.venue %> · <%= venue_basis_note(@game) %><% end %></p></div></header>
   <section class="round-panel"><h2 class="profile-section-title">Participants</h2>
-    <% @contestants.each do |entry| %><p><%= entry.campaign.name %> · <%= entry.campaign.season.name %></p><% end %>
+    <% @contestants.each do |entry| %><p><%= entry.campaign.name %> · <%= entry.campaign.season.name %><% if entry.side %> · <%= entry.side.capitalize %><% end %></p><% end %>
     <% if @contestants.empty? %><p>No recorded participants.</p><% end %>
     <h2 class="profile-section-title">Competitions</h2>
     <% @memberships.each do |membership| %><p><%= link_to contest_display_name(membership.contest), admin_competition_path(membership.contest) %> · <%= competition_game_summary(membership) %></p><% end %>

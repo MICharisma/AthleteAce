@@ -43,7 +43,7 @@ namespace :seeds do
       games.each do |incoming|
         game = Game.find_by!(entity_code: "HCK-NHL-GAME_#{incoming.fetch('source_id')}")
         expected = { "home" => incoming.fetch("home"), "away" => incoming.fetch("away") }
-        actual = game.contestants.includes(:campaign).to_h { |entry| [ entry.tiebreakers.fetch("side"), entry.campaign.abbreviation ] }
+        actual = game.contestants.includes(:campaign).to_h { |entry| [ entry.side || entry.tiebreakers.fetch("side"), entry.campaign.abbreviation ] }
         raise "NHL participants changed for #{game.entity_code}" unless actual == expected
         details = game.details.merge(incoming.slice("start_time_utc", "venue", "state"))
         game.assign_attributes(begin_date: incoming.fetch("date"), end_date: incoming.fetch("date"), details: details)
@@ -106,6 +106,9 @@ namespace :seeds do
     venues = Seeds::HomeVenueImporter.new(source: root.parent.join("sources/geography_2026/bindings.json")).call
     puts({ home_venues: venues.transform_values(&:length) }.to_json)
     venues[:conflicts].each { |conflict| puts conflict.to_json }
+    game_venues = Seeds::GameVenueImporter.new(source: root.parent.join("sources/nhl_venues_2026/bindings.json")).call
+    puts({ game_venues: game_venues.transform_values(&:length) }.to_json)
+    game_venues[:conflicts].each { |conflict| puts conflict.to_json }
     Rake::Task["seeds:current_teams"].invoke
   end
 

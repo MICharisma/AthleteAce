@@ -15,7 +15,7 @@ class Admin::GamesController < ApplicationController
   end
 
   def show
-    @game = Game.find(params[:id])
+    @game = Game.includes(stadium: { city: { state: :country } }).find(params[:id])
     @tab = params[:tab].presence || "appearances"
     return render plain: "Choose appearances or rosters.", status: :bad_request unless %w[appearances rosters].include?(@tab)
 

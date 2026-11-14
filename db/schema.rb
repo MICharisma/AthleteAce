@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_030000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -257,11 +257,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_030000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "entity_code"
+    t.string "side"
     t.index ["campaign_id"], name: "index_contestants_on_campaign_id"
     t.index ["contest_id", "campaign_id"], name: "index_contestants_on_contest_id_and_campaign_id", unique: true
     t.index ["contest_id", "id"], name: "index_contestants_on_contest_id_and_id", unique: true
+    t.index ["contest_id"], name: "index_contestants_on_contest_away", unique: true, where: "((side)::text = 'away'::text)"
+    t.index ["contest_id"], name: "index_contestants_on_contest_home", unique: true, where: "((side)::text = 'home'::text)"
     t.index ["contest_id"], name: "index_contestants_on_contest_id"
     t.index ["entity_code"], name: "index_contestants_on_entity_code", unique: true
+    t.check_constraint "side IS NULL OR (side::text = ANY (ARRAY['home'::character varying, 'away'::character varying]::text[]))", name: "contestants_have_known_sides"
   end
 
   create_table "contests", force: :cascade do |t|
@@ -283,10 +287,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_030000) do
     t.string "kind"
     t.string "type"
     t.jsonb "format_rules", default: {}, null: false
+    t.bigint "stadium_id"
     t.index ["context_type", "context_id"], name: "index_contests_on_context"
     t.index ["entity_code"], name: "index_contests_on_entity_code", unique: true
     t.index ["kind", "begin_date"], name: "index_contests_on_kind_and_begin_date"
     t.index ["season_id"], name: "index_contests_on_season_id"
+    t.index ["stadium_id"], name: "index_contests_on_stadium_id"
     t.index ["type"], name: "index_contests_on_type"
     t.check_constraint "jsonb_typeof(format_rules) = 'object'::text", name: "contest_format_is_object"
     t.check_constraint "type IS NOT NULL AND kind IS NOT NULL AND type::text = 'Game'::text AND kind::text = 'game'::text OR type IS NULL AND kind::text IS DISTINCT FROM 'game'::text", name: "contest_game_type"
@@ -1369,6 +1375,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_030000) do
   add_foreign_key "contestants", "campaigns"
   add_foreign_key "contestants", "contests"
   add_foreign_key "contests", "seasons"
+  add_foreign_key "contests", "stadiums"
   add_foreign_key "contracts", "organizations"
   add_foreign_key "contracts", "players"
   add_foreign_key "contracts", "teams"
