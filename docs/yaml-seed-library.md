@@ -219,6 +219,8 @@ Player records can supply `first_name`, `last_name`, and `nicknames`, which are 
 
 Sequence lookups match a Player code part against the Figure's short or sort name with punctuation folded to underscores. `HART`, `HART_JOSH`, and `DE_LA_CRUZ_ELLY` all resolve through these name forms.
 
+Business ties, practice relationships, attributed statements and their Attestations import as typed claims; see [Figure connections](figure-connections.md#seeds).
+
 ## Displayed names from Rizz
 
 Migration `20261107180000` adds `rizz_names` and a feed cursor for each display purpose. These projections remain separate from Figure source fields. Profiles, search, and games read the local projections without making Rizz requests while rendering.

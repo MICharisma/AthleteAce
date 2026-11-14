@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_010000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -146,6 +146,71 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
     t.check_constraint "byte_size > 0", name: "asset_file_not_empty"
     t.check_constraint "sha256::text ~ '^[a-f0-9]{64}$'::text", name: "asset_sha256_format"
     t.check_constraint "subject_type::text = ANY (ARRAY['Logo'::character varying, 'Uniform'::character varying, 'UniformPiece'::character varying]::text[])", name: "asset_subject_type"
+  end
+
+  create_table "attestations", force: :cascade do |t|
+    t.string "claim_type", null: false
+    t.bigint "claim_id", null: false
+    t.string "content_form", null: false
+    t.text "body"
+    t.string "url"
+    t.string "media_url"
+    t.text "excerpt"
+    t.string "locator"
+    t.bigint "author_id"
+    t.string "author_name"
+    t.string "source_title"
+    t.string "publisher"
+    t.string "published_on"
+    t.datetime "captured_at"
+    t.text "context"
+    t.bigint "entered_by_id"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_attestations_on_author_id"
+    t.index ["claim_type", "claim_id"], name: "index_attestations_on_claim"
+    t.index ["entered_by_id"], name: "index_attestations_on_entered_by_id"
+    t.index ["entity_code"], name: "index_attestations_on_entity_code", unique: true
+    t.check_constraint "claim_type::text = ANY (ARRAY['FigureBusinessRelationship'::character varying, 'FigurePracticeRelationship'::character varying, 'AttributedStatement'::character varying]::text[])", name: "attestations_claim_type"
+    t.check_constraint "content_form::text = ANY (ARRAY['text'::character varying, 'link'::character varying, 'image'::character varying, 'video'::character varying]::text[])", name: "attestations_content_form"
+  end
+
+  create_table "attributed_statements", force: :cascade do |t|
+    t.bigint "figure_id", null: false
+    t.string "attribution_kind", null: false
+    t.text "text", null: false
+    t.bigint "topic_id"
+    t.bigint "figure_practice_relationship_id"
+    t.bigint "staff_tenure_id"
+    t.bigint "observer_id"
+    t.string "observer_name"
+    t.string "statement_date"
+    t.text "context"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_attributed_statements_on_entity_code", unique: true
+    t.index ["figure_id"], name: "index_attributed_statements_on_figure_id"
+    t.index ["figure_practice_relationship_id"], name: "index_attributed_statements_on_figure_practice_relationship_id"
+    t.index ["observer_id"], name: "index_attributed_statements_on_observer_id"
+    t.index ["staff_tenure_id"], name: "index_attributed_statements_on_staff_tenure_id"
+    t.index ["topic_id"], name: "index_attributed_statements_on_topic_id"
+    t.check_constraint "attribution_kind::text = ANY (ARRAY['direct_quote'::character varying, 'attributed_paraphrase'::character varying, 'self_stated_value'::character varying, 'observer_characterization'::character varying]::text[])", name: "attributed_statements_attribution_kind"
+  end
+
+  create_table "businesses", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "url"
+    t.integer "founded_year"
+    t.text "description"
+    t.string "entity_code", null: false
+    t.jsonb "source", default: {}, null: false
+    t.jsonb "details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_businesses_on_entity_code", unique: true
+    t.index ["name"], name: "index_businesses_on_name"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -423,6 +488,49 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
     t.string "entity_code"
     t.index ["entity_code"], name: "index_federations_on_entity_code", unique: true
     t.index ["seed_version"], name: "index_federations_on_seed_version"
+  end
+
+  create_table "figure_business_relationships", force: :cascade do |t|
+    t.bigint "figure_id", null: false
+    t.bigint "business_id", null: false
+    t.string "predicate", null: false
+    t.string "start_date"
+    t.string "end_date"
+    t.string "temporal_state", default: "unknown", null: false
+    t.string "as_of_date"
+    t.string "compensation", default: "unknown", null: false
+    t.text "compensation_description"
+    t.string "vehicle_name"
+    t.text "context"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_figure_business_relationships_on_business_id"
+    t.index ["entity_code"], name: "index_figure_business_relationships_on_entity_code", unique: true
+    t.index ["figure_id"], name: "index_figure_business_relationships_on_figure_id"
+    t.check_constraint "compensation::text = ANY (ARRAY['documented_paid'::character varying, 'documented_unpaid'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_compensation"
+    t.check_constraint "predicate::text = ANY (ARRAY['founded'::character varying, 'owns'::character varying, 'invests_in'::character varying, 'endorses'::character varying, 'promotes'::character varying, 'sponsored_by'::character varying]::text[])", name: "figure_business_relationships_predicate"
+    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_temporal_state"
+  end
+
+  create_table "figure_practice_relationships", force: :cascade do |t|
+    t.bigint "figure_id", null: false
+    t.bigint "protocol_id"
+    t.string "predicate", null: false
+    t.text "interpretation"
+    t.string "start_date"
+    t.string "end_date"
+    t.string "temporal_state", default: "unknown", null: false
+    t.string "as_of_date"
+    t.text "context"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_figure_practice_relationships_on_entity_code", unique: true
+    t.index ["figure_id"], name: "index_figure_practice_relationships_on_figure_id"
+    t.index ["protocol_id"], name: "index_figure_practice_relationships_on_protocol_id"
+    t.check_constraint "predicate::text = ANY (ARRAY['participates_in'::character varying, 'recommends'::character varying, 'teaches'::character varying, 'endorses'::character varying]::text[])", name: "figure_practice_relationships_predicate"
+    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_practice_relationships_temporal_state"
   end
 
   create_table "figures", force: :cascade do |t|
@@ -832,6 +940,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
     t.check_constraint "parent_id IS NULL OR parent_id <> id", name: "positions_are_not_their_own_parent"
   end
 
+  create_table "practice_connections", force: :cascade do |t|
+    t.bigint "figure_practice_relationship_id", null: false
+    t.bigint "practice_id", null: false
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_practice_connections_on_entity_code", unique: true
+    t.index ["figure_practice_relationship_id", "practice_id"], name: "index_practice_connections_uniquely", unique: true
+    t.index ["figure_practice_relationship_id"], name: "index_practice_connections_on_figure_practice_relationship_id"
+    t.index ["practice_id"], name: "index_practice_connections_on_practice_id"
+  end
+
   create_table "practice_reviews", force: :cascade do |t|
     t.bigint "ace_id", null: false
     t.string "game_type", null: false
@@ -849,6 +969,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
     t.index ["ace_id", "game_type", "subject_type", "subject_id", "target_type", "target_id"], name: "index_practice_reviews_on_identity", unique: true
     t.index ["ace_id"], name: "index_practice_reviews_on_ace_id"
     t.index ["last_attempt_id"], name: "index_practice_reviews_on_last_attempt_id"
+  end
+
+  create_table "practices", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_practices_on_entity_code", unique: true
+    t.index ["name"], name: "index_practices_on_name"
+  end
+
+  create_table "protocols", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.text "routine"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_protocols_on_entity_code", unique: true
+    t.index ["name"], name: "index_protocols_on_name"
   end
 
   create_table "quests", force: :cascade do |t|
@@ -1248,6 +1389,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
     t.check_constraint "winner_id IS NOT NULL OR player_id IS NOT NULL", name: "title_awards_have_a_recipient"
   end
 
+  create_table "topics", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_topics_on_entity_code", unique: true
+    t.index ["name"], name: "index_topics_on_name", unique: true
+  end
+
   create_table "transaction_players", force: :cascade do |t|
     t.bigint "transaction_id", null: false
     t.bigint "player_id", null: false
@@ -1361,6 +1512,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
   add_foreign_key "appearances", "contestants"
   add_foreign_key "appearances", "players"
   add_foreign_key "appearances", "stints"
+  add_foreign_key "attestations", "aces", column: "entered_by_id"
+  add_foreign_key "attestations", "figures", column: "author_id"
+  add_foreign_key "attributed_statements", "figure_practice_relationships"
+  add_foreign_key "attributed_statements", "figures"
+  add_foreign_key "attributed_statements", "figures", column: "observer_id"
+  add_foreign_key "attributed_statements", "staff_tenures"
+  add_foreign_key "attributed_statements", "topics"
   add_foreign_key "campaigns", "cities"
   add_foreign_key "campaigns", "conferences"
   add_foreign_key "campaigns", "divisions"
@@ -1383,6 +1541,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
   add_foreign_key "credit_entries", "credit_accounts"
   add_foreign_key "divisions", "conferences"
   add_foreign_key "divisions", "leagues"
+  add_foreign_key "figure_business_relationships", "businesses"
+  add_foreign_key "figure_business_relationships", "figures"
+  add_foreign_key "figure_practice_relationships", "figures"
+  add_foreign_key "figure_practice_relationships", "protocols"
   add_foreign_key "follows", "aces"
   add_foreign_key "game_attempts", "aces"
   add_foreign_key "game_attempts", "game_rounds"
@@ -1424,6 +1586,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
   add_foreign_key "position_assignments", "positions"
   add_foreign_key "positions", "positions", column: "parent_id"
   add_foreign_key "positions", "sports"
+  add_foreign_key "practice_connections", "figure_practice_relationships", on_delete: :cascade
+  add_foreign_key "practice_connections", "practices"
   add_foreign_key "practice_reviews", "aces"
   add_foreign_key "practice_reviews", "game_attempts", column: "last_attempt_id", on_delete: :cascade
   add_foreign_key "quests", "aces", column: "created_by_id", on_delete: :nullify

@@ -8,6 +8,14 @@ class Figure < ApplicationRecord
 
   has_many :players, dependent: :restrict_with_error, inverse_of: :figure
   has_many :staff_tenures, dependent: :restrict_with_error
+  has_many :figure_business_relationships, dependent: :restrict_with_error
+  has_many :businesses, -> { distinct }, through: :figure_business_relationships
+  has_many :figure_practice_relationships, dependent: :restrict_with_error
+  has_many :attributed_statements, dependent: :restrict_with_error
+  has_many :observed_statements, class_name: "AttributedStatement", foreign_key: :observer_id,
+    inverse_of: :observer, dependent: :restrict_with_error
+  has_many :authored_attestations, class_name: "Attestation", foreign_key: :author_id,
+    inverse_of: :author, dependent: :restrict_with_error
   has_one :rizz_sync, dependent: :delete
   has_many :rizz_names, dependent: :delete_all
 

@@ -47,6 +47,8 @@ class Ace < ApplicationRecord
   has_many :game_rounds, dependent: :destroy
   has_many :created_quests, class_name: "Quest", foreign_key: :created_by_id, inverse_of: :created_by, dependent: :nullify
   has_many :practice_reviews, dependent: :destroy
+  has_many :entered_attestations, class_name: "Attestation", foreign_key: :entered_by_id,
+    inverse_of: :entered_by, dependent: :nullify
   has_many :warnings, class_name: "PostingWarning"
   has_many :mutes
   has_many :moderator_notes
