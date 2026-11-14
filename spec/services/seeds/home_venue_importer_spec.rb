@@ -36,7 +36,7 @@ RSpec.describe Seeds::HomeVenueImporter do
     registry = MICharismaSeeders::SequenceRegistry.read(library.join("entity_sequences.yaml"))
     catalog = Seeds::LibraryImporter.new(registry: registry)
     # Home-venue geography only; game-venue batches add their own off-site places.
-    paths = Dir.glob(library.join("**/*.yaml")).reject { |path| path.end_with?("entity_sequences.yaml") || path.include?("/nhl_venues_2026/") }
+    paths = Dir.glob(library.join("**/*.yaml")).reject { |path| path.end_with?("entity_sequences.yaml") || path.include?("/nhl_venues_2026/") || path.include?("/f1_2026/") }
     campaign_codes = bindings.map { |entry| entry.fetch("campaign") }
     types = %w[Country State City Stadium Sport League Federation Year Season Team]
     selected = catalog.read(paths).select { |row| types.include?(row.type) || (row.type == "Campaign" && campaign_codes.include?(row.code)) }
