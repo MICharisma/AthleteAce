@@ -1,0 +1,17 @@
+<% show_figure = local_assigns.fetch(:show_figure, false) %>
+<article class="connection-card" id="<%= dom_id(claim, :public_card_for) %>">
+  <p class="eyebrow"><%= practice_predicate_label(claim) %></p>
+  <h3>
+    <% if show_figure %><%= link_to claim.figure.display_name, figure_path(claim.figure) %><% end %>
+    <% if claim.protocol %><%= " · " if show_figure %><%= link_to claim.protocol.name, protocol_path(claim.protocol) %><% elsif !show_figure %>General practice<% end %>
+  </h3>
+  <% if claim.practices.any? %>
+    <p><%= show_figure ? "#{claim.figure.display_name}'s sourced interpretation" : "Connected" %><%= claim.protocol ? " with" : ":" %> <%= safe_join(claim.practices.map { link_to it.name, practice_path(it), class: "connection-link" }, ", ") %></p>
+  <% elsif claim.protocol %>
+    <p class="round-caption">No practice interpretation recorded.</p>
+  <% end %>
+  <% if claim.interpretation %><blockquote><%= claim.interpretation %></blockquote><% end %>
+  <p class="round-caption"><%= relationship_period(claim) %></p>
+  <% if claim.context %><p><%= claim.context %></p><% end %>
+  <%= render "figure_connections/attestations", attestations: claim.attestations %>
+</article>

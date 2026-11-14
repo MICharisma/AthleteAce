@@ -1,0 +1,8 @@
+<% content_for :title, @practice.name %>
+<%= link_to "All practices", practices_path, class: "tool-link" %>
+<header class="browse-header"><div><p class="eyebrow">Practice</p><h1 class="page-title"><%= @practice.name %></h1><% if @practice.description %><p><%= @practice.description %></p><% end %>
+  <p class="round-caption">People whose own sourced associations name <%= @practice.name.downcase %>, with the protocol they connect it to.</p></div></header>
+<%= filter_links :predicate, FigureConnectionsHelper::PRACTICE_PREDICATES.map { |value, label| [ label, value ] }, @predicate, label: "Connection", base: { period: @period } %>
+<%= filter_links :period, period_options, @period, label: "When", base: { predicate: @predicate } %>
+<%= render "figure_connections/people", people: @people, claims_by_person: @claims_by_person, card: "practice_card",
+      empty: (@predicate || @period) ? "No published connections match these filters." : "No published connections name #{@practice.name} yet." %>

@@ -8,6 +8,8 @@ City and state pages label their birth-place player associations **Players born 
 
 Year pages link to recorded seasons. Season pages retain status, dates, teams, campaigns, comments, and seed metadata. The season card and its champion have separate links. Season, campaign, and league overviews distinguish competitions from individual games. Competition pages show their format, titles, and player appearances when recorded, and link to their games.
 
+Browse has a **People and interests** group linking the Business, Practice, Protocol and Topic pages described in [Figure connections](figure-connections.md#public-pages). Organization pages remain sports-side and don't list business ties.
+
 Organization pages retain current teams, dated affiliation history, and sourced staff appointments. Affiliation, membership, contract, and activation pages retain their dates and related entities. Stored JSON details wrap within their panels.
 
 [League memberships](league-memberships.md) support leagues with no groups, conferences without divisions, and divisions with or without conferences. Membership pages always show the league. Conference and division team sections show active affiliations; membership history retains inactive records.

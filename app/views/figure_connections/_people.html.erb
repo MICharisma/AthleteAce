@@ -1,0 +1,12 @@
+<% if people.empty? %>
+  <section class="round-panel"><p><%= empty %></p></section>
+<% else %>
+  <p class="round-caption"><%= pluralize @pagy.count, "person" %></p>
+  <% people.each do |person| %>
+    <section class="round-panel connection-person" id="<%= dom_id(person, :connections_for) %>">
+      <h2 class="profile-section-title"><%= link_to person.display_name, figure_path(person) %></h2>
+      <div class="connection-cards"><% claims_by_person.fetch(person.id, []).each do |claim| %><%= render "figure_connections/#{card}", claim: claim %><% end %></div>
+    </section>
+  <% end %>
+  <%== @pagy.series_nav if @pagy.pages > 1 %>
+<% end %>

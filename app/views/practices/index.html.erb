@@ -1,0 +1,23 @@
+<% content_for :title, "Practices" %>
+<%= browse_header "Practices" do %><span class="round-caption"><%= pluralize @practices.size, "practice" %></span><% end %>
+<p class="round-caption">Each connection is one person's own sourced association. A practice named by one person isn't assigned to anyone else's routine.</p>
+<section class="round-panel">
+  <%= form_with url: practices_path, method: :get, class: "people-filters" do %>
+    <fieldset class="claim-practices"><legend>Practices</legend>
+      <% @practices.each do |practice| %><label><%= check_box_tag "practice_ids[]", practice.id, @selected_ids.include?(practice.id), id: "practice_filter_#{practice.id}" %> <%= practice.name %></label><% end %>
+    </fieldset>
+    <div><%= label_tag :protocol_id, "Protocol" %><%= select_tag :protocol_id, options_from_collection_for_select(@protocols, :id, :name, @protocol&.id), include_blank: "Any protocol", class: "account-input" %></div>
+    <div><%= label_tag :predicate, "Connection" %><%= select_tag :predicate, options_for_select(FigureConnectionsHelper::PRACTICE_PREDICATES.invert, @predicate), include_blank: "Any connection", class: "account-input" %></div>
+    <div><%= label_tag :period, "When" %><%= select_tag :period, options_for_select(period_options, @period), include_blank: "Any time", class: "account-input" %></div>
+    <div class="page-actions"><%= submit_tag "Show people", name: nil, class: "tool-button" %><% if @filtering %><%= link_to "Clear", practices_path, class: "tool-link" %><% end %></div>
+  <% end %>
+</section>
+<% if @filtering %>
+  <%= render "figure_connections/people", people: @people, claims_by_person: @claims_by_person, card: "practice_card", empty: "No published practice connections match these filters." %>
+<% elsif @practices.empty? %>
+  <section class="round-panel"><p>No sourced practices have been recorded yet.</p></section>
+<% else %>
+  <ul class="wallet-history">
+    <% @practices.each do |practice| %><li><%= link_to practice.name, practice_path(practice) %> <span class="round-caption">· <%= pluralize @people_counts.fetch(practice.id), "person" %></span></li><% end %>
+  </ul>
+<% end %>

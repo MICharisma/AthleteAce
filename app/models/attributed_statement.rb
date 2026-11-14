@@ -20,6 +20,13 @@ class AttributedStatement < ApplicationRecord
   validates :entity_code, uniqueness: true
   validate :attribution_is_consistent
 
+  scope :by_recency, -> { order(Arel.sql("statement_date DESC NULLS LAST"), :entity_code) }
+
+  # Who said it: the Figure, unless an observer is describing them.
+  def speaker_name
+    observer_characterization? ? observer&.name || observer_name : figure.name
+  end
+
   private
 
   def review_targets

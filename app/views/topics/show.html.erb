@@ -1,0 +1,4 @@
+<% content_for :title, @topic.name %>
+<%= link_to "All topics", topics_path, class: "tool-link" %>
+<header class="browse-header"><div><p class="eyebrow">Topic</p><h1 class="page-title"><%= @topic.name %></h1><% if @topic.description %><p><%= @topic.description %></p><% end %></div></header>
+<%= render "figure_connections/people", people: @people, claims_by_person: @claims_by_person, card: "statement_card", empty: "No published statements on #{@topic.name} yet." %>

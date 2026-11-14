@@ -12,6 +12,7 @@ module IconHelper
     strength: "barbell", rating: "list-numbers", spectrum: "gauge", membership: "id-badge-2",
     year: "calendar", season: "calendar", contest: "medal", contract: "file-certificate",
     activation: "player-play", organization: "shield", position: "shirt-sport",
+    business: "building-community", practice: "heart", protocol: "repeat", topic: "speakerphone",
     chevron_down: "chevron-down", search: "search", shuffle: "arrows-shuffle"
   }.freeze
 

@@ -1,0 +1,9 @@
+<% content_for :title, @business.name %>
+<%= link_to "All businesses", businesses_path, class: "tool-link" %>
+<header class="browse-header"><div><p class="eyebrow">Business</p><h1 class="page-title"><%= @business.name %></h1>
+  <p><%= [ ("Founded #{@business.founded_year}" if @business.founded_year), @business.description ].compact.join(" · ") %></p>
+  <% if @business.url.present? %><%= external_link_to @business.url, class: "tool-link", rel: "noopener noreferrer nofollow" %><% end %></div></header>
+<%= filter_links :predicate, FigureConnectionsHelper::BUSINESS_PREDICATES.map { |value, label| [ label, value ] }, @predicate, label: "Relationship", base: { period: @period } %>
+<%= filter_links :period, period_options, @period, label: "When", base: { predicate: @predicate } %>
+<%= render "figure_connections/people", people: @people, claims_by_person: @claims_by_person, card: "business_card",
+      empty: (@predicate || @period) ? "No published connections match these filters." : "No published connections to #{@business.name} yet." %>

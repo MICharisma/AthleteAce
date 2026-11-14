@@ -11,7 +11,7 @@ RSpec.describe "Figure career pages", type: :system do
     create :staff_tenure, :broadcaster, figure: player.figure, organization: organization
 
     visit player_path(player)
-    click_link "Coaching, staff and broadcasting history"
+    click_link "Career, connections and values"
 
     expect(page).to have_current_path(figure_path(player.figure), ignore_query: true)
     expect(page).to have_css("h1", text: /Jordan Reyes/i)
@@ -22,6 +22,6 @@ RSpec.describe "Figure career pages", type: :system do
     click_link "Athletic profile: Basketball"
 
     expect(page).to have_current_path(player_path(player), ignore_query: true)
-    expect(page).to have_link("Coaching, staff and broadcasting history", href: figure_path(player.figure))
+    expect(page).to have_link("Career, connections and values", href: figure_path(player.figure))
   end
 end

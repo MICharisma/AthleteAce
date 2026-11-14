@@ -1,6 +1,6 @@
 # Figure connections: businesses, practices, statements and evidence
 
-Figures can carry sourced connections to businesses, wellness or skill practices, and their own words. Each connection is a typed claim with a stable entity code. Evidence lives in `Attestation` records, not in a claim-level `source` column. This is the model layer from AA-33, AA-104, AA-34, AA-215 and AA-222, with admin review and publication from AA-217. Public pages (AA-218) come next.
+Figures can carry sourced connections to businesses, wellness or skill practices, and their own words. Each connection is a typed claim with a stable entity code. Evidence lives in `Attestation` records, not in a claim-level `source` column. This is the model layer from AA-33, AA-104, AA-34, AA-215 and AA-222, with admin review and publication from AA-217 and public pages from AA-218.
 
 Dates on every claim use the [partial-date rules](figures-and-staff.md#appointments): `YYYY`, `YYYY-MM`, `YYYY-MM-DD` or null for unknown. The `PartialDates` concern validates them and rejects a range whose start falls entirely after its end.
 
@@ -143,6 +143,54 @@ Publication also requires `publication_problems` to be empty: the claim must be 
 - **Claim page:** a source preview, the publication problems, the review actions and the decision history.
 
 **Businesses, practices, protocols & topics** (`/admin/claim-identities`) creates those records, building a code from the name when none is given. There is no edit: give a materially different method its own Protocol so approved claims keep the meaning they were reviewed with.
+
+## Public pages
+
+Every public page reads `published` claims and their Attestations only, including for admins. Pending, rejected and withdrawn claims never appear in cards, counts or lists. A claim that changes after publication disappears until it is published again.
+
+**Figure pages** have three sections, in this order after appointments: **Businesses**, **Practices**, and **Values and wisdom**. Entries sort by start date (statement date for statements), most recent first, with unknown dates last and the entity code as a tie-breaker. An empty section says no sourced material has been recorded yet. A note separates sourced connections from fan ratings and posts and says they don't imply beliefs, medical effects or a team's position.
+
+Each card shows:
+
+| Card | Shows |
+| --- | --- |
+| Business | The predicate (Founded, Owns, Invests in, Endorses, Promotes, Sponsored by), the period, compensation for endorsements, promotions and sponsorships (Paid (documented), Unpaid (documented) or Compensation unknown), the investment vehicle and context. |
+| Practice | The predicate, the Protocol (or General practice), every Practice this association names with the Figure's own explanation, and the period. A protocol-only claim says no practice interpretation was recorded. |
+| Statement | The attribution kind and Topic, the text (direct quotes in quotation marks), who said it, the statement date, the role at the time, and the linked practice association when that is published. |
+
+Periods never treat a missing end date as current:
+
+| State | Label |
+| --- | --- |
+| `reported_current` | Reported current as of the as-of date, since the start date if known. |
+| `historical` | The known period. |
+| `planned` | Planned, from the start date if known. |
+| `unknown` | Current status unknown, with any known dates. |
+
+A founding shows only its date.
+
+Each card's **sources** expand to its Attestations:
+
+- the form, the original author (a Figure link or the credited name, otherwise "Author unknown"), the source title and publisher, and the publication date or "Publication date unknown"
+- the text or excerpt, the segment or location, and the context
+- links that open the source in a new tab; images with a media URL display with the excerpt as alt text and caption
+
+The Ace who entered an Attestation is never shown publicly.
+
+**Player pages** link to the Figure page as "Career, connections and values" and show published counts that link to each section.
+
+**Reverse pages** list each person once, alphabetically by name then code, 20 per page, with all of their matching published claims:
+
+| Page | Lists |
+| --- | --- |
+| `/businesses` | Businesses with published ties, with distinct-person counts and a predicate filter. |
+| `/businesses/:id` | People and their ties, filtered by predicate and period. |
+| `/practices` | Practices with person counts. Its filter form combines Practices, Protocol, connection and period; an association naming several selected Practices appears once. |
+| `/practices/:id` | Associations naming that Practice, with their Protocols, filtered by connection and period. |
+| `/protocols`, `/protocols/:id` | The method and each person's own association, with the Practices that person connects to it. |
+| `/topics`, `/topics/:id` | Attributed statements, grouped by person. |
+
+Organization pages don't list business ties. An empty filter says that nothing matches.
 
 ## Seeds
 

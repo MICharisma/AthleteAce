@@ -55,7 +55,7 @@ The catalog and published schemas use the Figure contract. The Steve Kerr exampl
 
 ## Businesses, practices and statements
 
-Figures' sourced business ties, practices, statements and supporting evidence are described in [Figure connections](figure-connections.md).
+Figure pages show published business ties, practices and attributed statements in **Businesses**, **Practices** and **Values and wisdom** sections, each with its sources. A coach or broadcaster without a Player gets the same sections. Player pages link to them, with counts when there is published content. See [Figure connections](figure-connections.md#public-pages).
 
 ## Rizz sync
 

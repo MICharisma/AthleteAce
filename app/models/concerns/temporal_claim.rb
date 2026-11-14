@@ -13,6 +13,10 @@ module TemporalClaim
     enum :temporal_state, STATES.index_with(&:itself), validate: true
     validates :entity_code, presence: true, uniqueness: true
     validate :temporal_state_is_supported
+
+    # Most recent known start first, unknown dates last, codes breaking ties.
+    scope :by_recency, -> { order(Arel.sql("start_date DESC NULLS LAST"), :entity_code) }
+    scope :in_period, ->(period) { period.in?(STATES) ? where(temporal_state: period) : all }
   end
 
   private

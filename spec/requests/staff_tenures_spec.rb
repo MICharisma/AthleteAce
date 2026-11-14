@@ -34,7 +34,7 @@ RSpec.describe "People and staff appointments", type: :request do
     expect(response.body).to include("Athletic profile: #{player.sport.name}", player_path(player), "Assistant coach", "Color commentator")
     expect(response.body).to include("Unknown start to Unknown end")
     get player_path(player)
-    expect(response.body).to include(figure_path(figure), "Coaching, staff and broadcasting history")
+    expect(response.body).to include(figure_path(figure), "Career, connections and values")
   end
 
   it "renders empty staff collections and figures without athletic profiles" do
