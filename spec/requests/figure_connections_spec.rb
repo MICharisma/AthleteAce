@@ -21,16 +21,18 @@ RSpec.describe "Sourced Figure connections", type: :request do
     tie.reload
   end
 
-  it "shows only published claims and their evidence on a Figure page, with honest empty states" do
+  it "shows only published claims and their evidence, without empty sections or explainer text" do
     figure = create :figure, name: "Jordan Reyes"
     get figure_path(figure)
-    expect(response.body).to include("No sourced business connections have been recorded yet.",
-      "No sourced practices have been recorded yet.", "No sourced statements have been recorded yet.")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).not_to include('id="businesses"', 'id="practices"', 'id="values"', "connection-note", "connection-preview")
     published = publish(create(:figure_business_relationship, :paid_sponsorship, figure: figure, business: create(:business, name: "Summit Shoes")))
     create :attestation, claim: create(:figure_business_relationship, figure: figure, business: create(:business, name: "Hidden Co")),
       excerpt: "hidden passage"
     get figure_path(figure)
     expect(response.body).to include("Summit Shoes", "Sponsored by", "Paid (documented)")
+    expect(response.body).to include('id="businesses"')
+    expect(response.body).not_to include('id="practices"', 'id="values"', "connection-note", "connection-preview")
     expect(response.body).not_to include("Hidden Co", "hidden passage")
     published.update! context: "Changed"
     get figure_path(figure)

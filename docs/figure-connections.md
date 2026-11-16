@@ -148,7 +148,7 @@ Publication also requires `publication_problems` to be empty: the claim must be 
 
 Every public page reads `published` claims and their Attestations only, including for admins. Pending, rejected and withdrawn claims never appear in cards, counts or lists. A claim that changes after publication disappears until it is published again.
 
-**Figure pages** have three sections, in this order after appointments: **Businesses**, **Practices**, and **Values and wisdom**. Entries sort by start date (statement date for statements), most recent first, with unknown dates last and the entity code as a tie-breaker. An empty section says no sourced material has been recorded yet. A note separates sourced connections from fan ratings and posts and says they don't imply beliefs, medical effects or a team's position.
+**Figure pages** show **Businesses**, **Practices**, and **Values and wisdom**, in that order after appointments. Empty sections, including appointments, are omitted. Figure pages have no connection-count preview or data explainer text. Entries sort by start date (statement date for statements), most recent first, with unknown dates last and the entity code as a tie-breaker.
 
 Each card shows:
 
