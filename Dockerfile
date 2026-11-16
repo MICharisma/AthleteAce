@@ -11,7 +11,7 @@
 ARG RUBY_VERSION=4.0.7
 
 FROM scratch AS submodules
-ADD https://github.com/MICharisma/athlete_ace_data.git#f81f49a36d7e07bdc453829ab5adb7c6c3482ed2 /db/seeds/athlete_ace_data
+ADD https://github.com/MICharisma/athlete_ace_data.git#16257c6004f1f587635aab6e9d6c58aedcb6daa2 /db/seeds/athlete_ace_data
 ADD https://github.com/mikeymicrophone/micharisma_seeders.git#f1b4b5dd24c9aaed37866fb6b738c36dbbf40b80 /lib/micharisma_seeders
 
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
@@ -48,11 +48,6 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 COPY --from=submodules / /rails/
-
-RUN cp db/seeds/athlete_ace_data/yaml/coverage_2026/visual_assets.yaml /tmp/visual_assets.yaml && \
-    ruby db/seeds/athlete_ace_data/scripts/build_visual_assets.rb --download && \
-    cmp /tmp/visual_assets.yaml db/seeds/athlete_ace_data/yaml/coverage_2026/visual_assets.yaml && \
-    rm /tmp/visual_assets.yaml
 
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/

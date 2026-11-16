@@ -14,16 +14,18 @@ namespace :seeds do
   end
 
   namespace :assets do
-    desc "Verify every imported canonical asset file against its size and SHA-256"
+    desc "Ingest pinned GitHub media into application storage and verify existing files"
+    task import: :environment do
+      counts = { imported: 0, unchanged: 0 }
+      AssetRepresentation.find_each { |asset| counts[asset.ingest_file!] += 1 }
+      puts({ assets: counts }.to_json)
+    end
+
+    desc "Verify every stored canonical asset file against its size and SHA-256"
     task verify: :environment do
-      require "digest"
-      root = Pathname.new(ENV.fetch("SEED_LIBRARY_ROOT", Rails.root.join("db/seeds/athlete_ace_data/yaml").to_s)).parent
       count = 0
       AssetRepresentation.find_each do |asset|
-        path = asset.local_path(root: root)
-        raise "Missing asset: #{path}" unless path.file?
-        raise "Asset size differs: #{path}" unless path.size == asset.byte_size
-        raise "Asset checksum differs: #{path}" unless Digest::SHA256.file(path).hexdigest == asset.sha256
+        asset.verify_file!
         count += 1
       end
       raise "No asset representations imported" if count.zero?
@@ -110,6 +112,7 @@ namespace :seeds do
     puts({ game_venues: game_venues.transform_values(&:length) }.to_json)
     game_venues[:conflicts].each { |conflict| puts conflict.to_json }
     Rake::Task["seeds:current_teams"].invoke
+    Rake::Task["seeds:assets:import"].invoke
   end
 
   desc "Assign players the team they are listed with in their league's latest rostered season"

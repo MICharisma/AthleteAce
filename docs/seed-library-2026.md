@@ -6,7 +6,6 @@ Run these commands from the AthleteAce checkout with its pinned Ruby. The data r
 
 ```sh
 mise exec -- bundle exec rails db:migrate
-mise exec -- ruby db/seeds/athlete_ace_data/scripts/build_visual_assets.rb --download
 mise exec -- bundle exec rails seeds:validate db:seed
 mise exec -- bundle exec rails seeds:coverage seeds:assets:verify
 ```
@@ -15,9 +14,9 @@ The catalog contains current-season source listings for NBA, NFL, MLB, NHL, MLS,
 
 Champions League uses UEFA as its federation jurisdiction. Clubs retain their existing domestic identity, and a recorded competition Campaign makes their number history available to that competition's seasonal lookup.
 
-`seeds:validate` must print positive record and file counts. `seeds:assets:verify` raises on missing, empty, resized, or changed files and also raises if no representations were imported. It prints the number of verified canonical files on success. Image and 3D files are local under the data repository's ignored `media/` directory. The download command creates them on another checkout.
+`seeds:validate` must print positive record and file counts. `db:seed` imports the catalog and then downloads pinned canonical media into Active Storage. `seeds:assets:verify` raises on missing, empty, resized, or changed stored files and also raises if no representations were imported. It prints the number of verified canonical files on success. See [seed media](seed-media.md) for the repository layout and ingestion workflow.
 
-The visual sample contains sourced logos and uniform photographs alongside explicitly illustrative SVG and GLB geometry. The meshes demonstrate representation storage and loading. They are not accurate garment reconstructions. The importer stores file references and checksums; it does not upload files or publish a media endpoint.
+The visual sample contains sourced logos and uniform photographs alongside explicitly illustrative SVG and GLB geometry. The meshes demonstrate representation storage and loading. They are not accurate garment reconstructions. Files come from a pinned commit in the independent public media repository, not from the original providers during deployment. Application storage serves the ingested copies through Active Storage URLs.
 
 ## Refresh public sources
 

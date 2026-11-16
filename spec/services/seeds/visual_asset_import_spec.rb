@@ -15,7 +15,7 @@ RSpec.describe "Visual asset seed import" do
       expect(importer.call([ path ])[:created].size).to eq(2)
       expect(importer.call([ path ])[:conflicts]).to be_empty
       expect(AssetRepresentation.sole.subject).to eq(Logo.sole)
-      expect(AssetRepresentation.sole.local_path.to_s).to end_with("/media/pilot/knicks.png")
+      expect(AssetRepresentation.sole.canonical_path).to eq("media/pilot/knicks.png")
       Logo.sole.update!(name: "Curated logo")
       report = importer.call([ path ])
       expect(report[:conflicts].map { |row| row.fetch(:code) }).to eq([ "NYK-LOGO" ])
