@@ -7,7 +7,7 @@ AthleteAce supports Google alongside email and password. Google sign-in requires
 | `GOOGLE_CLIENT_ID` | The Google web client's client ID |
 | `GOOGLE_CLIENT_SECRET` | The same client's secret |
 
-The sign-in and signup pages show **Continue with Google** only when both variables are present at application boot. Restart the server after changing them. The Rails callback is `/aces/auth/google_oauth2/callback`.
+The sign-in and signup pages, visitor navigation, and guest play prompt show **Continue with Google** only when both variables are present at application boot. Restart the server after changing them. The Rails callback is `/aces/auth/google_oauth2/callback`.
 
 ## Configure the development client
 
@@ -55,3 +55,13 @@ mise exec -- bundle exec rspec spec/requests/google_sign_in_spec.rb spec/request
 The run must execute a positive example count and report zero failures. These tests use OmniAuth's mock provider response while exercising the real request middleware, callback, session, signup form, account linking, suspension checks, and CSRF verifier. They do not prove that a live Google client has been configured.
 
 After client setup, verify a real authorization redirect, complete Google sign-in, and check the intended Ace and saved destination. Keep this provider verification distinct from local mock-based tests. Changing deployed environment variables or releasing this code requires the usual explicit deployment authorization.
+
+## Reuse the compact button
+
+Render `google_sign_in_button` in ERB. It returns no markup when Google is unavailable, so a public entry point can retain its email sign-in link:
+
+```erb
+<%= google_sign_in_button || link_to("Sign In", new_ace_session_path) %>
+```
+
+The button contains the Google G and the AthleteAce icon. Its accessible name includes AthleteAce. The navigation hides the text on narrow screens. It uses the existing saved-location and signup-completion flow.
