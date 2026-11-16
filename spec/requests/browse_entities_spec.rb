@@ -17,6 +17,24 @@ RSpec.describe "Browse entity pages", type: :request do
     Nokogiri::HTML(response.body)
   end
 
+  it "uses selected stored logos for league teams and keeps legacy URLs as a fallback" do
+    team.update! logo_url: "https://example.com/old-logo.png"
+    legacy = create :team, league: league, logo_url: "https://example.com/legacy-logo.png"
+    logo = Logo.create! owner: team, name: "Herons mark"
+    asset = AssetRepresentation.create! subject: logo, entity_code: "HERONS-LOGO-PNG", file_format: "png", view: "default",
+      canonical_path: "media/herons.png", content_type: "image/png", byte_size: 1, sha256: "a" * 64
+    asset.file.attach io: StringIO.new("x"), filename: "herons.png", content_type: "image/png", identify: false
+    team.update! primary_logo: logo
+    get league_path(league)
+    teams = document.at_css ".related-section.teams"
+    expect(teams.at_css("#team_#{team.id} .lazy-logo-container")["data-lazy-logo-url-value"]).to include "herons.png"
+    expect(teams.at_css("#team_#{legacy.id} .lazy-logo-container")["data-lazy-logo-url-value"]).to eq legacy.logo_url
+    expect(teams.at_css("#team_#{team.id}")["href"]).to eq team_path(team)
+    expect(teams.text).to include team.name, legacy.name
+  ensure
+    asset&.file&.purge
+  end
+
   it "renders each remaining sports, place and time detail with one title and working related links" do
     membership = create :membership, team: team, division: division
     player = create :player, team: team, birth_city: city

@@ -44,6 +44,8 @@ After file ingestion, `Seeds::PrimaryMediaImporter` reads `sources/nba_media_202
 
 Player pages show their selected Figure portrait and the selected logos in their breadcrumbs. Logo links reveal their text on hover or focus; devices without hover keep labels visible. Breadcrumbs without a sourced logo retain their icon and label. PNG renditions are preferred over SVG originals for inline logo display because Active Storage serves SVG files as downloads.
 
+Related collections, including the teams on a league page, use each entity's selected stored logo and fall back to its legacy logo URL when no stored logo is selected. Explicit image attributes, such as player photo URLs, keep their existing behavior.
+
 ## NBA and LeBron media batch
 
 The November 15, 2026 capture loads all 480 team-logo variants listed in the recorded NBA feed, one official NBA league mark, and LeBron's NBA and ESPN headshots. Two Knicks files reuse existing pilot representations. A PNG rendition of the league SVG is separately identified as rasterized source artwork. Together with the earlier pilot, application storage contains 506 canonical files. The capture establishes image availability on that date, not logo introduction dates or historical uniform accuracy.
