@@ -111,3 +111,5 @@ Dependabot also remains enabled for dependency update proposals.
 Revisit automated tests and security scans during launch preparation. The previous
 CI setup can be recovered from Git history; include Tailwind compilation before
 browser tests when rebuilding it. This change does not configure deployment.
+
+Transactional mail setup and development capture: [Configure transactional email](docs/email.md).

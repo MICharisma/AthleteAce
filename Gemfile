@@ -87,3 +87,5 @@ gem "ransack", "~> 5.0"
 gem "stripe"
 gem "csv"
 gem "rizz-client", git: "https://github.com/MICharisma/rizz.git", ref: "5f64cfea8e3e044a1696f36cc77ac55bbc9dfedd", glob: "clients/rizz-client/*.gemspec"
+
+gem "postshiba", git: "https://github.com/postshiba/postshiba-ruby.git", ref: "9c2c5f3585c196f663495b7e2adcd5b9341fdf55"
