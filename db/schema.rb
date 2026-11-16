@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_040000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -173,7 +173,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.index ["subject_type", "subject_id"], name: "index_asset_representations_on_subject"
     t.check_constraint "byte_size > 0", name: "asset_file_not_empty"
     t.check_constraint "sha256::text ~ '^[a-f0-9]{64}$'::text", name: "asset_sha256_format"
-    t.check_constraint "subject_type::text = ANY (ARRAY['Logo'::character varying, 'Uniform'::character varying, 'UniformPiece'::character varying]::text[])", name: "asset_subject_type"
+    t.check_constraint "subject_type::text = ANY (ARRAY['Logo'::character varying, 'Uniform'::character varying, 'UniformPiece'::character varying, 'Figure'::character varying]::text[])", name: "asset_subject_type"
   end
 
   create_table "attestations", force: :cascade do |t|
@@ -322,8 +322,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_conferences_on_entity_code", unique: true
     t.index ["league_id"], name: "index_conferences_on_league_id"
+    t.index ["primary_logo_id"], name: "index_conferences_on_primary_logo_id"
     t.index ["seed_version"], name: "index_conferences_on_seed_version"
   end
 
@@ -488,9 +490,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
     t.bigint "league_id", null: false
+    t.bigint "primary_logo_id"
     t.index ["conference_id"], name: "index_divisions_on_conference_id"
     t.index ["entity_code"], name: "index_divisions_on_entity_code", unique: true
     t.index ["league_id"], name: "index_divisions_on_league_id"
+    t.index ["primary_logo_id"], name: "index_divisions_on_primary_logo_id"
     t.index ["seed_version"], name: "index_divisions_on_seed_version"
   end
 
@@ -590,7 +594,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.string "sort_name", null: false
     t.string "name_segments", default: [], null: false, array: true
     t.string "alternate_names", default: [], null: false, array: true
+    t.bigint "primary_portrait_id"
     t.index ["entity_code"], name: "index_figures_on_entity_code", unique: true
+    t.index ["primary_portrait_id"], name: "index_figures_on_primary_portrait_id"
     t.index ["sort_name"], name: "index_figures_on_sort_name"
   end
 
@@ -734,14 +740,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_leagues_on_entity_code", unique: true
     t.index ["jurisdiction_type", "jurisdiction_id"], name: "index_leagues_on_jurisdiction"
+    t.index ["primary_logo_id"], name: "index_leagues_on_primary_logo_id"
     t.index ["seed_version"], name: "index_leagues_on_seed_version"
     t.index ["sport_id"], name: "index_leagues_on_sport_id"
   end
 
   create_table "logos", force: :cascade do |t|
-    t.bigint "team_id", null: false
+    t.bigint "owner_id", null: false
     t.string "name", null: false
     t.string "role"
     t.date "start_date"
@@ -752,9 +760,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.string "entity_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "owner_type", null: false
     t.index ["entity_code"], name: "index_logos_on_entity_code", unique: true
-    t.index ["team_id"], name: "index_logos_on_team_id"
+    t.index ["owner_type", "owner_id"], name: "index_logos_on_owner_type_and_owner_id"
     t.check_constraint "NOT ongoing OR end_date IS NULL", name: "logos_ongoing_without_end"
+    t.check_constraint "owner_type::text = ANY (ARRAY['Sport'::character varying, 'League'::character varying, 'Conference'::character varying, 'Division'::character varying, 'Team'::character varying]::text[])", name: "logo_owner_type"
     t.check_constraint "start_date IS NULL OR end_date IS NULL OR end_date >= start_date", name: "logos_ordered_dates"
   end
 
@@ -1288,7 +1298,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_sports_on_entity_code", unique: true
+    t.index ["primary_logo_id"], name: "index_sports_on_primary_logo_id"
     t.index ["seed_version"], name: "index_sports_on_seed_version"
   end
 
@@ -1407,8 +1419,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
     t.string "text_color"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_teams_on_entity_code", unique: true
     t.index ["league_id"], name: "index_teams_on_league_id"
+    t.index ["primary_logo_id"], name: "index_teams_on_primary_logo_id"
     t.index ["seed_version"], name: "index_teams_on_seed_version"
     t.index ["stadium_id"], name: "index_teams_on_stadium_id"
   end
@@ -1573,6 +1587,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
   add_foreign_key "catalog_edits", "aces", column: "actor_id", on_delete: :nullify
   add_foreign_key "cities", "states"
   add_foreign_key "conferences", "leagues"
+  add_foreign_key "conferences", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "contest_games", "contests"
   add_foreign_key "contest_games", "contests", column: "game_id"
   add_foreign_key "contestants", "campaigns"
@@ -1586,10 +1601,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
   add_foreign_key "credit_entries", "credit_accounts"
   add_foreign_key "divisions", "conferences"
   add_foreign_key "divisions", "leagues"
+  add_foreign_key "divisions", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "figure_business_relationships", "businesses"
   add_foreign_key "figure_business_relationships", "figures"
   add_foreign_key "figure_practice_relationships", "figures"
   add_foreign_key "figure_practice_relationships", "protocols"
+  add_foreign_key "figures", "asset_representations", column: "primary_portrait_id", on_delete: :nullify
   add_foreign_key "follows", "aces"
   add_foreign_key "game_attempts", "aces"
   add_foreign_key "game_attempts", "game_rounds"
@@ -1603,8 +1620,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
   add_foreign_key "highlights", "quests"
   add_foreign_key "jersey_number_assignments", "players"
   add_foreign_key "jersey_number_assignments", "teams"
+  add_foreign_key "leagues", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "leagues", "sports"
-  add_foreign_key "logos", "teams"
   add_foreign_key "memberships", "conferences"
   add_foreign_key "memberships", "divisions"
   add_foreign_key "memberships", "leagues"
@@ -1660,6 +1677,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
   add_foreign_key "shout_outs", "teams", on_delete: :nullify
   add_foreign_key "sign_in_events", "aces", on_delete: :cascade
   add_foreign_key "spectrums", "aces", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "sports", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "stadiums", "cities"
   add_foreign_key "staff_tenures", "figures"
   add_foreign_key "staff_tenures", "organizations"
@@ -1673,6 +1691,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_16_020834) do
   add_foreign_key "stripe_purchases", "aces"
   add_foreign_key "stripe_purchases", "shout_outs"
   add_foreign_key "teams", "leagues"
+  add_foreign_key "teams", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "teams", "stadiums"
   add_foreign_key "title_awards", "contestants", column: ["contest_id", "winner_id"], primary_key: ["contest_id", "id"]
   add_foreign_key "title_awards", "contests"

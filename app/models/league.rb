@@ -1,4 +1,5 @@
 class League < ApplicationRecord
+  include HasLogos
   belongs_to :sport
   belongs_to :jurisdiction, polymorphic: true
   has_many :conferences, dependent: :destroy

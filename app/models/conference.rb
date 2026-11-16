@@ -1,4 +1,5 @@
 class Conference < ApplicationRecord
+  include HasLogos
   belongs_to :league
   has_many :divisions, dependent: :destroy
   has_many :memberships, dependent: :destroy

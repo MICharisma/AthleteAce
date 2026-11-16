@@ -5,6 +5,22 @@
 .player-breadcrumbs li > .ace-icon { @apply text-ink-3; }
 .player-breadcrumbs [aria-current="page"] { @apply text-xs font-semibold text-ink-2; }
 .player-breadcrumbs .entity-chip { @apply min-h-9; }
+.player-breadcrumbs {
+  --breadcrumb-logo-size: 2rem;
+  --breadcrumb-label-width: 24rem;
+  .breadcrumb-logo { width: var(--breadcrumb-logo-size); height: var(--breadcrumb-logo-size); object-fit: contain; }
+  @media (hover: hover) {
+    .breadcrumb-with-logo {
+      .breadcrumb-label { max-width: 0; opacity: 0; overflow: hidden; white-space: nowrap; transition: max-width 160ms ease, opacity 160ms ease; }
+      &:hover, &:focus {
+        .breadcrumb-label { max-width: var(--breadcrumb-label-width); opacity: 1; }
+      }
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .breadcrumb-label { transition: none; }
+  }
+}
 .player-hero { @apply flex items-center gap-8 pb-8 mb-8 border-b border-line; }
 .player-hero-details { @apply min-w-0 flex-1; }
 .player-hero .page-title { @apply mt-2 mb-3 text-7xl; overflow-wrap: anywhere; }

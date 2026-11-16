@@ -7,6 +7,9 @@ class Figure < ApplicationRecord
     "array_to_string(figures.nicknames, ' '), array_to_string(figures.alternate_names, ' ')))".freeze
 
   has_many :players, dependent: :restrict_with_error, inverse_of: :figure
+  has_many :asset_representations, as: :subject, dependent: :destroy
+  belongs_to :primary_portrait, class_name: "AssetRepresentation", optional: true
+  validate :primary_portrait_matches_figure
   has_many :staff_tenures, dependent: :restrict_with_error
   has_many :figure_business_relationships, dependent: :restrict_with_error
   has_many :businesses, -> { distinct }, through: :figure_business_relationships
@@ -71,6 +74,10 @@ class Figure < ApplicationRecord
   end
 
   private
+
+  def primary_portrait_matches_figure
+    errors.add :primary_portrait, "must belong to this Figure" if primary_portrait && primary_portrait.subject != self
+  end
 
   # Changing a name part rebuilds every form that the same change didn't set.
   def fill_name_forms

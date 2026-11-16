@@ -4,7 +4,7 @@ class AssetRepresentation < ApplicationRecord
   include SeedObservation
   belongs_to :subject, polymorphic: true
   has_one_attached :file
-  validates :subject_type, inclusion: { in: %w[Logo Uniform UniformPiece] }
+  validates :subject_type, inclusion: { in: %w[Logo Uniform UniformPiece Figure] }
   validates :file_format, :view, :canonical_path, :content_type, presence: true
   validates :view, uniqueness: { scope: [ :subject_type, :subject_id, :file_format ] }
   validates :sha256, format: { with: /\A[a-f0-9]{64}\z/ }

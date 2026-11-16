@@ -13,6 +13,29 @@ RSpec.describe "Player profiles", type: :request do
     Nokogiri::HTML response.body
   end
 
+  it "renders selected breadcrumb logos and the Figure's stored portrait" do
+    logo = Logo.create! owner: team, name: "Team mark"
+    image = AssetRepresentation.create! subject: logo, file_format: "svg", view: "default", canonical_path: "media/team.svg",
+      content_type: "image/svg+xml", byte_size: 6, sha256: "a" * 64
+    image.file.attach io: StringIO.new("<svg/>"), filename: "team.svg", content_type: "image/svg+xml"
+    team.update! primary_logo: logo
+    portrait = AssetRepresentation.create! subject: player.figure, file_format: "png", view: "nba_headshot", canonical_path: "media/headshot.png",
+      content_type: "image/png", byte_size: 6, sha256: "b" * 64
+    portrait.file.attach io: StringIO.new("photo!"), filename: "headshot.png", content_type: "image/png", identify: false
+    player.figure.update! primary_portrait: portrait
+    get player_path(player)
+    crumb = document.at_css ".player-breadcrumbs .breadcrumb-with-logo"
+    expect(crumb["aria-label"]).to eq team.name
+    expect(crumb.at_css("img")["src"]).to include "team.svg"
+    expect(crumb.at_css(".breadcrumb-label").text).to eq team.name
+    expect(document.at_css(".profile-photo")["src"]).to include "headshot.png"
+    get team_player_path(team, player)
+    expect(document.at_css(".breadcrumb-logo")["src"]).to include "team.svg"
+  ensure
+    image&.file&.purge
+    portrait&.file&.purge
+  end
+
   it "shows a public hero, hierarchy, real metadata and the team's quiz" do
     get player_path(player)
 

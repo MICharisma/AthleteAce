@@ -4,12 +4,49 @@ RSpec.describe "Team visual assets" do
   let(:team) { create(:team) }
   let(:source) { { url: "https://www.nhl.com/blues/team/brand" } }
 
+  it "stores league marks and validates each entity's primary logo ownership" do
+    league = team.league
+    league_logo = Logo.create! owner: league, name: "League mark"
+    team_logo = Logo.create! owner: team, name: "Team mark"
+    league.update! primary_logo: league_logo
+    team.update! primary_logo: team_logo
+    expect(league.logos).to contain_exactly league_logo
+    team.primary_logo = league_logo
+    expect(team).not_to be_valid
+    expect(team.errors[:primary_logo]).to be_present
+  end
+
+  it "keeps a Figure's primary portrait attached to that Figure" do
+    figure = create :figure
+    portrait = AssetRepresentation.create! subject: figure, file_format: "png", view: "nba_headshot",
+      canonical_path: "media/headshot.png", content_type: "image/png", byte_size: 100, sha256: "a" * 64
+    figure.update! primary_portrait: portrait
+    other = create :figure
+    other.primary_portrait = portrait
+    expect(other).not_to be_valid
+    expect(other.errors[:primary_portrait]).to be_present
+  end
+
+  it "prefers the PNG rendition while retaining the original SVG" do
+    logo = Logo.create! owner: team, name: "League mark"
+    images = %w[svg png].map do |format|
+      asset = AssetRepresentation.create! subject: logo, file_format: format, view: "default", canonical_path: "media/mark.#{format}",
+        entity_code: "MARK-FILE-#{format.upcase}", content_type: format == "svg" ? "image/svg+xml" : "image/png", byte_size: 1, sha256: "a" * 64
+      asset.file.attach io: StringIO.new("x"), filename: "mark.#{format}", content_type: asset.content_type, identify: false
+      asset
+    end
+    expect(logo.image.blob).to eq images.last.file.blob
+    expect(logo.asset_representations.count).to eq 2
+  ensure
+    images&.each { |asset| asset.file.purge }
+  end
+
   it "allows concurrent logos and distinguishes unknown dates from ongoing use" do
-    primary = Logo.create!(team: team, name: "Blue Note", role: "primary", start_date: "2025-06-20", ongoing: true, source: source)
-    alternate = Logo.create!(team: team, name: "Fleur", role: "alternate", start_date: "2025-06-20", ongoing: true, source: source)
+    primary = Logo.create!(owner: team, name: "Blue Note", role: "primary", start_date: "2025-06-20", ongoing: true, source: source)
+    alternate = Logo.create!(owner: team, name: "Fleur", role: "alternate", start_date: "2025-06-20", ongoing: true, source: source)
     expect(team.logos).to contain_exactly(primary, alternate)
-    expect(Logo.new(team: team, name: "Archive mark", source: source)).to be_valid
-    expect(Logo.new(team: team, name: "Invalid period", start_date: "2026-01-01", end_date: "2025-01-01")).not_to be_valid
+    expect(Logo.new(owner: team, name: "Archive mark", source: source)).to be_valid
+    expect(Logo.new(owner: team, name: "Invalid period", start_date: "2026-01-01", end_date: "2025-01-01")).not_to be_valid
     primary.end_date = "2026-10-26"
     expect(primary).not_to be_valid
   end

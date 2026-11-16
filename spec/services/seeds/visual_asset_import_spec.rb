@@ -5,8 +5,9 @@ RSpec.describe "Visual asset seed import" do
   it "resolves asset owners out of order and preserves canonical files and dates on replay" do
     team = create(:team, entity_code: "BKT-NBA-TEAM-NYK")
     records = [
+      { type: "Team", code: team.entity_code },
       { type: "AssetRepresentation", code: "NYK-LOGO-PNG", attributes: { canonical_path: "media/pilot/knicks.png", file_format: "png", view: "default", content_type: "image/png", byte_size: 123, sha256: "b" * 64 }, references: { subject: "NYK-LOGO" } },
-      { type: "Logo", code: "NYK-LOGO", attributes: { name: "Knicks primary", ongoing: true }, references: { team: team.entity_code } }
+      { type: "Logo", code: "NYK-LOGO", attributes: { name: "Knicks primary", ongoing: true }, references: { owner: team.entity_code } }
     ]
     Dir.mktmpdir do |directory|
       path = File.join(directory, "logos.json")

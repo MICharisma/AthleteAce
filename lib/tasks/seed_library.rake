@@ -19,6 +19,10 @@ namespace :seeds do
       counts = { imported: 0, unchanged: 0 }
       AssetRepresentation.find_each { |asset| counts[asset.ingest_file!] += 1 }
       puts({ assets: counts }.to_json)
+      root = Pathname.new(ENV.fetch("SEED_LIBRARY_ROOT", Rails.root.join("db/seeds/athlete_ace_data/yaml").to_s)).parent
+      selections = Seeds::PrimaryMediaImporter.new(source: root.join("sources/nba_media_2026/primary.json")).call
+      puts({ primary_media: selections.transform_values(&:length) }.to_json)
+      selections[:conflicts].each { |conflict| puts conflict.to_json }
     end
 
     desc "Verify every stored canonical asset file against its size and SHA-256"

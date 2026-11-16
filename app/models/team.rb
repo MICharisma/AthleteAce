@@ -1,4 +1,5 @@
 class Team < ApplicationRecord
+  include HasLogos
   has_many :staff_tenures, dependent: :restrict_with_error
   has_many :shout_outs, as: :target, dependent: :nullify
   has_many :shout_out_drafts, as: :target, dependent: :nullify
@@ -10,7 +11,6 @@ class Team < ApplicationRecord
   belongs_to :stadium, optional: true
   has_many :players
   has_many :jersey_number_assignments, dependent: :destroy
-  has_many :logos, dependent: :destroy
   has_many :uniforms, dependent: :destroy
   has_many :contracts, dependent: :nullify
   has_many :contract_players, through: :contracts, source: :player

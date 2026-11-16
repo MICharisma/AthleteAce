@@ -18,7 +18,8 @@ RSpec.describe "seeds:import" do
       root.mkpath
       FileUtils.cp Rails.root.join("db/seeds/athlete_ace_data/yaml/entity_sequences.yaml"), root
       root.join("logos.yml").write YAML.dump({ "format" => "micharisma-seeds/v1", "namespace" => "MIC", "catalog" => "ALA", "records" => [
-        { "type" => "Logo", "code" => "HARBOR-LOGO", "attributes" => { "name" => "Harbor Athletics mark" }, "references" => { "team" => team.entity_code } },
+        { "type" => "Team", "code" => team.entity_code },
+        { "type" => "Logo", "code" => "HARBOR-LOGO", "attributes" => { "name" => "Harbor Athletics mark" }, "references" => { "owner" => team.entity_code } },
         { "type" => "AssetRepresentation", "code" => "HARBOR-LOGO-SVG", "references" => { "subject" => "HARBOR-LOGO" },
           "attributes" => { "canonical_path" => "media/logos/harbor.svg", "file_format" => "svg", "view" => "default", "content_type" => "image/svg+xml",
             "byte_size" => bytes.bytesize, "sha256" => Digest::SHA256.hexdigest(bytes) },

@@ -39,7 +39,7 @@ module Seeds
       "Attestation" => %w[claim],
       "Contract" => %w[player organization], "Campaign" => %w[team], "Activation" => %w[player],
       "JerseyNumberAssignment" => %w[player team],
-      "Logo" => %w[team], "Uniform" => %w[team], "UniformPiece" => %w[uniform],
+      "Logo" => %w[owner], "Uniform" => %w[team], "UniformPiece" => %w[uniform],
       "UniformCampaign" => %w[uniform campaign], "AssetRepresentation" => %w[subject],
       "Stint" => %w[player team], "Roster" => %w[campaign], "RosterEntry" => %w[roster player],
       "Contestant" => %w[contest campaign], "Appearance" => %w[player contestant],
@@ -50,7 +50,8 @@ module Seeds
     }.freeze
     POLYMORPHIC_TYPES = {
       [ "League", "jurisdiction" ] => %w[Country State City Federation],
-      [ "AssetRepresentation", "subject" ] => %w[Logo Uniform UniformPiece],
+      [ "AssetRepresentation", "subject" ] => %w[Logo Uniform UniformPiece Figure],
+      [ "Logo", "owner" ] => %w[Sport League Conference Division Team],
       [ "PositionAssignment", "subject" ] => %w[Player RosterEntry Appearance],
       [ "Contest", "context" ] => %w[League Conference Division Sport Federation Organization],
       [ "Game", "context" ] => %w[League Conference Division Sport Federation Organization],

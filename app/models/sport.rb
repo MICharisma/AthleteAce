@@ -1,4 +1,5 @@
 class Sport < ApplicationRecord
+  include HasLogos
   has_many :leagues
   has_many :conferences, through: :leagues
   has_many :divisions, through: :leagues

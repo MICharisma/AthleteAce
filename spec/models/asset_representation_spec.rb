@@ -5,7 +5,7 @@ RSpec.describe AssetRepresentation do
   let(:bytes) { '<svg xmlns="http://www.w3.org/2000/svg"><circle r="10"/></svg>' }
   let(:github) { { "repository" => "MICharisma/athlete_ace_media", "commit" => "a" * 40, "path" => "logos/harbor.svg" } }
   let(:asset) do
-    described_class.create! subject: Logo.create!(team: create(:team), name: "Harbor Athletics mark"),
+    described_class.create! subject: Logo.create!(owner: create(:team), name: "Harbor Athletics mark"),
       entity_code: "HARBOR-LOGO-SVG", canonical_path: "media/logos/harbor.svg", file_format: "svg", view: "default",
       content_type: "image/svg+xml", sha256: Digest::SHA256.hexdigest(bytes), byte_size: bytes.bytesize,
       source: { "github" => github }
