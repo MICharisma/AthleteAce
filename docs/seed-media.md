@@ -50,6 +50,8 @@ Related collections, including the teams on a league page, use each entity's sel
 
 The November 15, 2026 capture loads all 480 team-logo variants listed in the recorded NBA feed, one official NBA league mark, and LeBron's NBA and ESPN headshots. Two Knicks files reuse existing pilot representations. A PNG rendition of the league SVG is separately identified as rasterized source artwork. Together with the earlier pilot, application storage contains 506 canonical files. The capture establishes image availability on that date, not logo introduction dates or historical uniform accuracy.
 
+The November 16 supplement adds the Eastern and Western Conference wordmarks, with NBA Media Central provenance recorded by Wikimedia Commons. `conferences.json` records the downloaded files and their separate pinned media commit. The complete batch now has 508 canonical files and 34 primary selections. No separate official NBA division marks were verified.
+
 `scripts/capture_nba_media.py` in the data repository takes `--as-of` and `--media-root`. It downloads source images into the independent media checkout, records checksums and content types, and lists unavailable sources without bypassing their access restrictions. After publishing those files, update `sources/nba_media_2026/media.json` to their full commit SHA. The offline `scripts/build_nba_media.rb` generator writes the media manifest and default selections; `--check` exits nonzero if generated output differs. The original league SVG and its separately pinned PNG rendition are recorded in `capture.json` and `renditions.json`.
 
 ## Regenerate the visual pilot
