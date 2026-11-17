@@ -18,13 +18,13 @@ RSpec.describe "Rating dimension suggestions", type: :request do
   it "ranks only visible unanswered dimensions with user choice counts and creates no ratings" do
     sign_in ace
     create(:rating, ace: ace, target: player, spectrum: answered, value: 0)
-    create(:rating, ace: ace, target: create(:player), spectrum: skill, value: -8400)
+    create(:rating, ace: ace, target: create(:player), spectrum: skill, value: -84)
     hidden = create(:spectrum, moderation_status: "hidden")
     Rails.configuration.x.shared_ratings.suggestion_provider = lambda do |**input|
       keys = input[:candidates].map { |candidate| candidate[:key] }
       expect(keys).to contain_exactly(skill.rating_dimension.key, familiarity.rating_dimension.key)
       expect(input[:preferences]).to eq([{ key: skill.rating_dimension.key, times_chosen: 1 }])
-      expect(input.to_json).not_to include(ace.email, "-8400")
+      expect(input.to_json).not_to include(ace.email, "-84")
       [hidden.rating_dimension.key, skill.rating_dimension.key, skill.rating_dimension.key]
     end
 

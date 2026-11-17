@@ -23,8 +23,8 @@ RSpec.describe "My teams on Feed", type: :request do
     ace.follows.create!(followable: team)
     create(:ace).follows.create!(followable: other)
     affinity = create(:spectrum, name: "Affinity")
-    create(:rating, ace: ace, spectrum: affinity, target: team, value: 5000)
-    create(:rating, ace: create(:ace), spectrum: affinity, target: other, value: 10_000)
+    create(:rating, ace: ace, spectrum: affinity, target: team, value: 250)
+    create(:rating, ace: create(:ace), spectrum: affinity, target: other, value: 500)
     sign_in ace
     get feed_path, params: { view: "my_teams", ace_id: create(:ace).id }
     expect(response).to have_http_status(:ok)
@@ -37,8 +37,8 @@ RSpec.describe "My teams on Feed", type: :request do
 
   it "includes high Affinity teams without follows but excludes lower, archived and hidden ratings" do
     affinity = create(:spectrum, name: "Affinity")
-    rating = create(:rating, ace: ace, spectrum: affinity, target: team, value: 5000)
-    create(:rating, ace: ace, spectrum: affinity, target: other, value: 4999)
+    rating = create(:rating, ace: ace, spectrum: affinity, target: team, value: 250)
+    create(:rating, ace: ace, spectrum: affinity, target: other, value: 249)
     sign_in ace
     get feed_path, params: { view: "my_teams" }
     expect(team_cards.map { |card| card["aria-label"] }).to eq([ team.name ])

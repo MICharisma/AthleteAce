@@ -27,10 +27,10 @@
   <% end %>
 
   <div class="my-5">
-    <%= form.label :value, "Your Rating (-10,000 to +10,000)" %>
+    <%= form.label :value, "Your Rating (-100 to +500)" %>
     <div class="flex items-center space-x-4 mt-2">
       <span class="text-red-500 text-sm"><%= local_assigns[:spectrum]&.low_label || "Low" %></span>
-      <%= form.range_field :value, min: -10000, max: 10000, step: 100, 
+      <%= form.range_field :value, min: Rating::SCALE.minimum, max: Rating::SCALE.maximum, step: Rating::SCALE.fine_step, value: rating.value || Rating::SCALE.neutral_value,
           class: "w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer", 
           data: { action: "input->rating#updateValue" } %>
       <span class="text-green-500 text-sm"><%= local_assigns[:spectrum]&.high_label || "High" %></span>

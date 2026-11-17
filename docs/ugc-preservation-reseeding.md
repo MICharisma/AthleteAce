@@ -93,8 +93,8 @@ aces:
 spectrums:
   - id: 1
     name: "Skill"
-    min_value: -10000
-    max_value: 10000
+    min_value: -100
+    max_value: 500
     # ... other spectrum attributes
 
 ratings:

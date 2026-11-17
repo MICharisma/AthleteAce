@@ -14,7 +14,7 @@
   <%= tag.div class: "slider-track" do %>
     <% if average %>
       <%= tag.div class: "average-track", aria: { hidden: true } do %>
-        <%= tag.span "", class: "average-marker", style: "left: #{(average + 10_000) / 200}%", title: "Aces average #{signed_rating average}" %>
+        <%= tag.span "", class: "average-marker", style: "left: #{(average - dimension.minimum) * 100 / (dimension.maximum - dimension.minimum)}%", title: "Aces average #{signed_rating average}" %>
       <% end %>
     <% end %>
     <%# An integer track keeps existing off-grid ratings exact; Stimulus applies the selected increments to new input. %>

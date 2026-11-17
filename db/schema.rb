@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -902,6 +902,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_110000) do
     t.index ["archived"], name: "index_ratings_on_archived"
     t.index ["spectrum_id"], name: "index_ratings_on_spectrum_id"
     t.index ["target_type", "target_id"], name: "index_ratings_on_target"
+    t.check_constraint "value >= '-100'::integer AND value <= 500", name: "ratings_value_in_standard_scale"
   end
 
   create_table "rizz_feed_cursors", force: :cascade do |t|

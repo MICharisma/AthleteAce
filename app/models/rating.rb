@@ -1,9 +1,9 @@
 class Rating < ApplicationRecord
-  SCALE = SharedRatings::Dimension.new(
-    key: "athleteace.rating", version: 1, question: "How do you rate this entity?",
-    low_label: "Low", high_label: "High", minimum: -10_000, maximum: 10_000,
-    coarse_step: 1000, fine_step: 100, neutral_value: 0, neutral_label: "Neutral"
+  SCALE = SharedRatings::Scales.standard(
+    key: "athleteace.rating", version: 2, question: "How do you rate this entity?",
+    low_label: "Low", high_label: "High"
   )
+  HIGH_AFFINITY_THRESHOLD = 250
 
   belongs_to :ace
   belongs_to :spectrum
@@ -47,12 +47,12 @@ class Rating < ApplicationRecord
   
   # Normalized value between 0 and 1 for display purposes
   def normalized_value
-    (value.to_f + 10_000) / 20_000
+    SCALE.position value
   end
   
   # Percentage value (0-100) for display purposes
   def percentage_value
-    ((value.to_f + 10_000) / 20_000 * 100).round
+    (normalized_value * 100).round
   end
 
   private

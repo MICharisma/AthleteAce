@@ -26,6 +26,6 @@ module Ratable
     avg = average_rating_on(spectrum)
     return nil if avg.nil?
     
-    (avg + 10_000) / 20_000
+    (avg - Rating::SCALE.minimum) / (Rating::SCALE.maximum - Rating::SCALE.minimum)
   end
 end

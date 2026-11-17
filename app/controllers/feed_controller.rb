@@ -14,7 +14,7 @@ class FeedController < ApplicationController
 
     followed = current_ace.follows.where(followable_type: "Team")
     affinity = current_ace.ratings.active.where(target_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
-      .where("value >= 5000")
+      .where("value >= ?", Rating::HIGH_AFFINITY_THRESHOLD)
     teams = Team.where(id: followed.select(:followable_id)).or(Team.where(id: affinity.select(:target_id)))
     teams = teams.where(league: @league) if @league
     teams = teams.where(league: League.where(sport: @sport)) if @sport
@@ -35,7 +35,7 @@ class FeedController < ApplicationController
     if @view == "my_teams"
       followed = current_ace.follows.where(followable_type: "Team").select(:followable_id)
       affinity = current_ace.ratings.active.where(target_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
-        .where("value >= 5000").select(:target_id)
+        .where("value >= ?", Rating::HIGH_AFFINITY_THRESHOLD).select(:target_id)
       posts = posts.where(team_id: followed).or(posts.where(team_id: affinity))
     end
     posts = posts.where(league_id: @league.id) if @league
