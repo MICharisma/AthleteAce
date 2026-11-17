@@ -1,7 +1,10 @@
 source "https://rubygems.org"
 
-gem "shared-ratings", path: ENV.fetch("SHARED_RATINGS_PATH", "../../packages/shared-ratings"),
-  require: ["shared-ratings", "shared_ratings/engine"]
+if ENV["SHARED_RATINGS_PATH"]
+  gem "shared-ratings", path: ENV.fetch("SHARED_RATINGS_PATH"), require: ["shared-ratings", "shared_ratings/engine"]
+else
+  gem "shared-ratings", git: "https://github.com/MICharisma/rizz-integration.git", ref: "2069a5225f708927b5b05ea032e10be6c71e17ae", glob: "packages/shared-ratings/*.gemspec", require: ["shared-ratings", "shared_ratings/engine"]
+end
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.4"
