@@ -2,7 +2,7 @@ module Ratable
   extend ActiveSupport::Concern
 
   included do
-    has_many :ratings, as: :target, dependent: :destroy
+    has_many :ratings, as: :rated, dependent: :destroy
   end
 
   class_methods do

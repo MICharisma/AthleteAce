@@ -1,6 +1,6 @@
 class RatingDimensions
-  def initialize(ace:, target:)
-    @ace, @target = ace, target
+  def initialize(ace:, rated:)
+    @ace, @rated = ace, rated
   end
 
   def catalog
@@ -8,7 +8,7 @@ class RatingDimensions
   end
 
   def eligible
-    answered = @ace.ratings.active.where(target: @target).pluck(:spectrum_id)
+    answered = @ace.ratings.active.where(rated: @rated).pluck(:spectrum_id)
     catalog.reject { |spectrum| answered.include?(spectrum.id) }
   end
 
@@ -28,7 +28,7 @@ class RatingDimensions
     end
     provider = Rails.configuration.x.shared_ratings.suggestion_provider || SharedRatings::LLMProvider.from_env
     result = SharedRatings::Suggestions.new(provider: provider).call(
-      candidates: candidates, subject: { type: @target.class.name, name: @target.is_a?(Player) ? @target.display_name : @target.name },
+      candidates: candidates, subject: { type: @rated.class.name, name: @rated.is_a?(Player) ? @rated.display_name : @rated.name },
       preferences: preferences, defaults: defaults.map { |spectrum| spectrum.rating_dimension.key }
     )
     current = eligible.index_by { |spectrum| spectrum.rating_dimension.key }

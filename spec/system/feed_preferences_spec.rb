@@ -10,7 +10,7 @@ RSpec.describe "My teams on Feed", type: :system do
     create(:player, team: team)
     ace.follows.create!(followable: team)
     affinity = create(:spectrum, name: "Affinity")
-    create(:rating, ace: ace, target: other, spectrum: affinity, value: 250)
+    create(:rating, ace: ace, rated: other, spectrum: affinity, value: 250)
     sign_in ace
     visit feed_path
     within('[aria-label="Feed views"]') { click_link "My teams" }

@@ -93,14 +93,15 @@ class UgcBackupService
   end
 
   def export_ratings
-    Rating.includes(:target).map do |rating|
-      rating.attributes.merge(
-        "target_code" => entity_code_for(rating.target),
-        "target_identifier" => build_target_identifier(rating.target),
-        "target_sport_identifier" => extract_sport_identifier(rating.target),
-        "target_league_identifier" => extract_league_identifier(rating.target),
-        "target_team_identifier" => extract_team_identifier(rating.target),
-        "target_conference_identifier" => extract_conference_identifier(rating.target)
+    Rating.includes(:rated).map do |rating|
+      rating.attributes.except("rated_type", "rated_id").merge(
+        "target_type" => rating.rated_type, "target_id" => rating.rated_id,
+        "target_code" => entity_code_for(rating.rated),
+        "target_identifier" => build_target_identifier(rating.rated),
+        "target_sport_identifier" => extract_sport_identifier(rating.rated),
+        "target_league_identifier" => extract_league_identifier(rating.rated),
+        "target_team_identifier" => extract_team_identifier(rating.rated),
+        "target_conference_identifier" => extract_conference_identifier(rating.rated)
       )
     end
   end

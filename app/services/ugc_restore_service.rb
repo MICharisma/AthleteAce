@@ -86,7 +86,7 @@ class UgcRestoreService
         next
       end
 
-      existing = Rating.where(ace_id: ace_id, spectrum_id: spectrum_id, target: target)
+      existing = Rating.where(ace_id: ace_id, spectrum_id: spectrum_id, rated: target)
       if existing.exists?(created_at: rating_attrs["created_at"])
         log_success("Rating (skipped duplicate)", label, nil)
         next
@@ -98,7 +98,7 @@ class UgcRestoreService
       rating = Rating.create!(
         ace_id: ace_id,
         spectrum_id: spectrum_id,
-        target: target,
+        rated: target,
         value: rating_attrs["value"],
         notes: rating_attrs["notes"],
         archived: archived,

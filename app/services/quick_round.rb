@@ -30,8 +30,8 @@ class QuickRound
   end
 
   def preferred_teams_setup
-    affinity = @ace.ratings.active.where(target_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
-      .where("value >= ?", Rating::HIGH_AFFINITY_THRESHOLD).order(value: :desc).limit(30).pluck(:target_id)
+    affinity = @ace.ratings.active.where(rated_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
+      .where("value >= ?", Rating::HIGH_AFFINITY_THRESHOLD).order(value: :desc).limit(30).pluck(:rated_id)
     following = @ace.follows.where(followable_type: "Team").order(created_at: :desc, id: :desc).limit(30).pluck(:followable_id)
     setup = GameRoundSetup.new(team_ids: (following + affinity).uniq.first(30))
     setup = setup.season_suggestion || GameRoundSetup.new if setup.available_count.zero?

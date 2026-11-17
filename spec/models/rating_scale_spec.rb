@@ -25,8 +25,8 @@ RSpec.describe "The standard rating scale" do
   it "positions fractional averages on the same scale" do
     player = create(:player)
     spectrum = create(:spectrum)
-    create(:rating, target: player, spectrum: spectrum, value: 43)
-    create(:rating, target: player, spectrum: spectrum, value: 44)
+    create(:rating, rated: player, spectrum: spectrum, value: 43)
+    create(:rating, rated: player, spectrum: spectrum, value: 44)
     expect(player.normalized_average_rating_on(spectrum)).to be_within(0.0001).of(143.5 / 600)
   end
 

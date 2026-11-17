@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -872,8 +872,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_120000) do
   create_table "rating_revisions", force: :cascade do |t|
     t.bigint "ace_id", null: false
     t.bigint "rating_id", null: false
-    t.string "target_type", null: false
-    t.bigint "target_id", null: false
+    t.string "rated_type", null: false
+    t.bigint "rated_id", null: false
     t.bigint "spectrum_id", null: false
     t.bigint "value", null: false
     t.text "notes"
@@ -882,26 +882,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_120000) do
     t.string "operation", null: false
     t.datetime "created_at", null: false
     t.index ["ace_id"], name: "index_rating_revisions_on_ace_id"
+    t.index ["rated_type", "rated_id"], name: "index_rating_revisions_on_rated"
     t.index ["rating_id", "id"], name: "index_rating_revisions_on_rating_id_and_id"
-    t.index ["target_type", "target_id"], name: "index_rating_revisions_on_target"
     t.check_constraint "operation::text = ANY (ARRAY['set'::character varying, 'archive'::character varying, 'remove'::character varying]::text[])", name: "rating_revisions_valid_operation"
   end
 
   create_table "ratings", force: :cascade do |t|
     t.bigint "ace_id", null: false
     t.bigint "spectrum_id", null: false
-    t.string "target_type", null: false
-    t.bigint "target_id", null: false
+    t.string "rated_type", null: false
+    t.bigint "rated_id", null: false
     t.bigint "value", null: false
     t.text "notes"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.boolean "archived", default: false, null: false
-    t.index ["ace_id", "spectrum_id", "target_type", "target_id"], name: "index_ratings_on_ace_spectrum_and_target_active", unique: true, where: "(archived = false)"
+    t.index ["ace_id", "spectrum_id", "rated_type", "rated_id"], name: "index_ratings_on_ace_spectrum_and_rated_active", unique: true, where: "(archived = false)"
     t.index ["ace_id"], name: "index_ratings_on_ace_id"
     t.index ["archived"], name: "index_ratings_on_archived"
+    t.index ["rated_type", "rated_id"], name: "index_ratings_on_rated"
     t.index ["spectrum_id"], name: "index_ratings_on_spectrum_id"
-    t.index ["target_type", "target_id"], name: "index_ratings_on_target"
     t.check_constraint "value >= '-100'::integer AND value <= 500", name: "ratings_value_in_standard_scale"
   end
 

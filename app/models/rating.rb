@@ -7,10 +7,10 @@ class Rating < ApplicationRecord
 
   belongs_to :ace
   belongs_to :spectrum
-  belongs_to :target, polymorphic: true
+  belongs_to :rated, polymorphic: true
 
   after_create :record_revision
-  after_update :record_revision, if: -> { saved_changes.keys.intersect? %w[value notes archived spectrum_id target_type target_id] }
+  after_update :record_revision, if: -> { saved_changes.keys.intersect? %w[value notes archived spectrum_id rated_type rated_id] }
   before_destroy { RatingRevision.record! reload, operation: "remove" }
   
   # Validations
@@ -24,7 +24,7 @@ class Rating < ApplicationRecord
   # Scopes
   scope :by_ace, ->(ace) { where(ace: ace) }
   scope :by_spectrum, ->(spectrum) { where(spectrum: spectrum) }
-  scope :for_target, ->(target) { where(target: target) }
+  scope :for_rated, ->(rated) { where(rated: rated) }
   scope :positive, -> { where('value > 0') }
   scope :negative, -> { where('value < 0') }
   scope :neutral, -> { where(value: 0) }

@@ -149,27 +149,27 @@ class Ace < ApplicationRecord
 
   # Rating methods (RatingService.replace records new ratings)
 
-  # Get all ratings for a specific target
-  # @param target [Object] The target to get ratings for
-  # @return [ActiveRecord::Relation] The ratings for the target
-  def ratings_for(target)
-    ratings.where(target: target, archived: false)
+  # Get all ratings for a specific entity
+  # @param rated [Object] The entity to get ratings for
+  # @return [ActiveRecord::Relation] The ratings for the entity
+  def ratings_for(rated)
+    ratings.where(rated: rated, archived: false)
   end
 
-  # Get the rating for a specific target on a specific spectrum
-  # @param target [Object] The target to get the rating for
+  # Get the rating for a specific entity on a specific spectrum
+  # @param rated [Object] The entity to get the rating for
   # @param spectrum [Spectrum] The spectrum to get the rating on
   # @return [Rating, nil] The rating or nil if not rated
-  def rating_for(target, spectrum)
-    ratings.find_by(target: target, spectrum: spectrum, archived: false)
+  def rating_for(rated, spectrum)
+    ratings.find_by(rated: rated, spectrum: spectrum, archived: false)
   end
 
-  # Check if the ace has rated a target on a spectrum
-  # @param target [Object] The target to check
+  # Check if the ace has rated an entity on a spectrum
+  # @param rated [Object] The entity to check
   # @param spectrum [Spectrum] The spectrum to check
-  # @return [Boolean] Whether the ace has rated the target on the spectrum
-  def rated?(target, spectrum)
-    ratings.active.exists?(target: target, spectrum: spectrum)
+  # @return [Boolean] Whether the ace has rated the entity on the spectrum
+  def rated?(rated, spectrum)
+    ratings.active.exists?(rated: rated, spectrum: spectrum)
   end
 
   private

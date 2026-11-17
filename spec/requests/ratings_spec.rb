@@ -13,13 +13,13 @@ RSpec.describe "Ratings", type: :request do
 
       expect(response).to redirect_to(player_path(player))
       rating = ace.ratings.active.sole
-      expect(rating).to have_attributes(target: player, spectrum: spectrum, value: 500, notes: "Solid")
+      expect(rating).to have_attributes(rated: player, spectrum: spectrum, value: 500, notes: "Solid")
     end
 
-    it "ignores a target smuggled in through the params" do
-      post player_ratings_path(player), params: { rating: { spectrum_id: spectrum.id, value: 500, target_type: "Ace", target_id: ace.id } }
+    it "ignores a rated smuggled in through the params" do
+      post player_ratings_path(player), params: { rating: { spectrum_id: spectrum.id, value: 500, rated_type: "Ace", rated_id: ace.id } }
 
-      expect(ace.ratings.active.sole.target).to eq(player)
+      expect(ace.ratings.active.sole.rated).to eq(player)
     end
 
     it "archives the previous rating on the same spectrum" do
@@ -65,14 +65,14 @@ RSpec.describe "Ratings", type: :request do
   end
 
   describe "PATCH /ratings/:id" do
-    let!(:rating) { create(:rating, ace: ace, target: player, spectrum: spectrum, value: 100) }
+    let!(:rating) { create(:rating, ace: ace, rated: player, spectrum: spectrum, value: 100) }
 
-    it "replaces the rating, keeping its target and spectrum" do
+    it "replaces the rating, keeping its rated and spectrum" do
       patch rating_path(rating), params: { rating: { spectrum_id: spectrum.id, value: 70 } }
 
       expect(response).to redirect_to(player_path(player))
       expect(rating.reload).to be_archived
-      expect(ace.ratings.active.sole).to have_attributes(target: player, spectrum: spectrum, value: 70)
+      expect(ace.ratings.active.sole).to have_attributes(rated: player, spectrum: spectrum, value: 70)
     end
 
     it "keeps the original rating when the new value is invalid" do
@@ -84,7 +84,7 @@ RSpec.describe "Ratings", type: :request do
     end
 
     it "doesn't let aces change other aces' ratings" do
-      someone_elses = create(:rating, target: player, spectrum: spectrum, value: 100)
+      someone_elses = create(:rating, rated: player, spectrum: spectrum, value: 100)
 
       patch rating_path(someone_elses), params: { rating: { value: 70 } }
 
@@ -107,9 +107,9 @@ RSpec.describe "Shared rating rows", type: :request do
 
   it "shows your own exact value and averages only active ratings" do
     sign_in ace
-    create(:rating, ace: ace, target: player, spectrum: spectrum, value: 43)
-    create(:rating, target: player, spectrum: spectrum, value: 17)
-    create(:rating, target: player, spectrum: spectrum, value: -90, archived: true)
+    create(:rating, ace: ace, rated: player, spectrum: spectrum, value: 43)
+    create(:rating, rated: player, spectrum: spectrum, value: 17)
+    create(:rating, rated: player, spectrum: spectrum, value: -90, archived: true)
 
     get player_path(player)
 
@@ -125,12 +125,12 @@ RSpec.describe "Shared rating rows", type: :request do
 
   it "never shows another ace's rating as yours and distinguishes an unrated zero" do
     sign_in ace
-    create(:rating, target: player, spectrum: spectrum, value: 80)
+    create(:rating, rated: player, spectrum: spectrum, value: 80)
     get player_path(player)
     expect(document.at_css(".slider-value").text).to eq("Not rated")
     expect(document.at_css(".rating-slider-instance")["data-rated"]).to eq("false")
 
-    create(:rating, ace: ace, target: player, spectrum: spectrum, value: 0)
+    create(:rating, ace: ace, rated: player, spectrum: spectrum, value: 0)
     get player_path(player)
     expect(document.at_css(".slider-value").text).to eq("0")
     expect(document.at_css(".rating-slider-instance")["data-rated"]).to eq("true")
@@ -138,8 +138,8 @@ RSpec.describe "Shared rating rows", type: :request do
 
   it "replaces the row with the saved value and recomputed average without counting the archived version" do
     sign_in ace
-    original = create(:rating, ace: ace, target: player, spectrum: spectrum, value: 10)
-    create(:rating, target: player, spectrum: spectrum, value: 30)
+    original = create(:rating, ace: ace, rated: player, spectrum: spectrum, value: 10)
+    create(:rating, rated: player, spectrum: spectrum, value: 30)
 
     post player_ratings_path(player), params: { rating: { spectrum_id: spectrum.id, value: 50 } }, headers: stream_headers
 
@@ -151,7 +151,7 @@ RSpec.describe "Shared rating rows", type: :request do
   end
 
   it "returns public averages as read-only rows without exposing personal JSON ratings" do
-    create(:rating, target: player, spectrum: spectrum, value: 20)
+    create(:rating, rated: player, spectrum: spectrum, value: 20)
     get for_spectrums_player_ratings_path(player), params: { spectrum_ids: spectrum.id.to_s }, headers: stream_headers
 
     expect(response).to have_http_status(:ok)

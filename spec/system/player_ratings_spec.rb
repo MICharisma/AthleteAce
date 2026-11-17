@@ -44,7 +44,7 @@ RSpec.describe "Player profiles and rating controls", type: :system do
 
   it "explains the sign-in requirement when a visitor clicks or uses the keyboard on a slider" do
     sign_out ace
-    create(:rating, target: player, spectrum: familiarity, value: 80)
+    create(:rating, rated: player, spectrum: familiarity, value: 80)
     visit player_path(player)
 
     row = row_for familiarity
@@ -71,8 +71,8 @@ RSpec.describe "Player profiles and rating controls", type: :system do
   end
 
   it "preserves existing exact values and saves keyboard changes with coarse and fine precision" do
-    original = create(:rating, ace: ace, target: player, spectrum: familiarity, value: 43)
-    create(:rating, target: player, spectrum: familiarity, value: 17)
+    original = create(:rating, ace: ace, rated: player, spectrum: familiarity, value: 43)
+    create(:rating, rated: player, spectrum: familiarity, value: 17)
     visit player_path(player)
 
     click_button "Fine"
@@ -127,8 +127,8 @@ RSpec.describe "Player profiles and rating controls", type: :system do
   end
 
   it "reuses the shared controls when the browse spectrum picker changes traits" do
-    create(:rating, ace: ace, target: player, spectrum: skill, value: 20)
-    create(:rating, target: player, spectrum: skill, value: 40)
+    create(:rating, ace: ace, rated: player, spectrum: skill, value: 20)
+    create(:rating, rated: player, spectrum: skill, value: 40)
     visit players_path
     click_button "Fine"
     find(".spectrum-picker-toggle").click
@@ -156,7 +156,7 @@ RSpec.describe "Player profiles and rating controls", type: :system do
   end
 
   it "switches a held drag into fine adjustments and saves only on release" do
-    original = create(:rating, ace: ace, target: player, spectrum: familiarity, value: 43)
+    original = create(:rating, ace: ace, rated: player, spectrum: familiarity, value: 43)
     visit player_path(player)
     row = row_for familiarity
     slider = row.find("input")
@@ -197,7 +197,7 @@ RSpec.describe "Player profiles and rating controls", type: :system do
   end
 
   it "supports touch precision while leaving the rest of the rating row scrollable" do
-    create(:rating, ace: ace, target: player, spectrum: familiarity, value: 43)
+    create(:rating, ace: ace, rated: player, spectrum: familiarity, value: 43)
     page.current_window.resize_to 390, 844
     visit player_path(player)
     row = row_for familiarity
@@ -259,7 +259,7 @@ RSpec.describe "Player profiles and rating controls", type: :system do
   end
 
   it "suggests dimensions without replacing an existing draft or rating for the user" do
-    create(:rating, ace: ace, target: player, spectrum: familiarity, value: 43)
+    create(:rating, ace: ace, rated: player, spectrum: familiarity, value: 43)
     Rails.configuration.x.shared_ratings.suggestion_provider = ->(**) { [skill.rating_dimension.key] }
     visit player_path(player)
     page.execute_script <<~JS

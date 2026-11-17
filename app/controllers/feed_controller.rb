@@ -13,15 +13,15 @@ class FeedController < ApplicationController
     return unless @view == "my_teams" && current_ace
 
     followed = current_ace.follows.where(followable_type: "Team")
-    affinity = current_ace.ratings.active.where(target_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
+    affinity = current_ace.ratings.active.where(rated_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
       .where("value >= ?", Rating::HIGH_AFFINITY_THRESHOLD)
-    teams = Team.where(id: followed.select(:followable_id)).or(Team.where(id: affinity.select(:target_id)))
+    teams = Team.where(id: followed.select(:followable_id)).or(Team.where(id: affinity.select(:rated_id)))
     teams = teams.where(league: @league) if @league
     teams = teams.where(league: League.where(sport: @sport)) if @sport
     @pagy, @teams = pagy(teams.includes(:league).order(:territory, :mascot, :id))
     ids = @teams.map(&:id)
     @followed_ids = followed.where(followable_id: ids).pluck(:followable_id)
-    @affinity_ids = affinity.where(target_id: ids).pluck(:target_id)
+    @affinity_ids = affinity.where(rated_id: ids).pluck(:rated_id)
   end
 
   private
@@ -34,8 +34,8 @@ class FeedController < ApplicationController
     posts = posts.matching_text(@query) if @query.present?
     if @view == "my_teams"
       followed = current_ace.follows.where(followable_type: "Team").select(:followable_id)
-      affinity = current_ace.ratings.active.where(target_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
-        .where("value >= ?", Rating::HIGH_AFFINITY_THRESHOLD).select(:target_id)
+      affinity = current_ace.ratings.active.where(rated_type: "Team", spectrum: Spectrum.approved.where(name: "Affinity"))
+        .where("value >= ?", Rating::HIGH_AFFINITY_THRESHOLD).select(:rated_id)
       posts = posts.where(team_id: followed).or(posts.where(team_id: affinity))
     end
     posts = posts.where(league_id: @league.id) if @league

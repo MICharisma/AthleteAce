@@ -17,8 +17,8 @@ RSpec.describe "Rating dimension suggestions", type: :request do
 
   it "ranks only visible unanswered dimensions with user choice counts and creates no ratings" do
     sign_in ace
-    create(:rating, ace: ace, target: player, spectrum: answered, value: 0)
-    create(:rating, ace: ace, target: create(:player), spectrum: skill, value: -84)
+    create(:rating, ace: ace, rated: player, spectrum: answered, value: 0)
+    create(:rating, ace: ace, rated: create(:player), spectrum: skill, value: -84)
     hidden = create(:spectrum, moderation_status: "hidden")
     Rails.configuration.x.shared_ratings.suggestion_provider = lambda do |**input|
       keys = input[:candidates].map { |candidate| candidate[:key] }
@@ -40,7 +40,7 @@ RSpec.describe "Rating dimension suggestions", type: :request do
   it "rechecks answered dimensions after the provider responds" do
     sign_in ace
     Rails.configuration.x.shared_ratings.suggestion_provider = lambda do |**|
-      create(:rating, ace: ace, target: player, spectrum: skill, value: 100)
+      create(:rating, ace: ace, rated: player, spectrum: skill, value: 100)
       [skill.rating_dimension.key]
     end
     post suggest_dimensions_player_ratings_path(player)

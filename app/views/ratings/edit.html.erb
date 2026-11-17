@@ -6,11 +6,11 @@
   <div class="bg-white rounded-lg shadow-md overflow-hidden p-6 mb-6">
     <div class="mb-6">
       <h2 class="font-semibold text-xl mb-2">
-        <% if @rating.target_type == 'Player' %>
-          <%= link_to @rating.target.display_name, player_path(@rating.target), class: "text-blue-600 hover:underline" %>
+        <% if @rating.rated_type == 'Player' %>
+          <%= link_to @rating.rated.display_name, player_path(@rating.rated), class: "text-blue-600 hover:underline" %>
           <span class="text-gray-500 text-sm">(Player)</span>
-        <% elsif @rating.target_type == 'Team' %>
-          <%= link_to @rating.target.name, team_path(@rating.target), class: "text-blue-600 hover:underline" %>
+        <% elsif @rating.rated_type == 'Team' %>
+          <%= link_to @rating.rated.name, team_path(@rating.rated), class: "text-blue-600 hover:underline" %>
           <span class="text-gray-500 text-sm">(Team)</span>
         <% end %>
       </h2>
