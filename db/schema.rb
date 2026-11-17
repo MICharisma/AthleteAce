@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_17_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -869,6 +869,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
     t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "quests_moderation_status"
   end
 
+  create_table "rating_revisions", force: :cascade do |t|
+    t.bigint "ace_id", null: false
+    t.bigint "rating_id", null: false
+    t.string "target_type", null: false
+    t.bigint "target_id", null: false
+    t.bigint "spectrum_id", null: false
+    t.bigint "value", null: false
+    t.text "notes"
+    t.boolean "archived", null: false
+    t.jsonb "dimension", null: false
+    t.string "operation", null: false
+    t.datetime "created_at", null: false
+    t.index ["ace_id"], name: "index_rating_revisions_on_ace_id"
+    t.index ["rating_id", "id"], name: "index_rating_revisions_on_rating_id_and_id"
+    t.index ["target_type", "target_id"], name: "index_rating_revisions_on_target"
+    t.check_constraint "operation::text = ANY (ARRAY['set'::character varying, 'archive'::character varying, 'remove'::character varying]::text[])", name: "rating_revisions_valid_operation"
+  end
+
   create_table "ratings", force: :cascade do |t|
     t.bigint "ace_id", null: false
     t.bigint "spectrum_id", null: false
@@ -1427,6 +1445,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_13_040000) do
   add_foreign_key "practice_reviews", "aces"
   add_foreign_key "practice_reviews", "game_attempts", column: "last_attempt_id", on_delete: :cascade
   add_foreign_key "quests", "aces", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "rating_revisions", "aces"
   add_foreign_key "ratings", "aces"
   add_foreign_key "ratings", "spectrums"
   add_foreign_key "rizz_names", "figures", on_delete: :cascade

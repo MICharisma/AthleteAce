@@ -8,6 +8,10 @@ class Rating < ApplicationRecord
   belongs_to :ace
   belongs_to :spectrum
   belongs_to :target, polymorphic: true
+
+  after_create :record_revision
+  after_update :record_revision, if: -> { saved_changes.keys.intersect? %w[value notes archived spectrum_id target_type target_id] }
+  before_destroy { RatingRevision.record! reload, operation: "remove" }
   
   # Validations
   validates :value, presence: true, 
@@ -49,5 +53,11 @@ class Rating < ApplicationRecord
   # Percentage value (0-100) for display purposes
   def percentage_value
     ((value.to_f + 10_000) / 20_000 * 100).round
+  end
+
+  private
+
+  def record_revision
+    RatingRevision.record! self, operation: archived? ? "archive" : "set"
   end
 end
