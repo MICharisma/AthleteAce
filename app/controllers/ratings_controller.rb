@@ -1,15 +1,15 @@
 class RatingsController < ApplicationController
   before_action :authenticate_ace!, except: :for_spectrums
   before_action :set_rating, only: [:show, :edit, :update, :destroy]
-  before_action :set_target, only: [:new, :create, :for_spectrums]
+  before_action :set_rated, only: [:new, :create, :for_spectrums, :dimension, :suggest_dimensions]
   before_action :authorize_rating, only: [:edit, :update, :destroy]
 
   # GET /ratings
   def index
     @ratings = if params[:spectrum_id].present?
-      Spectrum.visible_to(current_ace).find(params[:spectrum_id]).ratings.active.includes(:target).order(created_at: :desc)
+      Spectrum.visible_to(current_ace).find(params[:spectrum_id]).ratings.active.includes(:rated).order(created_at: :desc)
     else
-      current_ace.ratings.active.where(spectrum: Spectrum.visible_to(current_ace)).includes(:spectrum, :target).order(created_at: :desc)
+      current_ace.ratings.active.where(spectrum: Spectrum.visible_to(current_ace)).includes(:spectrum, :rated).order(created_at: :desc)
     end
   end
 
@@ -26,9 +26,9 @@ class RatingsController < ApplicationController
     
     if @spectrum_id.present?
       @spectrum = Spectrum.visible_to(current_ace).find(@spectrum_id)
-      @rating = current_ace.ratings.active.find_or_initialize_by(target: @target, spectrum: @spectrum)
+      @rating = current_ace.ratings.active.find_or_initialize_by(rated: @rated, spectrum: @spectrum)
     else
-      @rating = Rating.new(target: @target)
+      @rating = Rating.new(rated: @rated)
       @spectrums = Spectrum.visible_to(current_ace)
     end
   end
@@ -42,15 +42,15 @@ class RatingsController < ApplicationController
   # POST /players/1/ratings
   # POST /teams/1/ratings
   def create
-    # The target always comes from the URL (e.g. /players/1/ratings), never from the form
-    @rating = RatingService.replace(ace: current_ace, target: @target, **rating_attributes)
+    # The rated always comes from the URL (e.g. /players/1/ratings), never from the form
+    @rating = RatingService.replace(ace: current_ace, rated: @rated, **rating_attributes)
 
     respond_to do |format|
       format.html { redirect_to after_rating_path }
       format.json { render json: { success: true, rating: @rating }, status: :created }
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(helpers.rating_row_id(@target, @rating.spectrum),
-          partial: "ratings/slider", locals: { record: @target, spectrum: @rating.spectrum, saved: true })
+        render turbo_stream: turbo_stream.replace(helpers.rating_row_id(@rated, @rating.spectrum),
+          partial: "ratings/slider", locals: { record: @rated, spectrum: @rating.spectrum, saved: true })
       end
       format.js { head :ok }
     end
@@ -72,9 +72,9 @@ class RatingsController < ApplicationController
   # Ratings are versioned: the edited rating is archived and a new one takes its place
   def update
     original = @rating
-    @target = original.target
-    @target_type = original.target_type.underscore
-    @rating = RatingService.replace(ace: current_ace, target: @target, **rating_attributes.merge(spectrum_id: original.spectrum_id))
+    @rated = original.rated
+    @rated_type = original.rated_type.underscore
+    @rating = RatingService.replace(ace: current_ace, rated: @rated, **rating_attributes.merge(spectrum_id: original.spectrum_id))
 
     redirect_to after_rating_path
   rescue ActiveRecord::RecordInvalid => e
@@ -94,15 +94,15 @@ class RatingsController < ApplicationController
 
   # GET /players/1/ratings/for_spectrums
   # GET /teams/1/ratings/for_spectrums
-  # Returns existing ratings for the current ace and target for the given spectrum IDs
+  # Returns existing ratings for the current ace and rated for the given spectrum IDs
   def for_spectrums
     spectrum_ids = params[:spectrum_ids].presence || []
     spectrum_ids = spectrum_ids.split(',') if spectrum_ids.is_a?(String)
     spectrum_ids = spectrum_ids.map(&:to_i).reject(&:zero?)
     
-    # Find existing ratings for this ace, target, and spectrums
+    # Find existing ratings for this ace, rated, and spectrums
     ratings = current_ace ? current_ace.ratings.active
-                         .where(target: @target)
+                         .where(rated: @rated)
                          .where(spectrum_id: Spectrum.visible_to(current_ace).where(id: spectrum_ids).select(:id))
                          .includes(:spectrum) : Rating.none
     
@@ -120,10 +120,21 @@ class RatingsController < ApplicationController
     respond_to do |format|
       format.json { render json: { ratings: ratings_hash } }
       format.turbo_stream do
-        render turbo_stream: turbo_stream.update(helpers.rating_rows_id(@target),
-          partial: "ratings/slider_rows", locals: { record: @target, spectrums: Spectrum.visible_to(current_ace).where(id: spectrum_ids).order(:name) })
+        render turbo_stream: turbo_stream.update(helpers.rating_rows_id(@rated),
+          partial: "ratings/slider_rows", locals: { record: @rated, spectrums: Spectrum.visible_to(current_ace).where(id: spectrum_ids).order(:name) })
       end
     end
+  end
+
+  def suggest_dimensions
+    response.headers["Cache-Control"] = "no-store"
+    render json: RatingDimensions.new(ace: current_ace, rated: @rated).suggestions
+  end
+
+  def dimension
+    spectrum = Spectrum.visible_to(current_ace).find(params[:spectrum_id])
+    render turbo_stream: turbo_stream.append(helpers.rating_rows_id(@rated),
+      partial: "ratings/slider", locals: { record: @rated, spectrum: spectrum })
   end
 
   private
@@ -132,24 +143,24 @@ class RatingsController < ApplicationController
       @rating = Rating.where(spectrum: Spectrum.visible_to(current_ace)).find(params[:id])
     end
     
-    # Set the target for the rating based on the ratable_models configuration
-    def set_target
-      # Look for any valid target ID parameter
-      target_param = find_target_param
+    # Set the rated for the rating based on the ratable_models configuration
+    def set_rated
+      # Look for any valid rated ID parameter
+      target_param = find_rated_param
       
       if target_param
         model_name, id = target_param
         model_class = model_name.classify.constantize
-        @target = model_class.find(id)
-        @target_type = model_name.singularize
+        @rated = model_class.find(id)
+        @rated_type = model_name.singularize
       else
-        # No valid target type found
-        redirect_to root_path, alert: 'Invalid target for rating.'
+        # No valid rated type found
+        redirect_to root_path, alert: 'Invalid rated for rating.'
       end
     end
     
-    # Find the first valid target parameter in the request
-    def find_target_param
+    # Find the first valid rated parameter in the request
+    def find_rated_param
       Rails.application.config.ratable_models.each do |model_name|
         param_name = "#{model_name.underscore}_id"
         return [model_name.underscore, params[param_name]] if params[param_name].present?
@@ -173,11 +184,11 @@ class RatingsController < ApplicationController
       end
     end
     
-    # Determine where to redirect after rating based on target type
+    # Determine where to redirect after rating based on rated type
     def after_rating_path
-      if @target && @target_type && Rails.application.config.ratable_models_hash[@target_type.classify]
+      if @rated && @rated_type && Rails.application.config.ratable_models_hash[@rated_type.classify]
         # Dynamically generate the path helper name and call it
-        send("#{@target_type}_path", @target)
+        send("#{@rated_type}_path", @rated)
       else
         ratings_path
       end

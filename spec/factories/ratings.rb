@@ -3,18 +3,18 @@ FactoryBot.define do
     value { rand(1..100) }
     association :ace
     association :spectrum
-    association :target, factory: :player
+    association :rated, factory: :player
     
     trait :with_player_target do
-      association :target, factory: :player
+      association :rated, factory: :player
     end
     
     trait :with_team_target do
-      association :target, factory: :team
+      association :rated, factory: :team
     end
     
     trait :with_stadium_target do
-      association :target, factory: :stadium
+      association :rated, factory: :stadium
     end
     
     trait :high_rating do

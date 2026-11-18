@@ -4,8 +4,9 @@
 <% average = average&.to_f %>
 <% row_id = rating_row_id record, spectrum %>
 <% saved = local_assigns.fetch :saved, false %>
+<% dimension = spectrum.rating_dimension %>
 
-<%= tag.div id: row_id, class: "rating-slider-instance", data: { spectrum_id: spectrum.id, rated: your_rating.present? } do %>
+<%= tag.div id: row_id, class: "rating-slider-instance", style: "--rating-position: #{dimension.position(your_rating&.value || 0) * 100}%", data: { spectrum_id: spectrum.id, rated: your_rating.present?, dimension: dimension.to_h.to_json } do %>
   <%= tag.div class: "slider-header" do %>
     <%= tag.label spectrum.name, for: "#{row_id}_input", class: "slider-label" %>
     <%= tag.span signed_rating(your_rating&.value), class: "slider-value", data: { rating_slider_target: "value" } %>
@@ -13,21 +14,37 @@
   <%= tag.div class: "slider-track" do %>
     <% if average %>
       <%= tag.div class: "average-track", aria: { hidden: true } do %>
-        <%= tag.span "", class: "average-marker", style: "left: #{(average + 10_000) / 200}%", title: "Aces average #{signed_rating average}" %>
+        <%= tag.span "", class: "average-marker", style: "left: #{(average - dimension.minimum) * 100 / (dimension.maximum - dimension.minimum)}%", title: "Aces average #{signed_rating average}" %>
       <% end %>
     <% end %>
     <%# An integer track keeps existing off-grid ratings exact; Stimulus applies the selected increments to new input. %>
-    <%= tag.input type: "range", id: "#{row_id}_input", min: -10000, max: 10000, step: 1,
+    <%= tag.input type: "range", id: "#{row_id}_input", min: dimension.minimum, max: dimension.maximum, step: 1,
       value: your_rating&.value || 0, disabled: !ace_signed_in?, class: "rating-slider-input",
-      aria: { describedby: "#{row_id}_summary" }, data: {
+      aria: { describedby: ["#{row_id}_summary", ("#{row_id}_precision_hint" if ace_signed_in?)].compact.join(" ") }, data: {
         rating_slider_target: "slider", rating_slider_spectrum_id_param: spectrum.id,
         rating_slider_url: polymorphic_path([record, :ratings]),
-        action: "input->rating-slider#updateValue change->rating-slider#submitRating keydown->rating-slider#adjustWithKeyboard"
+        action: "input->rating-slider#updateValue change->rating-slider#submitRating keydown->rating-slider#adjustWithKeyboard pointerdown->rating-slider#startDrag lostpointercapture->rating-slider#cancelDrag"
       } %>
+    <% if ace_signed_in? %>
+      <%= tag.div class: "rating-handle-track" do %>
+        <%= tag.span "", class: "rating-drag-handle", aria: { hidden: true }, data: {
+          action: "pointerdown->rating-slider#startDrag"
+        } %>
+      <% end %>
+    <% end %>
     <% unless ace_signed_in? %>
       <%= tag.button "", type: "button", class: "rating-sign-in-trigger",
         aria: { label: "Sign in to rate #{spectrum.name}", describedby: "#{row_id}_status" },
         data: { action: "rating-slider#promptSignIn" } %>
+    <% end %>
+  <% end %>
+  <% if ace_signed_in? %>
+    <%= tag.div class: "rating-adjustment-help" do %>
+      <%= tag.span "Drag down for finer adjustments", id: "#{row_id}_precision_hint", class: "precision-hint" %>
+      <%= tag.span "", class: "drag-precision", role: "status", aria: { live: "polite" } %>
+      <% unless your_rating %>
+        <%= tag.button "Rate neutral", type: "button", class: "rate-neutral", data: { action: "rating-slider#rateNeutral" } %>
+      <% end %>
     <% end %>
   <% end %>
   <%= tag.div class: "slider-endpoints" do %>

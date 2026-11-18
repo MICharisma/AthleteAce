@@ -18,10 +18,10 @@ RSpec.describe "Quick round team preferences", type: :request do
     expect(round.questions.map { |q| q.fetch("subject_id") }).to match_array(players.map(&:id))
   end
 
-  it "uses approved active high Affinity ratings at the 5000 threshold" do
+  it "uses approved active high Affinity ratings at the 250 threshold" do
     affinity = create(:spectrum, name: "Affinity")
-    create(:rating, ace: ace, target: team, spectrum: affinity, value: 5000)
-    create(:rating, ace: ace, target: rival, spectrum: affinity, value: 4999)
+    create(:rating, ace: ace, rated: team, spectrum: affinity, value: 250)
+    create(:rating, ace: ace, rated: rival, spectrum: affinity, value: 249)
     post play_quick_path
     expect(ace.game_rounds.last.questions.map { |q| q.fetch("subject_id") }).to match_array(players.map(&:id))
   end
@@ -52,7 +52,7 @@ RSpec.describe "Quick round team preferences", type: :request do
 
   it "ignores archived ratings and unapproved Affinity spectrums" do
     affinity = create(:spectrum, name: "Affinity", moderation_status: "hidden")
-    create(:rating, ace: ace, target: team, spectrum: affinity, value: 10_000)
+    create(:rating, ace: ace, rated: team, spectrum: affinity, value: 500)
     post play_quick_path
     expect(ace.game_rounds.last.questions.map { |q| q.fetch("subject_id") }).to match_array((players + others).map(&:id))
     affinity.update!(moderation_status: "approved")

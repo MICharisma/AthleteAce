@@ -1,20 +1,30 @@
 class Rating < ApplicationRecord
+  SCALE = SharedRatings::Scales.standard(
+    key: "athleteace.rating", version: 2, question: "How do you rate this entity?",
+    low_label: "Low", high_label: "High"
+  )
+  HIGH_AFFINITY_THRESHOLD = 250
+
   belongs_to :ace
   belongs_to :spectrum
-  belongs_to :target, polymorphic: true
+  belongs_to :rated, polymorphic: true
+
+  after_create :record_revision
+  after_update :record_revision, if: -> { saved_changes.keys.intersect? %w[value notes archived spectrum_id rated_type rated_id] }
+  before_destroy { RatingRevision.record! reload, operation: "remove" }
   
   # Validations
   validates :value, presence: true, 
                    numericality: { 
                      only_integer: true, 
-                     greater_than_or_equal_to: -10_000, 
-                     less_than_or_equal_to: 10_000 
+                     greater_than_or_equal_to: SCALE.minimum,
+                     less_than_or_equal_to: SCALE.maximum
                    }
   
   # Scopes
   scope :by_ace, ->(ace) { where(ace: ace) }
   scope :by_spectrum, ->(spectrum) { where(spectrum: spectrum) }
-  scope :for_target, ->(target) { where(target: target) }
+  scope :for_rated, ->(rated) { where(rated: rated) }
   scope :positive, -> { where('value > 0') }
   scope :negative, -> { where('value < 0') }
   scope :neutral, -> { where(value: 0) }
@@ -37,11 +47,17 @@ class Rating < ApplicationRecord
   
   # Normalized value between 0 and 1 for display purposes
   def normalized_value
-    (value.to_f + 10_000) / 20_000
+    SCALE.position value
   end
   
   # Percentage value (0-100) for display purposes
   def percentage_value
-    ((value.to_f + 10_000) / 20_000 * 100).round
+    (normalized_value * 100).round
+  end
+
+  private
+
+  def record_revision
+    RatingRevision.record! self, operation: archived? ? "archive" : "set"
   end
 end

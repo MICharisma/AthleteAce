@@ -1,4 +1,11 @@
 class Spectrum < ApplicationRecord
+  def rating_dimension
+    SharedRatings::Dimension.new(**Rating::SCALE.to_h.merge(
+      key: "athleteace.spectrum.#{id}", question: description.presence || name,
+      low_label: low_label, high_label: high_label
+    ))
+  end
+
   include Moderatable
   has_many :ratings, dependent: :destroy
   

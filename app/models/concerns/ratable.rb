@@ -2,7 +2,7 @@ module Ratable
   extend ActiveSupport::Concern
 
   included do
-    has_many :ratings, as: :target, dependent: :destroy
+    has_many :ratings, as: :rated, dependent: :destroy
   end
 
   class_methods do
@@ -26,6 +26,6 @@ module Ratable
     avg = average_rating_on(spectrum)
     return nil if avg.nil?
     
-    (avg + 10_000) / 20_000
+    (avg - Rating::SCALE.minimum) / (Rating::SCALE.maximum - Rating::SCALE.minimum)
   end
 end

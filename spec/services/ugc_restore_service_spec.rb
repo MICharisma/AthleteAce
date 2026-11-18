@@ -39,7 +39,7 @@ RSpec.describe UgcRestoreService do
     team = create(:team)
     create(:player, first_name: "Mike", last_name: "Williams", team: team, entity_code: "FTB-NFL-PLAYER-WILLIAMS_MIKE_1")
     second = create(:player, first_name: "Mike", last_name: "Williams", team: team, entity_code: "FTB-NFL-PLAYER-WILLIAMS_MIKE_2")
-    rating = create(:rating, target: second)
+    rating = create(:rating, rated: second)
     UgcBackupService.new(backup_dir).backup_all
     exported = YAML.load_file(backup_dir.join("aces_and_ratings.yml"), permitted_classes: [Time, Date, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true)
     expect(exported.fetch(:ratings).sole).to include("target_code" => "FTB-NFL-PLAYER-WILLIAMS_MIKE_2", "target_identifier" => "Mike Williams")
@@ -47,7 +47,7 @@ RSpec.describe UgcRestoreService do
 
     described_class.new(backup_dir).restore_all
 
-    expect(Rating.sole.target).to eq(second)
+    expect(Rating.sole.rated).to eq(second)
   end
 
   it "follows a code's alias and still restores by name when a backup has no code" do
@@ -67,13 +67,13 @@ RSpec.describe UgcRestoreService do
 
     described_class.new(backup_dir).restore_all
 
-    expect(Rating.where(target: player).count).to eq(2)
+    expect(Rating.where(rated: player).count).to eq(2)
   end
 
   it "backs up and restores an uncoded division through its league without a conference" do
     division = create(:division, name: "North", conference: nil)
     create(:division, name: "North", conference: nil)
-    rating = create(:rating, target: division)
+    rating = create(:rating, rated: division)
     UgcBackupService.new(backup_dir).backup_all
     exported = YAML.load_file(backup_dir.join("aces_and_ratings.yml"),
       permitted_classes: [Time, Date, Symbol, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone], aliases: true)
@@ -83,6 +83,6 @@ RSpec.describe UgcRestoreService do
 
     described_class.new(backup_dir).restore_all
 
-    expect(Rating.sole.target).to eq(division)
+    expect(Rating.sole.rated).to eq(division)
   end
 end

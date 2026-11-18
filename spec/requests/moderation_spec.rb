@@ -158,7 +158,7 @@ RSpec.describe "Moderation boundaries", type: :request do
     spectrum = create(:spectrum, created_by: author, name: "Author-only spectrum")
     public_spectrum = create(:spectrum, name: "Public spectrum")
     player = create(:player)
-    create(:rating, ace: author, target: player, spectrum: public_spectrum, value: 100)
+    create(:rating, ace: author, rated: player, spectrum: public_spectrum, value: 100)
     sign_in author
     post player_ratings_path(player), params: { rating: { spectrum_id: spectrum.id, value: 200 } }, as: :json
     expect(response).to have_http_status(:created)

@@ -54,7 +54,7 @@ These should be discussed, even though they are not in the six assigned review i
 - **Round selection (AA-174, AA-175):** rounds have 10/20/30 names; Quick round blends follows, high Affinity and recent misses. The weighting and fallback behavior need definition.
 - **Following versus Affinity (AA-175):** +5,000 is the proposed high-Affinity threshold. Confirm whether that rating should implicitly personalize Feed and Play, and how player follows affect team feeds.
 - **Quest completion (AA-183):** decide whether partial achievement progress counts unique players, correct attempts, mastery, or another rule; the “7 of 10” visual does not define this.
-- **Rating precision (AA-186):** proposed coarse/fine steps are 1,000/100 across −10,000 to +10,000. Confirm that these preserve the intended rating experience.
+- **Rating precision (AA-186):** coarse/fine steps are 10/1 across −100 to +500, supplied by the shared standard scale.
 - **Leaderboard meaning (AA-200):** counts live shout-outs, uses Monday–Sunday weeks, and proposes counting only direct team shout-outs on the Teams board. Player-to-team aggregation and week timezone need a call.
 - **Public identity (AA-171):** handles, display names, rename rules and the onboarding of existing aces need definition.
 - **Moderated content scope (AA-187):** the issue mentions existing user-created highlights, but its proposed status fields list quests, achievements and spectrums. Confirm whether highlights also require review.
