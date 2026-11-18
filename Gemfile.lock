@@ -17,6 +17,13 @@ GIT
       json (~> 2.7)
       net-http (~> 0.4)
 
+GIT
+  remote: https://github.com/postshiba/postshiba-ruby.git
+  revision: 9c2c5f3585c196f663495b7e2adcd5b9341fdf55
+  ref: 9c2c5f3585c196f663495b7e2adcd5b9341fdf55
+  specs:
+    postshiba (0.1.0)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -553,6 +560,7 @@ DEPENDENCIES
   omniauth-rails_csrf_protection (~> 2.0)
   pagy (~> 43.6)
   pg (~> 1.1)
+  postshiba!
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.4)

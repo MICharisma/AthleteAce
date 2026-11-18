@@ -101,7 +101,7 @@ Existing goals prepare missing roster snapshots on their next correct saved answ
 
 Visitors can answer one Team Match question at `/play/preview`, linked from Feed and Play. The signed session holds the question and its first answer for 30 minutes. The preview does not create a round, attempt, streak, or quest progress. Sign in or create an account to continue saved play.
 
-Production confirmation mail requires an actual SMTP provider and verified sender. Configure the variables in `config/production-mail.env.example` using the deployment's secret storage. `APP_HOST` controls HTTPS confirmation links; `MAIL_FROM` controls the sender. Setting `SMTP_ADDRESS` enables authenticated SMTP with STARTTLS on `SMTP_PORT`, default 587, and requires `SMTP_USERNAME` and `SMTP_PASSWORD`. Without those settings, the existing placeholder mail configuration remains. No production delivery is established by these code changes.
+Confirmation mail uses PostShiba. Configure `POSTSHIBA_API_KEY`, `APP_HOST`, and `MAIL_FROM` through the deployment's secret storage, using `config/production-mail.env.example` as a reference. [Configure transactional email](email.md) covers DNS, separate environment keys, and development capture. Production delivery still needs verification after deployment and DNS setup.
 
 ## Apply and verify
 
