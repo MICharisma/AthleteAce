@@ -43,6 +43,25 @@ Rails.application.routes.draw do
     resources :people, only: [ :index, :show, :update ]
     resources :catalog_records, path: "sports-data", only: [ :index, :new, :create, :edit, :update ]
     resources :catalog_edits, only: [ :index, :show, :update ]
+    scope "claims", constraints: { kind: /business|practice|statement/ } do
+      get "/", to: "figure_claims#index", as: :figure_claims
+      get ":kind/new", to: "figure_claims#new", as: :new_figure_claim
+      post ":kind", to: "figure_claims#create", as: :create_figure_claim
+      get ":kind/:id", to: "figure_claims#show", as: :figure_claim
+      get ":kind/:id/edit", to: "figure_claims#edit", as: :edit_figure_claim
+      patch ":kind/:id", to: "figure_claims#update", as: nil
+      post ":kind/:id/review", to: "figure_claims#review", as: :review_figure_claim
+      get ":kind/:claim_id/attestations/new", to: "attestations#new", as: :new_claim_attestation
+      post ":kind/:claim_id/attestations", to: "attestations#create", as: :claim_attestations
+      get ":kind/:claim_id/attestations/:id/edit", to: "attestations#edit", as: :edit_claim_attestation
+      patch ":kind/:claim_id/attestations/:id", to: "attestations#update", as: :claim_attestation
+      delete ":kind/:claim_id/attestations/:id", to: "attestations#destroy", as: nil
+    end
+    scope "claim-identities", constraints: { kind: /business|practice|protocol|topic/ } do
+      get "/", to: "claim_identities#index", as: :claim_identities
+      get ":kind/new", to: "claim_identities#new", as: :new_claim_identity
+      post ":kind", to: "claim_identities#create", as: :create_claim_identity
+    end
   end
   get "admin", to: "admin#index", as: :admin
   resource :shout_out_revenue, path: "admin/revenue", only: :show

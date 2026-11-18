@@ -1,0 +1,20 @@
+<% content_for :title, "Add #{params[:kind]}" %>
+<div class="moderation-page people-page">
+  <%= link_to "Back", admin_claim_identities_path, class: "tool-link" %>
+  <header class="browse-header"><div><p class="eyebrow">Admin · Figure claims</p><h1 class="page-title">Add <%= params[:kind] %></h1></div></header>
+  <% if @error %><div role="alert" class="round-panel"><p><%= @error %></p></div><% end %>
+  <section class="round-panel">
+    <%= form_with scope: :record, url: admin_create_claim_identity_path(params[:kind]), class: "people-actions catalog-form" do |form| %>
+      <%= claim_text_field form, :name, @record.name, required: true %>
+      <%= claim_text_field form, :entity_code, nil, label: "Entity code", hint: "Leave blank to build one from the name." %>
+      <% Admin::ClaimIdentitiesController::FIELDS.fetch(params[:kind]).without("name").each do |field| %>
+        <% if %w[description routine].include?(field) %>
+          <%= claim_text_area form, field, @record.public_send(field), hint: field == "routine" ? "The concrete method the source describes, without assigning it a purpose." : nil %>
+        <% else %>
+          <%= claim_text_field form, field, @record.public_send(field) %>
+        <% end %>
+      <% end %>
+      <div class="page-actions"><%= form.submit "Add #{params[:kind]}", class: "tool-button" %></div>
+    <% end %>
+  </section>
+</div>

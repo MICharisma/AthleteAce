@@ -35,11 +35,20 @@ RSpec.describe Seeds::HomeVenueImporter do
     library = data_root.join("yaml")
     registry = MICharismaSeeders::SequenceRegistry.read(library.join("entity_sequences.yaml"))
     catalog = Seeds::LibraryImporter.new(registry: registry)
-    # Home-venue geography only; game-venue batches add their own off-site places.
-    paths = Dir.glob(library.join("**/*.yaml")).reject { |path| path.end_with?("entity_sequences.yaml") || path.include?("/nhl_venues_2026/") || path.include?("/f1_2026/") }
+    paths = Dir.glob(library.join("**/*.{yaml,yml}")).reject { |path| path.end_with?("entity_sequences.yaml") }
     campaign_codes = bindings.map { |entry| entry.fetch("campaign") }
-    types = %w[Country State City Stadium Sport League Federation Year Season Team]
-    selected = catalog.read(paths).select { |row| types.include?(row.type) || (row.type == "Campaign" && campaign_codes.include?(row.code)) }
+    # Home-venue geography only: the places these bindings use. Game-venue and
+    # F1 batches add other places to the same catalog files.
+    rows = catalog.read(paths)
+    by_code = rows.index_by(&:code)
+    places = Set.new
+    pending = bindings.flat_map { |entry| entry.fetch("venues").flat_map { |venue| venue.values_at("stadium", "city") } }
+    while (code = pending.shift)
+      next unless places.add?(code)
+      pending.concat(by_code.fetch(code).references.values_at("city", "state", "country").compact)
+    end
+    types = %w[Sport League Federation Year Season Team]
+    selected = rows.select { |row| types.include?(row.type) || places.include?(row.code) || (row.type == "Campaign" && campaign_codes.include?(row.code)) }
     rows = selected.map do |row|
       { "type" => row.type, "code" => row.code, "aliases" => row.aliases, "attributes" => row.attributes,
         "references" => row.references, "scope" => row.scope, "source" => row.source || {} }

@@ -33,6 +33,7 @@
 
 @import "./components/people.css";
 @import "./components/catalog.css";
+@import "./components/figure_claims.css";
 @import "./components/competitions.css";
 @import "./components/shout_out_history.css";
 @import "./components/admin_overview.css";

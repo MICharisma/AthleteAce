@@ -130,7 +130,12 @@ module ApplicationHelper
   def display_name_with_lazy_logo(record, name_attribute: :name, logo_attribute: :logo_url, **options)
     return '' unless record
 
-    logo_url_value = record.respond_to?(logo_attribute) ? record.public_send(logo_attribute) : nil
+    image = record.primary_logo&.image if logo_attribute == :logo_url && record.is_a?(HasLogos)
+    logo_url_value = if image
+      url_for image
+    elsif record.respond_to? logo_attribute
+      record.public_send logo_attribute
+    end
     entity_name = if record.respond_to?(:display_name) && %i[name full_name].include?(name_attribute)
       record.display_name
     else

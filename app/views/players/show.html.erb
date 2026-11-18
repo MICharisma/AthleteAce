@@ -15,7 +15,8 @@
       <% end %>
       <%= render "follows/button", record: @player %>
       <% if @player.figure %>
-        <%= link_to "Coaching, staff and broadcasting history", figure_path(@player.figure), class: "tool-link" %>
+        <%= link_to "Career, connections and values", figure_path(@player.figure), class: "tool-link" %>
+        <%= render "figure_connections/preview", figure: @player.figure %>
       <% end %>
       <%= link_to "Write a shout-out draft", new_shout_out_draft_path(target_type: "Player", target_id: @player.id), class: "tool-button" %>
       <% if @player.team %>

@@ -1,0 +1,14 @@
+<% content_for :title, "Businesses" %>
+<%= browse_header "Businesses" do %><span class="round-caption"><%= pluralize @pagy.count, "business" %> with sourced connections</span><% end %>
+<p class="round-caption">Businesses, foundations, schools and similar institutions connected to people in sports by reviewed sources.</p>
+<%= filter_links :predicate, FigureConnectionsHelper::BUSINESS_PREDICATES.map { |value, label| [ label, value ] }, @predicate, label: "Relationship" %>
+<% if @businesses.empty? %>
+  <section class="round-panel"><p><%= @predicate ? "No businesses have a sourced #{FigureConnectionsHelper::BUSINESS_PREDICATES[@predicate].downcase} connection yet." : "No sourced business connections have been recorded yet." %></p></section>
+<% else %>
+  <ul class="wallet-history">
+    <% @businesses.each do |business| %>
+      <li><%= link_to business.name, business_path(business, predicate: @predicate) %> <span class="round-caption">· <%= pluralize @people_counts.fetch(business.id), "person" %><%= " · founded #{business.founded_year}" if business.founded_year %></span></li>
+    <% end %>
+  </ul>
+  <%== @pagy.series_nav if @pagy.pages > 1 %>
+<% end %>

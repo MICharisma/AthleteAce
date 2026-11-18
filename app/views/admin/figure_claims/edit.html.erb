@@ -1,0 +1,6 @@
+<% content_for :title, "Edit #{@claim.entity_code}" %>
+<div class="moderation-page people-page">
+  <%= link_to "Back to claim", admin_figure_claim_path(params[:kind], @claim), class: "tool-link" %>
+  <header class="browse-header"><div><p class="eyebrow">Admin · Figure claims · <%= figure_claim_status(@claim) %></p><h1 class="page-title">Edit claim</h1><p><%= figure_claim_summary(@claim) %> · <%= @claim.entity_code %> · revision <%= @claim.moderation_revision %></p></div></header>
+  <%= render "form" %>
+</div>

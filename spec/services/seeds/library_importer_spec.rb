@@ -3,7 +3,8 @@ require "tmpdir"
 require "fileutils"
 
 RSpec.describe Seeds::LibraryImporter do
-  let(:library) { Rails.root.join("db/seeds/athlete_ace_data/yaml") }
+  # The original pilot manifests, frozen as a fixture; see spec/fixtures/seed_pilot/README.md.
+  let(:library) { Rails.root.join("spec/fixtures/seed_pilot") }
   let(:registry) { MICharismaSeeders::SequenceRegistry.read(library.join("entity_sequences.yaml")) }
   let(:paths) { Dir.glob(library.join("*.yaml")).sort.reject { |path| path.end_with?("entity_sequences.yaml") } }
   let(:importer) { described_class.new(registry: registry) }

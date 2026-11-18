@@ -1,10 +1,10 @@
 module PlayerProfileHelper
   def player_breadcrumbs(player, filtered_breadcrumb, filters)
     crumbs = if filters.present?
-      filtered_breadcrumb
+      filtered_breadcrumb.map { |crumb| crumb.merge(record: filters[crumb[:type].to_s.underscore.to_sym]) }
     else
       [ player.sport, player.league, player.team&.conference, player.team&.division, player.team ].compact.map do |record|
-        { label: record.name, path: polymorphic_path(record), type: record.model_name.singular }
+        { label: record.name, path: polymorphic_path(record), type: record.model_name.singular, record: record }
       end
     end
     tag.nav class: "player-breadcrumbs", aria: { label: "Breadcrumb" } do
@@ -15,8 +15,11 @@ module PlayerProfileHelper
             content = if crumb[:current]
               tag.span player_display_name(player), aria: { current: "page" }
             else
-              link_to crumb[:path], class: "entity-chip", data: { entity: crumb[:type].to_s.underscore.singularize } do
-                icon_for_resource(crumb[:type].to_s.underscore, size: 16) + tag.span(crumb[:label])
+              image = crumb[:record].is_a?(HasLogos) ? crumb[:record].primary_logo&.image : nil
+              link_to crumb[:path], class: ["entity-chip", ("breadcrumb-with-logo" if image)],
+                aria: { label: crumb[:label] }, data: { entity: crumb[:type].to_s.underscore.singularize } do
+                mark = image ? image_tag(image, alt: "", class: "breadcrumb-logo") : icon_for_resource(crumb[:type].to_s.underscore, size: 16)
+                mark + tag.span(crumb[:label], class: "breadcrumb-label")
               end
             end
             safe_join [ separator, content ]
@@ -34,8 +37,8 @@ module PlayerProfileHelper
       fallback = tag.div class: "profile-jersey", data: { entity_image_target: "fallback" }, aria: { hidden: true } do
         jersey_portrait_fallback(player_display_name(player), number&.number)
       end
-      photo = if player.photo_url.present?
-        tag.img src: player.photo_url, alt: "", class: "profile-photo hidden",
+      photo = if player_portrait_url(player).present?
+        tag.img src: player_portrait_url(player), alt: "", class: "profile-photo hidden",
           data: { entity_image_target: "image", action: "load->entity-image#loaded error->entity-image#failed" }
       end
       safe_join [ fallback, photo ].compact

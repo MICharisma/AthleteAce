@@ -53,6 +53,10 @@ Figures and appointments are core catalog records in `UgcResetService`. A full c
 
 The catalog and published schemas use the Figure contract. The Steve Kerr example in `yaml/figures/steve_kerr.yaml` links one Figure to an athletic profile, a TNT broadcasting appointment, and a Warriors coaching appointment. Names belong to the Figure, and the Player and StaffTenures reference its code.
 
+## Businesses, practices and statements
+
+Figure pages show published business ties, practices and attributed statements in **Businesses**, **Practices** and **Values and wisdom** sections, each with its sources. A coach or broadcaster without a Player gets the same sections. Player pages link to them, with counts when there is published content. See [Figure connections](figure-connections.md#public-pages).
+
 ## Rizz sync
 
 `bin/rails rizz:sync_figures` sends Figures with athletic profiles to Rizz. It requires the optional `rizz-client` gem, `RIZZ_ENDPOINT`, and `RIZZ_API_TOKEN`. The local `RizzFigureSync` adapter retains the external SDK's `PersonRecord` and `import_athleteace_person` interfaces until Rizz is updated.

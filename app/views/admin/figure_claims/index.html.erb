@@ -1,0 +1,26 @@
+<% content_for :title, "Figure claims" %>
+<div class="moderation-page people-page">
+  <header class="browse-header"><div><p class="eyebrow">Admin · Figure claims</p><h1 class="page-title"><%= figure_claim_status(@status) %></h1><p>Business ties, practice relationships and attributed statements. Only published claims are public.</p></div></header>
+  <div class="page-actions">
+    <%= link_to "New business tie", admin_new_figure_claim_path("business"), class: "tool-button" %>
+    <%= link_to "New practice relationship", admin_new_figure_claim_path("practice"), class: "tool-button" %>
+    <%= link_to "New statement", admin_new_figure_claim_path("statement"), class: "tool-button" %>
+    <%= link_to "Businesses, practices, protocols & topics", admin_claim_identities_path, class: "tool-link" %>
+  </div>
+  <nav class="page-actions" aria-label="Filter claims">
+    <% ReviewedClaim::STATUSES.each do |status| %>
+      <%= link_to "#{figure_claim_status(status)} (#{@counts[status]})", admin_figure_claims_path(status: status, kind: @kind), class: "tool-link", aria: { current: (status == @status ? "page" : nil) } %>
+    <% end %>
+    <% [ [ "All kinds", nil ], [ "Business", "business" ], [ "Practice", "practice" ], [ "Statements", "statement" ] ].each do |label, kind| %>
+      <%= link_to label, admin_figure_claims_path(status: @status, kind: kind), class: "tool-link", aria: { current: (kind == @kind ? "page" : nil) } %>
+    <% end %>
+  </nav>
+  <% if @claims.empty? %><section class="round-panel"><p>No matching claims.</p></section><% end %>
+  <ul class="wallet-history">
+    <% @claims.each do |claim| %>
+      <li id="<%= dom_id(claim, :admin_row_for) %>"><%= link_to figure_claim_summary(claim), admin_figure_claim_path(claim_kind(claim), claim) %>
+        <p class="round-caption"><%= claim.entity_code %> · revision <%= claim.moderation_revision %> · <%= pluralize claim.attestations.size, "attestation" %> · updated <%= l claim.updated_at, format: :long %></p></li>
+    <% end %>
+  </ul>
+  <% if @claims.size == Admin::FigureClaimsController::LIST_LIMIT %><p class="round-caption">Showing the <%= @claims.size %> most recently updated.</p><% end %>
+</div>

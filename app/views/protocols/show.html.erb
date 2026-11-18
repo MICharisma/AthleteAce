@@ -1,0 +1,9 @@
+<% content_for :title, @protocol.name %>
+<%= link_to "All protocols", protocols_path, class: "tool-link" %>
+<header class="browse-header"><div><p class="eyebrow">Protocol</p><h1 class="page-title"><%= @protocol.name %></h1>
+  <% if @protocol.routine || @protocol.description %><p><%= [ @protocol.routine, @protocol.description ].compact.join(" · ") %></p><% end %>
+  <p class="round-caption">Each person below connects this method with practices in their own words. Their interpretations differ and don't carry over to each other.</p></div></header>
+<%= filter_links :predicate, FigureConnectionsHelper::PRACTICE_PREDICATES.map { |value, label| [ label, value ] }, @predicate, label: "Connection", base: { period: @period } %>
+<%= filter_links :period, period_options, @period, label: "When", base: { predicate: @predicate } %>
+<%= render "figure_connections/people", people: @people, claims_by_person: @claims_by_person, card: "practice_card",
+      empty: (@predicate || @period) ? "No published connections match these filters." : "No published connections use #{@protocol.name} yet." %>

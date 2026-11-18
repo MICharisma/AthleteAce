@@ -1,0 +1,85 @@
+<% content_for :title, figure_claim_summary(@claim) %>
+<% kind = claim_kind(@claim) %>
+<div class="moderation-page people-page">
+  <%= link_to "Back to claims", admin_figure_claims_path(status: @claim.moderation_status), class: "tool-link" %>
+  <header class="browse-header"><div><p class="eyebrow">Admin · Figure claim · <%= figure_claim_status(@claim) %></p><h1 class="page-title"><%= figure_claim_summary(@claim) %></h1><p><%= @claim.entity_code %> · revision <%= @claim.moderation_revision %></p></div></header>
+  <% if @error %><div role="alert" class="round-panel"><p><%= @error %></p><%= link_to "Reload", admin_figure_claim_path(kind, @claim), class: "tool-link" %></div><% end %>
+  <div class="page-actions"><%= link_to "Edit claim", admin_edit_figure_claim_path(kind, @claim), class: "tool-button" %><%= link_to "Add attestation", admin_new_claim_attestation_path(kind, @claim), class: "tool-button" %></div>
+
+  <section class="round-panel" aria-labelledby="claim-details-title">
+    <h2 id="claim-details-title" class="profile-section-title">Claim</h2>
+    <dl class="claim-details">
+      <dt>Figure</dt><dd><%= link_to @claim.figure.name, figure_path(@claim.figure) %> · <%= @claim.figure.entity_code %></dd>
+      <% case @claim %>
+      <% when FigureBusinessRelationship %>
+        <dt>Business</dt><dd><%= @claim.business.name %> · <%= @claim.business.entity_code %></dd>
+        <dt>Relationship</dt><dd><%= @claim.predicate.humanize %></dd>
+        <dt>Compensation</dt><dd><%= @claim.compensation.humanize %><%= " · #{@claim.compensation_description}" if @claim.compensation_description %></dd>
+        <% if @claim.vehicle_name %><dt>Investment vehicle</dt><dd><%= @claim.vehicle_name %></dd><% end %>
+      <% when FigurePracticeRelationship %>
+        <dt>Relationship</dt><dd><%= @claim.predicate.humanize %></dd>
+        <dt>Protocol</dt><dd><%= @claim.protocol ? "#{@claim.protocol.name} · #{@claim.protocol.routine.presence || 'no routine recorded'}" : "None" %></dd>
+        <dt>Practices</dt><dd><%= @claim.practices.map(&:name).to_sentence.presence || "None" %></dd>
+        <dt>Their explanation</dt><dd><%= @claim.interpretation.presence || "None recorded" %></dd>
+      <% when AttributedStatement %>
+        <dt>Attribution</dt><dd><%= @claim.attribution_kind.humanize %><%= " by #{@claim.observer&.name || @claim.observer_name}" if @claim.observer_characterization? %></dd>
+        <dt>Text</dt><dd><blockquote><%= @claim.text %></blockquote></dd>
+        <dt>Topic</dt><dd><%= @claim.topic&.name || "None" %></dd>
+        <% if @claim.figure_practice_relationship %><dt>Practice context</dt><dd><%= link_to figure_claim_summary(@claim.figure_practice_relationship), admin_figure_claim_path("practice", @claim.figure_practice_relationship) %> · <%= figure_claim_status(@claim.figure_practice_relationship) %></dd><% end %>
+        <% if @claim.staff_tenure %><dt>Role at the time</dt><dd><%= @claim.staff_tenure.title %> · <%= @claim.staff_tenure.organization.name %></dd><% end %>
+        <dt>Statement date</dt><dd><%= @claim.statement_date || "Unknown" %></dd>
+      <% end %>
+      <% unless @claim.is_a?(AttributedStatement) %>
+        <dt>Dates</dt><dd><%= claim_date_range(@claim) || "Unknown" %></dd>
+        <dt>State</dt><dd><%= @claim.temporal_state.humanize %><%= " as of #{@claim.as_of_date}" if @claim.as_of_date %></dd>
+      <% end %>
+      <dt>Context</dt><dd><%= @claim.context.presence || "None" %></dd>
+    </dl>
+  </section>
+
+  <section class="round-panel" aria-labelledby="claim-evidence-title">
+    <h2 id="claim-evidence-title" class="profile-section-title">Evidence</h2>
+    <% if @claim.attestations.empty? %><p>No attestations yet.</p><% end %>
+    <ul class="wallet-history claim-evidence">
+      <% @claim.attestations.includes(:author, :entered_by).each do |attestation| %>
+        <li id="<%= dom_id(attestation, :preview_for) %>">
+          <p><strong><%= attestation.content_form.humanize %></strong> · <%= attestation.entity_code %><%= " · incomplete" unless attestation.complete? %></p>
+          <% if attestation.body %><blockquote><%= attestation.body %></blockquote><% end %>
+          <% [ attestation.url, attestation.media_url ].compact.uniq.each do |url| %><p><%= link_to url, url, rel: "noopener noreferrer nofollow", target: "_blank" %></p><% end %>
+          <% if attestation.excerpt %><p>“<%= attestation.excerpt %>”<%= " · #{attestation.locator}" if attestation.locator %></p><% elsif attestation.locator %><p><%= attestation.locator %></p><% end %>
+          <p class="round-caption">By <%= attestation.author&.name || attestation.author_name || "unknown author" %> · <%= [ attestation.source_title, attestation.publisher ].compact.join(", ").presence || "source untitled" %> · published <%= attestation.published_on || "date unknown" %> · captured <%= attestation.captured_at ? l(attestation.captured_at, format: :long) : "unknown" %> · entered by <%= attestation.entered_by&.public_name || "import or maintenance" %></p>
+          <p><%= attestation.context.presence || "No explanation of what this supports." %></p>
+          <div class="page-actions"><%= link_to "Edit", admin_edit_claim_attestation_path(kind, @claim, attestation), class: "tool-link" %><%= button_to "Remove", admin_claim_attestation_path(kind, @claim, attestation), method: :delete, class: "tool-link", form: { data: { turbo_confirm: "Remove this attestation? The claim returns to pending review." } } %></div>
+        </li>
+      <% end %>
+    </ul>
+  </section>
+
+  <section class="round-panel" aria-labelledby="claim-review-title">
+    <h2 id="claim-review-title" class="profile-section-title">Review</h2>
+    <p class="round-caption">Publishing records your editorial review of this exact revision and evidence. It doesn't independently prove the claim. A dead link alone doesn't make a claim false.</p>
+    <% if @claim.pending? && @problems.any? %>
+      <p>Before publishing:</p><ul><% @problems.each do |problem| %><li><%= problem %></li><% end %></ul>
+    <% end %>
+    <% actions = { "pending" => %w[publish reject], "approved" => %w[withdraw], "rejected" => %w[reopen], "hidden" => %w[reopen] }.fetch(@claim.moderation_status) %>
+    <% actions.each do |action| %>
+      <%= form_with url: admin_review_figure_claim_path(kind, @claim), class: "people-actions" do |form| %>
+        <%= hidden_field_tag :review_action, action %><%= hidden_field_tag :revision, @claim.moderation_revision %><%= hidden_field_tag :status, @claim.moderation_status %><%= hidden_field_tag :digest, @digest %>
+        <% if %w[reject withdraw].include?(action) %>
+          <%= label_tag "reason_#{action}", "Reason to #{action}" %><%= text_area_tag :reason, nil, id: "reason_#{action}", rows: 2, maxlength: 2000, class: "moderation-reason", required: true %>
+        <% end %>
+        <%= form.submit({ "publish" => "Publish revision #{@claim.moderation_revision}", "reject" => "Reject", "withdraw" => "Withdraw", "reopen" => "Reopen for review" }.fetch(action), class: "tool-button", disabled: action == "publish" && @problems.any?) %>
+      <% end %>
+    <% end %>
+  </section>
+
+  <section class="round-panel" aria-labelledby="claim-history-title">
+    <h2 id="claim-history-title" class="profile-section-title">Decision history</h2>
+    <% if @decisions.empty? %><p>No decisions yet.</p><% end %>
+    <ul class="wallet-history">
+      <% @decisions.each do |decision| %>
+        <li><%= decision.action.humanize %> · revision <%= decision.revision %> · <%= decision.actor&.public_name || "System" %> · <%= l decision.created_at, format: :long %><% if decision.reason %><p><%= decision.reason %></p><% end %></li>
+      <% end %>
+    </ul>
+  </section>
+</div>

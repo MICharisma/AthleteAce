@@ -1,0 +1,6 @@
+<% counts = { "businesses" => [ figure.figure_business_relationships.published.count, "business connection" ],
+              "practices" => [ figure.figure_practice_relationships.published.count, "practice" ],
+              "values" => [ figure.attributed_statements.published.count, "statement" ] }.select { |_anchor, (count, _label)| count.positive? } %>
+<% if counts.any? %>
+  <p class="connection-preview">Sourced: <%= safe_join(counts.map { |anchor, (count, label)| link_to pluralize(count, label), figure_path(figure, anchor: anchor), class: "tool-link" }, " · ") %></p>
+<% end %>

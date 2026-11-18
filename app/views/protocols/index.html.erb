@@ -1,0 +1,11 @@
+<% content_for :title, "Protocols" %>
+<%= browse_header "Protocols" do %><span class="round-caption"><%= pluralize @pagy.count, "protocol" %></span><% end %>
+<p class="round-caption">Concrete methods and routines. What each one means is attributed to each person's own source.</p>
+<% if @protocols.empty? %>
+  <section class="round-panel"><p>No sourced protocols have been recorded yet.</p></section>
+<% else %>
+  <ul class="wallet-history">
+    <% @protocols.each do |protocol| %><li><%= link_to protocol.name, protocol_path(protocol) %> <span class="round-caption">· <%= pluralize @people_counts.fetch(protocol.id), "person" %></span><% if protocol.routine %><p class="round-caption"><%= protocol.routine %></p><% end %></li><% end %>
+  </ul>
+  <%== @pagy.series_nav if @pagy.pages > 1 %>
+<% end %>

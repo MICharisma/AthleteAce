@@ -1,0 +1,25 @@
+@layer components {
+  .claim-details { display: grid; grid-template-columns: minmax(8rem, 12rem) 1fr; gap: .5rem 1.5rem; margin: 0; }
+  .claim-details dt { color: var(--color-ink-2); font-size: .85rem; }
+  .claim-details dd { margin: 0; overflow-wrap: anywhere; }
+  .claim-details blockquote, .claim-evidence blockquote { margin: 0; padding-left: .75rem; border-left: 3px solid var(--color-line); }
+  .claim-practices { display: grid; gap: .4rem; border: 0; padding: 0; margin: 0; }
+  @media (max-width: 640px) { .claim-details { grid-template-columns: 1fr; } .claim-details dd { margin-bottom: .5rem; } }
+}
+
+@layer components {
+  .connection-cards { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); }
+  .connection-card { display: grid; gap: .5rem; align-content: start; padding: 1rem; border: 1px solid var(--color-line); border-radius: .75rem; background: var(--color-surface); min-width: 0; }
+  .connection-card h3 { font-weight: 600; overflow-wrap: anywhere; }
+  .connection-card p, .connection-card blockquote { overflow-wrap: anywhere; }
+  .connection-card blockquote, .connection-evidence blockquote { margin: 0; padding-left: .75rem; border-left: 3px solid var(--color-line-2); }
+  .connection-quote { font-size: 1.05rem; }
+  .connection-evidence summary { cursor: pointer; font-weight: 600; font-size: .9rem; }
+  .connection-evidence ul { display: grid; gap: .75rem; margin-top: .5rem; }
+  .connection-evidence li { display: grid; gap: .35rem; padding-top: .5rem; border-top: 1px solid var(--color-line); }
+  .connection-media { max-width: 100%; height: auto; border-radius: .5rem; }
+  .connection-note { margin-block: 1rem; }
+  .connection-person { display: grid; gap: 1rem; }
+  .connection-link { text-decoration: underline; text-underline-offset: 2px; }
+  .connection-link:hover { text-decoration-thickness: 2px; }
+}

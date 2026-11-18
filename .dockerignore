@@ -30,6 +30,9 @@
 /tmp/storage/*
 !/tmp/storage/.keep
 
+# Canonical seed media is fetched into persistent storage during ingestion.
+/db/seeds/athlete_ace_data/media/
+
 # Ignore assets.
 /node_modules/
 /app/assets/builds/*

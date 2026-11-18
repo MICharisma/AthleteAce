@@ -1,0 +1,10 @@
+<% show_figure = local_assigns.fetch(:show_figure, false) %>
+<article class="connection-card" id="<%= dom_id(claim, :public_card_for) %>">
+  <p class="eyebrow"><%= business_predicate_label(claim) %></p>
+  <h3><%= show_figure ? link_to(claim.figure.display_name, figure_path(claim.figure)) : link_to(claim.business.name, business_path(claim.business)) %></h3>
+  <p class="round-caption"><%= relationship_period(claim) %><%= " · #{compensation_label(claim)}" if compensation_label(claim) %></p>
+  <% if claim.vehicle_name %><p>Through <%= claim.vehicle_name %></p><% end %>
+  <% if claim.compensation_description %><p><%= claim.compensation_description %></p><% end %>
+  <% if claim.context %><p><%= claim.context %></p><% end %>
+  <%= render "figure_connections/attestations", attestations: claim.attestations %>
+</article>

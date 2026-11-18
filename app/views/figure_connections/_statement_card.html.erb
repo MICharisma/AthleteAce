@@ -1,0 +1,13 @@
+<% show_figure = local_assigns.fetch(:show_figure, false) %>
+<article class="connection-card" id="<%= dom_id(claim, :public_card_for) %>">
+  <p class="eyebrow"><%= FigureConnectionsHelper::ATTRIBUTIONS.fetch(claim.attribution_kind) %><% if claim.topic %> · <%= link_to claim.topic.name, topic_path(claim.topic), class: "connection-link" %><% end %></p>
+  <% if show_figure %><h3><%= link_to claim.figure.display_name, figure_path(claim.figure) %></h3><% end %>
+  <blockquote class="<%= 'connection-quote' if claim.direct_quote? %>"><%= claim.direct_quote? ? "“#{claim.text}”" : claim.text %></blockquote>
+  <p class="round-caption">
+    <% if claim.observer_characterization? %>Said about <%= claim.figure.display_name %> by <%= claim.observer ? link_to(claim.observer.display_name, figure_path(claim.observer), class: "tool-link") : claim.observer_name %><% elsif claim.attributed_paraphrase? %>Paraphrase of <%= claim.figure.display_name %>, not their exact words<% else %>In <%= claim.figure.display_name %>'s words<% end %>
+    · <%= claim.statement_date || "Date unknown" %><%= " · as #{claim.staff_tenure.title}, #{claim.staff_tenure.organization.name}" if claim.staff_tenure %>
+  </p>
+  <% if claim.figure_practice_relationship&.published? %><p class="round-caption">About: <%= link_to [ claim.figure_practice_relationship.protocol&.name, claim.figure_practice_relationship.practices.map(&:name).to_sentence.presence ].compact.join(" as "), figure_path(claim.figure, anchor: "practices"), class: "tool-link" %></p><% end %>
+  <% if claim.context %><p><%= claim.context %></p><% end %>
+  <%= render "figure_connections/attestations", attestations: claim.attestations %>
+</article>

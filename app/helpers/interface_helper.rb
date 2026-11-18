@@ -33,7 +33,7 @@ module InterfaceHelper
   end
 
   def entity_avatar record, size: :small
-    image_url = record.is_a?(Player) ? record.photo_url : record.logo_url
+    image_url = record.is_a?(Player) ? player_portrait_url(record) : record.logo_url
     # No initials for a name Rizz withholds.
     initials = record.try(:name_withheld?) ? "" : person_name(record).split.filter_map { |word| word[0] }.first(3).join.upcase
     tag.span class: "entity-avatar entity-avatar-#{size}", data: {
@@ -46,6 +46,11 @@ module InterfaceHelper
       end
       safe_join [fallback, image].compact
     end
+  end
+
+  def player_portrait_url player
+    portrait = player.figure.primary_portrait&.file
+    portrait&.attached? ? url_for(portrait) : player.photo_url
   end
 
   def record_identity record

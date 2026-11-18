@@ -47,7 +47,7 @@ RSpec.describe "2026 seed coverage" do
   it "uses independent number periods and shares EPL club identities with the Champions League" do
     registry = MICharismaSeeders::SequenceRegistry.read(root.join("yaml/entity_sequences.yaml"))
     reader = MICharismaSeeders::Reader.new(registry: registry)
-    rows = Dir.glob(root.join("yaml/coverage_2026/*.yaml")).flat_map { |path| reader.read(path) }
+    rows = Dir.glob(root.join("yaml/{coverage_2026,catalog/**}/*.{yaml,yml}")).flat_map { |path| reader.read(path) }
     numbers = rows.select { |row| row.type == "JerseyNumberAssignment" }
     expect(numbers.size).to be > 6000
     expect(numbers.map { |row| [ row.references.fetch("player"), row.references.fetch("team") ] }.uniq.size).to eq(numbers.size)
@@ -83,15 +83,14 @@ RSpec.describe "2026 seed coverage" do
   it "imports provider aliases before their original definitions without creating unnamed athletes" do
     sport = create :sport, name: "Basketball", entity_code: "SPORT-BKT"
     code = "BKT-NBA-PLAYER-KUMINGA_JONATHAN"
-    reader = MICharismaSeeders::Reader.new
-    binding = reader.read(root.join("yaml/coverage_2026/identities.yaml")).find { |record| record.code == code }
-    original = Dir.glob(root.join("yaml/**/*.yaml")).reject { |path| path.include?("/coverage_2026/") || path.end_with?("entity_sequences.yaml") }
-      .flat_map { |path| reader.read(path) }.find { |record| record.code == code }
-    records = [ binding, original ].map do |record|
-      { "type" => record.type, "code" => record.code, "attributes" => record.attributes,
-        "references" => record.scope.slice("sport", "figure").merge(record.references),
-        "aliases" => record.aliases, "source" => record.source }
-    end
+    # The catalog holds one merged definition; split it into a provider-alias
+    # binding that arrives first and the named original that follows.
+    catalog = MICharismaSeeders::Reader.new.read(root.join("yaml/catalog/BKT/NBA/players/K.yml")).find { |record| record.code == code }
+    references = catalog.scope.slice("sport", "figure").merge(catalog.references)
+    records = [
+      { "type" => "Player", "code" => code, "attributes" => catalog.attributes.slice("first_name", "last_name"), "references" => references, "aliases" => catalog.aliases },
+      { "type" => "Player", "code" => code, "attributes" => catalog.attributes, "references" => references, "source" => catalog.source }
+    ]
 
     Dir.mktmpdir("player-alias-seeds") do |directory|
       path = File.join(directory, "players.json")

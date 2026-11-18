@@ -1,0 +1,8 @@
+<% content_for :title, "Topics" %>
+<%= browse_header "Topics" do %><span class="round-caption"><%= pluralize @topics.size, "topic" %></span><% end %>
+<p class="round-caption">Topics organize attributed statements. They aren't labels for anyone's character or beliefs.</p>
+<% if @topics.empty? %>
+  <section class="round-panel"><p>No sourced statements have been recorded yet.</p></section>
+<% else %>
+  <ul class="wallet-history"><% @topics.each do |topic| %><li><%= link_to topic.name, topic_path(topic) %> <span class="round-caption">· <%= pluralize @people_counts.fetch(topic.id), "person" %></span></li><% end %></ul>
+<% end %>

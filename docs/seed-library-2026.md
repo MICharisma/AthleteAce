@@ -6,7 +6,6 @@ Run these commands from the AthleteAce checkout with its pinned Ruby. The data r
 
 ```sh
 mise exec -- bundle exec rails db:migrate
-mise exec -- ruby db/seeds/athlete_ace_data/scripts/build_visual_assets.rb --download
 mise exec -- bundle exec rails seeds:validate db:seed
 mise exec -- bundle exec rails seeds:coverage seeds:assets:verify
 ```
@@ -15,9 +14,9 @@ The catalog contains current-season source listings for NBA, NFL, MLB, NHL, MLS,
 
 Champions League uses UEFA as its federation jurisdiction. Clubs retain their existing domestic identity, and a recorded competition Campaign makes their number history available to that competition's seasonal lookup.
 
-`seeds:validate` must print positive record and file counts. `seeds:assets:verify` raises on missing, empty, resized, or changed files and also raises if no representations were imported. It prints the number of verified canonical files on success. Image and 3D files are local under the data repository's ignored `media/` directory. The download command creates them on another checkout.
+`seeds:validate` must print positive record and file counts. `db:seed` imports the catalog and then downloads pinned canonical media into Active Storage. `seeds:assets:verify` raises on missing, empty, resized, or changed stored files and also raises if no representations were imported. It prints the number of verified canonical files on success. See [seed media](seed-media.md) for the repository layout and ingestion workflow.
 
-The visual sample contains sourced logos and uniform photographs alongside explicitly illustrative SVG and GLB geometry. The meshes demonstrate representation storage and loading. They are not accurate garment reconstructions. The importer stores file references and checksums; it does not upload files or publish a media endpoint.
+The visual sample contains sourced logos and uniform photographs alongside explicitly illustrative SVG and GLB geometry. The meshes demonstrate representation storage and loading. They are not accurate garment reconstructions. Files come from a pinned commit in the independent public media repository, not from the original providers during deployment. Application storage serves the ingested copies through Active Storage URLs.
 
 ## Refresh public sources
 
@@ -59,16 +58,15 @@ To check offline reproducibility, run each generator with `--check`. A differing
 ```sh
 mise exec -- bundle exec ruby db/seeds/athlete_ace_data/scripts/build_2026.rb --check
 mise exec -- ruby db/seeds/athlete_ace_data/scripts/build_visual_assets.rb --check
-mise exec -- ruby db/seeds/athlete_ace_data/scripts/build_pseudo_games.rb --check
 ```
 
-The simulated basketball library now stores persistent number assignments in `pseudo/hbl_numbers.yml`. Adjacent same-number periods merge across seasons. Its game roster entries and appearances no longer repeat those numbers.
+The fictional leagues and their builders (`build_pseudo.rb`, `build_pseudo_games.rb`) live only on the data repository's `pseudo` branch, which is `main` plus `pseudo/`. Check out that branch in the submodule to run them. The simulated basketball library there stores persistent number assignments in `pseudo/hbl_numbers.yml`. Adjacent same-number periods merge across seasons. Its game roster entries and appearances no longer repeat those numbers.
 
 ## Seed home venues and their geography
 
 The geography capture covers the current NBA, NFL, MLB, NHL, MLS, and EPL teams. It supplies 34 subdivisions, 89 cities or localities, and 160 distinct venues for 174 teams. The subdivision records comprise 27 US states, Washington, DC, five Canadian provinces, and England under the existing United Kingdom country. This is the geography needed by these venues, not a complete national city inventory.
 
-`db:seed` imports `yaml/coverage_2026/geography.yaml`, then applies `sources/geography_2026/bindings.json`. The home-venue importer fills missing `Team.stadium` and the selected season's `Campaign.stadium` and `Campaign.city`. It resolves catalog codes, checks the team, season, and stadium city, and leaves different existing selections intact as reported conflicts. Earlier season campaigns are unchanged. After a conflict-free import, replaying the same data must report zero home-venue updates and zero conflicts. A custom `SEED_LIBRARY_ROOT` uses only its own sibling binding file, if present.
+`db:seed` imports the home-venue places and stadiums from `yaml/catalog/places/` and `yaml/catalog/venues/`, then applies `sources/geography_2026/bindings.json`. The home-venue importer fills missing `Team.stadium` and the selected season's `Campaign.stadium` and `Campaign.city`. It resolves catalog codes, checks the team, season, and stadium city, and leaves different existing selections intact as reported conflicts. Earlier season campaigns are unchanged. After a conflict-free import, replaying the same data must report zero home-venue updates and zero conflicts. A custom `SEED_LIBRARY_ROOT` uses only its own sibling binding file, if present.
 
 The primary venue is the one with the most non-neutral home observations in the selected ESPN season schedule. A tied primary fails generation. MLB uses its season team's venue listing. Alternate grounds are seeded as stadiums and retained in the capture and binding file; the current model has one primary home link. The manifest does not add game-to-stadium associations or assert a complete venue history. NHL games retain their captured venue names in `details`. Capacities, opening years, addresses, and stadium artwork are not populated by this batch.
 

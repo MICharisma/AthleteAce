@@ -1,15 +1,17 @@
 module Seeds
+  # Fills missing annual conference and division links on existing campaigns
+  # from Campaign seed records (Reader rows), reporting disagreements.
   class CampaignAlignmentImporter
-    def initialize(source:)
-      @source = source
+    def initialize(records:)
+      @records = records
     end
 
     def call
       importer = LibraryImporter.new
       report = { updated: [], unchanged: [], conflicts: [] }
       ApplicationRecord.transaction do
-        importer.read([ @source ]).each do |record|
-          next unless record.type == "Campaign"
+        @records.each do |record|
+          next unless record.type == "Campaign" && record.references.key?("division")
 
           campaign = importer.resolve_code("Campaign", record.code)
           next unless campaign

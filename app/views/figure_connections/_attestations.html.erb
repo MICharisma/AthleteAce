@@ -1,0 +1,23 @@
+<% if attestations.any? %>
+  <details class="connection-evidence">
+    <summary><%= pluralize attestations.size, "source" %></summary>
+    <ul>
+      <% attestations.each do |attestation| %>
+        <li id="<%= dom_id(attestation, :public_card_for) %>">
+          <p class="round-caption"><%= attestation.content_form.humanize %> · By <%= attestation_author(attestation) %><%= " · #{attestation_source(attestation)}" if attestation_source(attestation) %> · <%= attestation.published_on ? "Published #{attestation.published_on}" : "Publication date unknown" %></p>
+          <% if attestation.body %><blockquote><%= attestation.body %></blockquote><% end %>
+          <% if attestation.image? && attestation.media_url %>
+            <figure><%= image_tag attestation.media_url, alt: attestation.excerpt.presence || "Image supporting this connection", loading: "lazy", class: "connection-media" %><% if attestation.excerpt %><figcaption><%= attestation.excerpt %></figcaption><% end %></figure>
+          <% elsif attestation.excerpt %>
+            <blockquote><%= attestation.excerpt %></blockquote>
+          <% end %>
+          <% if attestation.locator %><p class="round-caption"><%= attestation.video? ? "Segment" : "Location" %>: <%= attestation.locator %></p><% end %>
+          <% if attestation.context %><p><%= attestation.context %></p><% end %>
+          <% [ attestation.url, attestation.media_url ].compact.uniq.each do |url| %>
+            <%= link_to url, rel: "noopener noreferrer nofollow", target: "_blank", class: "tool-link" do %><%= attestation.video? ? "Watch the source" : "Open the source" %><%= icon "arrow-up-right", size: 14 %><span class="sr-only"> (opens <%= url %> in a new tab)</span><% end %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </details>
+<% end %>

@@ -1,0 +1,9 @@
+<% [ [ "businesses", "Businesses", business_ties, "business_card" ],
+     [ "practices", "Practices", practice_ties, "practice_card" ],
+     [ "values", "Values and wisdom", statements, "statement_card" ] ].each do |anchor, title, claims, card| %>
+  <% next if claims.empty? %>
+  <section class="round-panel" id="<%= anchor %>" aria-labelledby="<%= anchor %>-title">
+    <h2 id="<%= anchor %>-title" class="profile-section-title"><%= title %></h2>
+    <div class="connection-cards"><% claims.each do |claim| %><%= render "figure_connections/#{card}", claim: claim %><% end %></div>
+  </section>
+<% end %>

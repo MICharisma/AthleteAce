@@ -1,0 +1,6 @@
+<% content_for :title, "New #{params[:kind]} claim" %>
+<div class="moderation-page people-page">
+  <%= link_to "Back to claims", admin_figure_claims_path, class: "tool-link" %>
+  <header class="browse-header"><div><p class="eyebrow">Admin · Figure claims</p><h1 class="page-title">New <%= { "business" => "business tie", "practice" => "practice relationship", "statement" => "statement" }.fetch(params[:kind]) %></h1><p>New claims start pending. Add evidence, then publish.</p></div></header>
+  <%= render "form" %>
+</div>

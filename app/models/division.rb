@@ -1,4 +1,5 @@
 class Division < ApplicationRecord
+  include HasLogos
   include Ratable
   
   belongs_to :league

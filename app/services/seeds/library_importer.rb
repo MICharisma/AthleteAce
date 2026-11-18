@@ -12,6 +12,10 @@ module Seeds
       "OrganizationAffiliation" => OrganizationAffiliation,
       "Year" => Year, "Season" => Season, "Campaign" => Campaign, "Figure" => Figure,
       "Player" => Player, "StaffTenure" => StaffTenure,
+      "Business" => Business, "FigureBusinessRelationship" => FigureBusinessRelationship,
+      "Practice" => Practice, "Protocol" => Protocol,
+      "FigurePracticeRelationship" => FigurePracticeRelationship, "PracticeConnection" => PracticeConnection,
+      "Topic" => Topic, "AttributedStatement" => AttributedStatement, "Attestation" => Attestation,
       "Contract" => Contract, "Activation" => Activation,
       "JerseyNumberAssignment" => JerseyNumberAssignment,
       "Logo" => Logo, "Uniform" => Uniform, "UniformPiece" => UniformPiece,
@@ -30,9 +34,12 @@ module Seeds
       "Team" => %w[league], "Season" => %w[league year], "Player" => %w[sport figure],
       "OrganizationAffiliation" => %w[organization team],
       "StaffTenure" => %w[figure organization team],
+      "FigureBusinessRelationship" => %w[figure business], "FigurePracticeRelationship" => %w[figure protocol],
+      "PracticeConnection" => %w[figure_practice_relationship practice], "AttributedStatement" => %w[figure topic],
+      "Attestation" => %w[claim],
       "Contract" => %w[player organization], "Campaign" => %w[team], "Activation" => %w[player],
       "JerseyNumberAssignment" => %w[player team],
-      "Logo" => %w[team], "Uniform" => %w[team], "UniformPiece" => %w[uniform],
+      "Logo" => %w[owner], "Uniform" => %w[team], "UniformPiece" => %w[uniform],
       "UniformCampaign" => %w[uniform campaign], "AssetRepresentation" => %w[subject],
       "Stint" => %w[player team], "Roster" => %w[campaign], "RosterEntry" => %w[roster player],
       "Contestant" => %w[contest campaign], "Appearance" => %w[player contestant],
@@ -43,12 +50,15 @@ module Seeds
     }.freeze
     POLYMORPHIC_TYPES = {
       [ "League", "jurisdiction" ] => %w[Country State City Federation],
-      [ "AssetRepresentation", "subject" ] => %w[Logo Uniform UniformPiece],
+      [ "AssetRepresentation", "subject" ] => %w[Logo Uniform UniformPiece Figure],
+      [ "Logo", "owner" ] => %w[Sport League Conference Division Team],
       [ "PositionAssignment", "subject" ] => %w[Player RosterEntry Appearance],
       [ "Contest", "context" ] => %w[League Conference Division Sport Federation Organization],
-      [ "Game", "context" ] => %w[League Conference Division Sport Federation Organization]
+      [ "Game", "context" ] => %w[League Conference Division Sport Federation Organization],
+      [ "Attestation", "claim" ] => Attestation::CLAIM_TYPES
     }.freeze
-    PROTECTED_ATTRIBUTES = %w[id type entity_code created_at updated_at seed_version last_seeded_at].freeze
+    PROTECTED_ATTRIBUTES = %w[id type entity_code created_at updated_at seed_version last_seeded_at
+      moderation_status moderation_revision revision_transaction].freeze
 
     attr_reader :report
 
@@ -391,7 +401,8 @@ module Seeds
         PlayerGroupMembership => %w[player_group player], RosterEntry => %w[roster player], Contestant => %w[contest campaign],
         Appearance => %w[contestant player], TransactionPlayer => %w[event player],
         ContestGame => %w[contest game], TitleAward => %w[contest key],
-        UniformCampaign => %w[uniform campaign], Position => %w[sport name]
+        UniformCampaign => %w[uniform campaign], Position => %w[sport name],
+        PracticeConnection => %w[figure_practice_relationship practice]
       }[model]
       return unless keys && keys.all? { |key| desired[key].present? }
       model.find_by(desired.slice(*keys))

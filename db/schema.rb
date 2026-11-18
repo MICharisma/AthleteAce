@@ -107,6 +107,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.index ["player_id"], name: "index_activations_on_player_id"
   end
 
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
   create_table "appearances", force: :cascade do |t|
     t.bigint "player_id", null: false
     t.bigint "contestant_id", null: false
@@ -145,7 +173,77 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.index ["subject_type", "subject_id"], name: "index_asset_representations_on_subject"
     t.check_constraint "byte_size > 0", name: "asset_file_not_empty"
     t.check_constraint "sha256::text ~ '^[a-f0-9]{64}$'::text", name: "asset_sha256_format"
-    t.check_constraint "subject_type::text = ANY (ARRAY['Logo'::character varying, 'Uniform'::character varying, 'UniformPiece'::character varying]::text[])", name: "asset_subject_type"
+    t.check_constraint "subject_type::text = ANY (ARRAY['Logo'::character varying, 'Uniform'::character varying, 'UniformPiece'::character varying, 'Figure'::character varying]::text[])", name: "asset_subject_type"
+  end
+
+  create_table "attestations", force: :cascade do |t|
+    t.string "claim_type", null: false
+    t.bigint "claim_id", null: false
+    t.string "content_form", null: false
+    t.text "body"
+    t.string "url"
+    t.string "media_url"
+    t.text "excerpt"
+    t.string "locator"
+    t.bigint "author_id"
+    t.string "author_name"
+    t.string "source_title"
+    t.string "publisher"
+    t.string "published_on"
+    t.datetime "captured_at"
+    t.text "context"
+    t.bigint "entered_by_id"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_attestations_on_author_id"
+    t.index ["claim_type", "claim_id"], name: "index_attestations_on_claim"
+    t.index ["entered_by_id"], name: "index_attestations_on_entered_by_id"
+    t.index ["entity_code"], name: "index_attestations_on_entity_code", unique: true
+    t.check_constraint "claim_type::text = ANY (ARRAY['FigureBusinessRelationship'::character varying, 'FigurePracticeRelationship'::character varying, 'AttributedStatement'::character varying]::text[])", name: "attestations_claim_type"
+    t.check_constraint "content_form::text = ANY (ARRAY['text'::character varying, 'link'::character varying, 'image'::character varying, 'video'::character varying]::text[])", name: "attestations_content_form"
+  end
+
+  create_table "attributed_statements", force: :cascade do |t|
+    t.bigint "figure_id", null: false
+    t.string "attribution_kind", null: false
+    t.text "text", null: false
+    t.bigint "topic_id"
+    t.bigint "figure_practice_relationship_id"
+    t.bigint "staff_tenure_id"
+    t.bigint "observer_id"
+    t.string "observer_name"
+    t.string "statement_date"
+    t.text "context"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "moderation_status", default: "pending", null: false
+    t.integer "moderation_revision", default: 1, null: false
+    t.string "revision_transaction"
+    t.index ["entity_code"], name: "index_attributed_statements_on_entity_code", unique: true
+    t.index ["figure_id"], name: "index_attributed_statements_on_figure_id"
+    t.index ["figure_practice_relationship_id"], name: "index_attributed_statements_on_figure_practice_relationship_id"
+    t.index ["moderation_status"], name: "index_attributed_statements_on_moderation_status"
+    t.index ["observer_id"], name: "index_attributed_statements_on_observer_id"
+    t.index ["staff_tenure_id"], name: "index_attributed_statements_on_staff_tenure_id"
+    t.index ["topic_id"], name: "index_attributed_statements_on_topic_id"
+    t.check_constraint "attribution_kind::text = ANY (ARRAY['direct_quote'::character varying, 'attributed_paraphrase'::character varying, 'self_stated_value'::character varying, 'observer_characterization'::character varying]::text[])", name: "attributed_statements_attribution_kind"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "attributed_statements_moderation_status"
+  end
+
+  create_table "businesses", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "url"
+    t.integer "founded_year"
+    t.text "description"
+    t.string "entity_code", null: false
+    t.jsonb "source", default: {}, null: false
+    t.jsonb "details", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_businesses_on_entity_code", unique: true
+    t.index ["name"], name: "index_businesses_on_name"
   end
 
   create_table "campaigns", force: :cascade do |t|
@@ -224,8 +322,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_conferences_on_entity_code", unique: true
     t.index ["league_id"], name: "index_conferences_on_league_id"
+    t.index ["primary_logo_id"], name: "index_conferences_on_primary_logo_id"
     t.index ["seed_version"], name: "index_conferences_on_seed_version"
   end
 
@@ -390,9 +490,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
     t.bigint "league_id", null: false
+    t.bigint "primary_logo_id"
     t.index ["conference_id"], name: "index_divisions_on_conference_id"
     t.index ["entity_code"], name: "index_divisions_on_entity_code", unique: true
     t.index ["league_id"], name: "index_divisions_on_league_id"
+    t.index ["primary_logo_id"], name: "index_divisions_on_primary_logo_id"
     t.index ["seed_version"], name: "index_divisions_on_seed_version"
   end
 
@@ -425,6 +527,59 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.index ["seed_version"], name: "index_federations_on_seed_version"
   end
 
+  create_table "figure_business_relationships", force: :cascade do |t|
+    t.bigint "figure_id", null: false
+    t.bigint "business_id", null: false
+    t.string "predicate", null: false
+    t.string "start_date"
+    t.string "end_date"
+    t.string "temporal_state", default: "unknown", null: false
+    t.string "as_of_date"
+    t.string "compensation", default: "unknown", null: false
+    t.text "compensation_description"
+    t.string "vehicle_name"
+    t.text "context"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "moderation_status", default: "pending", null: false
+    t.integer "moderation_revision", default: 1, null: false
+    t.string "revision_transaction"
+    t.index ["business_id"], name: "index_figure_business_relationships_on_business_id"
+    t.index ["entity_code"], name: "index_figure_business_relationships_on_entity_code", unique: true
+    t.index ["figure_id"], name: "index_figure_business_relationships_on_figure_id"
+    t.index ["moderation_status"], name: "index_figure_business_relationships_on_moderation_status"
+    t.check_constraint "compensation::text = ANY (ARRAY['documented_paid'::character varying, 'documented_unpaid'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_compensation"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "figure_business_relationships_moderation_status"
+    t.check_constraint "predicate::text = ANY (ARRAY['founded'::character varying, 'owns'::character varying, 'invests_in'::character varying, 'endorses'::character varying, 'promotes'::character varying, 'sponsored_by'::character varying]::text[])", name: "figure_business_relationships_predicate"
+    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_temporal_state"
+  end
+
+  create_table "figure_practice_relationships", force: :cascade do |t|
+    t.bigint "figure_id", null: false
+    t.bigint "protocol_id"
+    t.string "predicate", null: false
+    t.text "interpretation"
+    t.string "start_date"
+    t.string "end_date"
+    t.string "temporal_state", default: "unknown", null: false
+    t.string "as_of_date"
+    t.text "context"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "moderation_status", default: "pending", null: false
+    t.integer "moderation_revision", default: 1, null: false
+    t.string "revision_transaction"
+    t.index ["entity_code"], name: "index_figure_practice_relationships_on_entity_code", unique: true
+    t.index ["figure_id"], name: "index_figure_practice_relationships_on_figure_id"
+    t.index ["moderation_status"], name: "index_figure_practice_relationships_on_moderation_status"
+    t.index ["protocol_id"], name: "index_figure_practice_relationships_on_protocol_id"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "figure_practice_relationships_moderation_status"
+    t.check_constraint "predicate::text = ANY (ARRAY['participates_in'::character varying, 'recommends'::character varying, 'teaches'::character varying, 'endorses'::character varying]::text[])", name: "figure_practice_relationships_predicate"
+    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_practice_relationships_temporal_state"
+  end
+
   create_table "figures", force: :cascade do |t|
     t.string "name", null: false
     t.string "entity_code", null: false
@@ -439,7 +594,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.string "sort_name", null: false
     t.string "name_segments", default: [], null: false, array: true
     t.string "alternate_names", default: [], null: false, array: true
+    t.bigint "primary_portrait_id"
     t.index ["entity_code"], name: "index_figures_on_entity_code", unique: true
+    t.index ["primary_portrait_id"], name: "index_figures_on_primary_portrait_id"
     t.index ["sort_name"], name: "index_figures_on_sort_name"
   end
 
@@ -583,14 +740,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_leagues_on_entity_code", unique: true
     t.index ["jurisdiction_type", "jurisdiction_id"], name: "index_leagues_on_jurisdiction"
+    t.index ["primary_logo_id"], name: "index_leagues_on_primary_logo_id"
     t.index ["seed_version"], name: "index_leagues_on_seed_version"
     t.index ["sport_id"], name: "index_leagues_on_sport_id"
   end
 
   create_table "logos", force: :cascade do |t|
-    t.bigint "team_id", null: false
+    t.bigint "owner_id", null: false
     t.string "name", null: false
     t.string "role"
     t.date "start_date"
@@ -601,9 +760,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.string "entity_code"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "owner_type", null: false
     t.index ["entity_code"], name: "index_logos_on_entity_code", unique: true
-    t.index ["team_id"], name: "index_logos_on_team_id"
+    t.index ["owner_type", "owner_id"], name: "index_logos_on_owner_type_and_owner_id"
     t.check_constraint "NOT ongoing OR end_date IS NULL", name: "logos_ongoing_without_end"
+    t.check_constraint "owner_type::text = ANY (ARRAY['Sport'::character varying, 'League'::character varying, 'Conference'::character varying, 'Division'::character varying, 'Team'::character varying]::text[])", name: "logo_owner_type"
     t.check_constraint "start_date IS NULL OR end_date IS NULL OR end_date >= start_date", name: "logos_ordered_dates"
   end
 
@@ -832,6 +993,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.check_constraint "parent_id IS NULL OR parent_id <> id", name: "positions_are_not_their_own_parent"
   end
 
+  create_table "practice_connections", force: :cascade do |t|
+    t.bigint "figure_practice_relationship_id", null: false
+    t.bigint "practice_id", null: false
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_practice_connections_on_entity_code", unique: true
+    t.index ["figure_practice_relationship_id", "practice_id"], name: "index_practice_connections_uniquely", unique: true
+    t.index ["figure_practice_relationship_id"], name: "index_practice_connections_on_figure_practice_relationship_id"
+    t.index ["practice_id"], name: "index_practice_connections_on_practice_id"
+  end
+
   create_table "practice_reviews", force: :cascade do |t|
     t.bigint "ace_id", null: false
     t.string "game_type", null: false
@@ -849,6 +1022,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.index ["ace_id", "game_type", "subject_type", "subject_id", "target_type", "target_id"], name: "index_practice_reviews_on_identity", unique: true
     t.index ["ace_id"], name: "index_practice_reviews_on_ace_id"
     t.index ["last_attempt_id"], name: "index_practice_reviews_on_last_attempt_id"
+  end
+
+  create_table "practices", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_practices_on_entity_code", unique: true
+    t.index ["name"], name: "index_practices_on_name"
+  end
+
+  create_table "protocols", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.text "routine"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_protocols_on_entity_code", unique: true
+    t.index ["name"], name: "index_protocols_on_name"
   end
 
   create_table "quests", force: :cascade do |t|
@@ -1123,7 +1317,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_sports_on_entity_code", unique: true
+    t.index ["primary_logo_id"], name: "index_sports_on_primary_logo_id"
     t.index ["seed_version"], name: "index_sports_on_seed_version"
   end
 
@@ -1242,8 +1438,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.datetime "last_seeded_at", comment: "When this record was last updated by a seed"
     t.string "entity_code"
     t.string "text_color"
+    t.bigint "primary_logo_id"
     t.index ["entity_code"], name: "index_teams_on_entity_code", unique: true
     t.index ["league_id"], name: "index_teams_on_league_id"
+    t.index ["primary_logo_id"], name: "index_teams_on_primary_logo_id"
     t.index ["seed_version"], name: "index_teams_on_seed_version"
     t.index ["stadium_id"], name: "index_teams_on_stadium_id"
   end
@@ -1265,6 +1463,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.index ["entity_code"], name: "index_title_awards_on_entity_code", unique: true
     t.index ["player_id"], name: "index_title_awards_on_player_id"
     t.check_constraint "winner_id IS NOT NULL OR player_id IS NOT NULL", name: "title_awards_have_a_recipient"
+  end
+
+  create_table "topics", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.string "entity_code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_topics_on_entity_code", unique: true
+    t.index ["name"], name: "index_topics_on_name", unique: true
   end
 
   create_table "transaction_players", force: :cascade do |t|
@@ -1377,9 +1585,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "activations", "campaigns"
   add_foreign_key "activations", "contracts"
   add_foreign_key "activations", "players"
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "appearances", "contestants"
   add_foreign_key "appearances", "players"
   add_foreign_key "appearances", "stints"
+  add_foreign_key "attestations", "aces", column: "entered_by_id"
+  add_foreign_key "attestations", "figures", column: "author_id"
+  add_foreign_key "attributed_statements", "figure_practice_relationships"
+  add_foreign_key "attributed_statements", "figures"
+  add_foreign_key "attributed_statements", "figures", column: "observer_id"
+  add_foreign_key "attributed_statements", "staff_tenures"
+  add_foreign_key "attributed_statements", "topics"
   add_foreign_key "campaigns", "cities"
   add_foreign_key "campaigns", "conferences"
   add_foreign_key "campaigns", "divisions"
@@ -1389,6 +1606,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "catalog_edits", "aces", column: "actor_id", on_delete: :nullify
   add_foreign_key "cities", "states"
   add_foreign_key "conferences", "leagues"
+  add_foreign_key "conferences", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "contest_games", "contests"
   add_foreign_key "contest_games", "contests", column: "game_id"
   add_foreign_key "contestants", "campaigns"
@@ -1402,6 +1620,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "credit_entries", "credit_accounts"
   add_foreign_key "divisions", "conferences"
   add_foreign_key "divisions", "leagues"
+  add_foreign_key "divisions", "logos", column: "primary_logo_id", on_delete: :nullify
+  add_foreign_key "figure_business_relationships", "businesses"
+  add_foreign_key "figure_business_relationships", "figures"
+  add_foreign_key "figure_practice_relationships", "figures"
+  add_foreign_key "figure_practice_relationships", "protocols"
+  add_foreign_key "figures", "asset_representations", column: "primary_portrait_id", on_delete: :nullify
   add_foreign_key "follows", "aces"
   add_foreign_key "game_attempts", "aces"
   add_foreign_key "game_attempts", "game_rounds"
@@ -1415,8 +1639,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "highlights", "quests"
   add_foreign_key "jersey_number_assignments", "players"
   add_foreign_key "jersey_number_assignments", "teams"
+  add_foreign_key "leagues", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "leagues", "sports"
-  add_foreign_key "logos", "teams"
   add_foreign_key "memberships", "conferences"
   add_foreign_key "memberships", "divisions"
   add_foreign_key "memberships", "leagues"
@@ -1443,6 +1667,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "position_assignments", "positions"
   add_foreign_key "positions", "positions", column: "parent_id"
   add_foreign_key "positions", "sports"
+  add_foreign_key "practice_connections", "figure_practice_relationships", on_delete: :cascade
+  add_foreign_key "practice_connections", "practices"
   add_foreign_key "practice_reviews", "aces"
   add_foreign_key "practice_reviews", "game_attempts", column: "last_attempt_id", on_delete: :cascade
   add_foreign_key "quests", "aces", column: "created_by_id", on_delete: :nullify
@@ -1471,6 +1697,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "shout_outs", "teams", on_delete: :nullify
   add_foreign_key "sign_in_events", "aces", on_delete: :cascade
   add_foreign_key "spectrums", "aces", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "sports", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "stadiums", "cities"
   add_foreign_key "staff_tenures", "figures"
   add_foreign_key "staff_tenures", "organizations"
@@ -1484,6 +1711,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "stripe_purchases", "aces"
   add_foreign_key "stripe_purchases", "shout_outs"
   add_foreign_key "teams", "leagues"
+  add_foreign_key "teams", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "teams", "stadiums"
   add_foreign_key "title_awards", "contestants", column: ["contest_id", "winner_id"], primary_key: ["contest_id", "id"]
   add_foreign_key "title_awards", "contests"

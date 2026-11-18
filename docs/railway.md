@@ -11,11 +11,9 @@ Dockerfile. It fetches the public seed catalog and importer at the commits recor
 by the application's submodules. When either submodule changes, update its Dockerfile
 commit too. The private UGC backup repository is not required to boot the application.
 
-The build downloads the captured visual assets and generates their SVG and GLB
-representations with the seed catalog's `scripts/build_visual_assets.rb --download`.
-It compares the resulting manifest with the committed version and fails if any
-captured checksum, size, or metadata changes. The generated media is included in
-the image; it is not committed to the seed repository.
+The image contains the seed manifests but no canonical media files. During explicit
+seed ingestion, the application fetches files from their pinned GitHub commit,
+verifies their checksums and sizes, and stores them on the persistent volume.
 
 Set these web-service variables:
 
@@ -69,9 +67,13 @@ The private Rizz client gem is pinned to its reviewed commit in the Gemfile. Kee
 place catalog has been loaded. After importing seeds, use `rizz:sync_places` and
 `rizz:sync_figures` to adopt the Rizz codes.
 
-After ingestion, run `bin/rails seeds:assets:verify` to check every imported
-canonical media file against its recorded size and SHA-256. A missing or changed
-file fails this check. Once figure synchronization finishes, run
+Catalog ingestion also downloads pinned files from the public media repository
+into Active Storage on `/rails/storage`. The media repository is not a submodule,
+and Docker builds do not download media. After ingestion, run
+`bin/rails seeds:assets:verify` to check every stored canonical media file against
+its recorded size and SHA-256. A missing or changed file fails this check. See
+[seed media](seed-media.md) for source reconciliation and resume behavior.
+Once figure synchronization finishes, run
 `bin/rails rizz:refresh_names` to populate the authorized display-name cache.
 The production job schedule polls name changes every five minutes and revalidates
 the cache at 4am each day. Figures awaiting identity review remain in Rizz's
