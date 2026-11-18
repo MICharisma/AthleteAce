@@ -44,7 +44,7 @@
         <% end %>
       </section>
     <% else %>
-      <section class="round-panel"><h2 class="profile-section-title">Find your teams here</h2><p>Sign in to see teams you follow and rate highly.</p><%= link_to "Sign in", new_ace_session_path, class: "game-button" %></section>
+      <section class="round-panel"><h2 class="profile-section-title">Find your teams here</h2><p>Sign in to see teams you follow and rate highly.</p><%= google_sign_in_button || link_to("Sign in", new_ace_session_path, class: "game-button") %></section>
     <% end %>
   <% end %>
 

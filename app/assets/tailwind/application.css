@@ -2,3 +2,5 @@
 @import "./variables/tokens.css";
 @import "./components.css";
 @import "./pagy.tailwind.css";
+
+@import "./google-sign-in.css";

@@ -33,6 +33,7 @@ RSpec.describe "Google sign-in", type: :request do
     expect(form["method"]).to eq("post")
     expect(form["data-turbo"]).to eq("false")
     expect(form.text).to include("Continue with Google")
+    expect(form.css("img").map { |image| image["src"] }).to eq(%w[/google-g.png /google-sign-in-site.svg])
     expect(page.at_css("input[type=password]")).to be_present
   end
 
