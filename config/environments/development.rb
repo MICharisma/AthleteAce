@@ -12,6 +12,7 @@ Rails.application.configure do
   # Public tunnel requests must not expose development error reports.
   config.consider_all_requests_local = false
   config.hosts << "ace.mikeymicrophone.fun"
+  config.hosts << "build.athleteace.win"
 
   # Enable server timing.
   config.server_timing = true
