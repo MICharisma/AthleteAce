@@ -20,6 +20,8 @@ RSpec.describe "GameAttempts", type: :request do
       attempt = GameAttempt.last
       expect(attempt.target_entity).to eq(player.team)
       expect(attempt).to be_correct
+      event = Ahoy::Event.where(name: "game_attempt_saved", user: ace).sole
+      expect(event.properties).to eq("game_attempt_id" => attempt.id, "game_type" => "player_team_match")
     end
 
     it "ignores the client's claimed answer and correctness" do

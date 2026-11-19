@@ -5,7 +5,7 @@ class Aces::RegistrationsController < Devise::RegistrationsController
 
       method = session.delete("devise.google_identity") ? "google" : "email"
       SignInEvent.record!(ace, request, outcome: "success") if method == "google"
-      Ahoy::Tracker.new(user: ace, visit_token: SecureRandom.uuid).track "signup_completed", method: method
+      Ahoy::Event.track "signup_completed", user: ace, method: method
     end
   rescue ActiveRecord::RecordNotUnique
     resource.errors.add :base, "This account or handle was just registered. Please sign in or choose another handle."

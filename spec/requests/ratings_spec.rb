@@ -28,6 +28,10 @@ RSpec.describe "Ratings", type: :request do
 
       expect(ace.ratings.active.pluck(:value)).to eq([90])
       expect(ace.ratings.archived.pluck(:value)).to eq([100])
+      events = Ahoy::Event.where(name: "rating_saved", user: ace)
+      expect(events.map(&:properties)).to match_array(
+        ace.ratings.map { |rating| { "rating_id" => rating.id, "rated_type" => "Player" } }
+      )
     end
 
     it "answers the slider's JSON requests" do
@@ -54,6 +58,7 @@ RSpec.describe "Ratings", type: :request do
       expect(response.parsed_body.dig("rating", "id")).to eq(original_id)
       expect(ace.ratings.count).to eq(1)
       expect(ace.ratings.active.sole.value).to eq(43)
+      expect(Ahoy::Event.where(name: "rating_saved", user: ace).sole.properties["rating_id"]).to eq(original_id)
     end
 
     it "re-renders the form when the rating is invalid" do
