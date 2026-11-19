@@ -1,3 +1,8 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="AthleteAce">
+<rect width="512" height="512" rx="112" fill="#0B0C0F"/>
+<g transform="translate(51 51) scale(.8)">
+<defs><mask id="aa-gap" maskUnits="userSpaceOnUse" x="0" y="0" width="512" height="512"><rect width="512" height="512" fill="#fff"/><g transform="translate(-18 66) scale(.74)"><path fill="#000" stroke="#000" stroke-width="30" d="M206 56H306L476 456H36Z"/></g></mask></defs>
+<g mask="url(#aa-gap)"><path transform="translate(152 66) scale(.74)" fill="#F2F1EC" fill-rule="evenodd" d="M206 56H306L476 456H366L316.7 340H195.3L146 456H36ZM256.0 122.0C267.8 145.6 315.0 169.2 315.0 201.1C315.0 222.3 299.7 236.5 282.0 236.5C272.5 236.5 264.3 231.7 259.5 224.7C260.7 238.8 266.6 250.6 277.2 258.9H234.8C245.4 250.6 251.3 238.8 252.5 224.7C247.7 231.7 239.5 236.5 230.0 236.5C212.3 236.5 197.0 222.3 197.0 201.1C197.0 169.2 244.2 145.6 256.0 122.0Z"/></g>
+<g transform="translate(-18 66) scale(.74)"><path fill="#D4FF3A" fill-rule="evenodd" d="M206 56H306L476 456H366L316.7 340H195.3L146 456H36ZM256 116L312 188L256 260L200 188Z"/><path fill="#FF5A36" d="M256 142L292 188L256 234L220 188Z"/></g>
+</g>
 </svg>

@@ -94,7 +94,10 @@ RSpec.describe "Stripe payments and credit wallet", type: :request do
     allow(Stripe::StripeClient).to receive(:new).and_return(client)
     expect(sessions).to receive(:create).once.with(hash_including(mode: "payment", line_items: [ { quantity: 1,
       price_data: { currency: "usd", unit_amount: 1234, product_data: { name: "AthleteAce credit" } } } ]),
-      hash_including(:idempotency_key)).and_return(result)
+      hash_including(:idempotency_key)) do |params|
+      expect(params).not_to have_key(:payment_method_types)
+      result
+    end
     expect(sessions).to receive(:retrieve).with("cs_fixture").and_return(result)
     sign_in ace
     key = SecureRandom.uuid

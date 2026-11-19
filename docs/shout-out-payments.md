@@ -40,6 +40,18 @@ Posting mutes block new shout-out submissions. Already-submitted posts and in-fl
 
 Configure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` through the app's secret storage. See `config/stripe.env.example` for variable names. Use test keys and Stripe CLI test events locally; live payments have not been verified by the automated suite. Checkout is disabled without both variables. There is no client-side publishable key because payment entry is hosted by Stripe.
 
+Development and staging use separate Wayswemage Stripe sandboxes. Their credentials are stored in the `athleteace` Doppler project:
+
+| Environment | Stripe sandbox | Doppler config | Webhook URL |
+| --- | --- | --- | --- |
+| Development | AthleteAce Development | `dev` | `https://ace.mikeymicrophone.fun/stripe/webhook` |
+| Staging | AthleteAce Staging | `stg` | `https://begin.athleteace.win/stripe/webhook` |
+
+Each restricted key has Checkout Sessions Write access. The endpoints use API version `2026-09-30.endive`, matching stripe-ruby 20.0.0. Update this version alongside the SDK.
+Load the matching Doppler configuration into the Rails process and restart it after changing credentials. Saving secrets in Doppler alone does not update a running app.
+Production requires its own live restricted key and webhook signing secret. Sandbox objects and credentials belong to their individual sandbox.
+The signing secret printed by `stripe listen` belongs to that listener and differs from the registered endpoint's secret.
+
 Register `POST /stripe/webhook` for `checkout.session.completed` and `checkout.session.expired`. It verifies the raw-body signature and timestamp with Stripe's Ruby SDK, checks test/live mode against the secret key, and checks currency, amount, purchaser, session identity, payment status, and reference before fulfilling. A paid session is processed once even when Stripe sends different duplicate event IDs. Expiry does not undo an already paid purchase.
 
 The [reports and revenue guide](shout-out-operations.md) covers report resolution, mandatory refunds, and the distinction between cash purchases and spent credit.
