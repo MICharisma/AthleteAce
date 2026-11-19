@@ -1,9 +1,11 @@
 class Aces::RegistrationsController < Devise::RegistrationsController
   def create
     super do |ace|
-      if ace.persisted? && session.delete("devise.google_identity")
-        SignInEvent.record!(ace, request, outcome: "success")
-      end
+      next unless ace.persisted?
+
+      method = session.delete("devise.google_identity") ? "google" : "email"
+      SignInEvent.record!(ace, request, outcome: "success") if method == "google"
+      Ahoy::Tracker.new(user: ace, visit_token: SecureRandom.uuid).track "signup_completed", method: method
     end
   rescue ActiveRecord::RecordNotUnique
     resource.errors.add :base, "This account or handle was just registered. Please sign in or choose another handle."
