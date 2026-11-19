@@ -38,9 +38,14 @@ RSpec.describe "Account flow", type: :request do
     get new_ace_registration_path
     post ace_registration_path, params: { ace: { username: "wrigley_wes", display_name: "Wes Rivera", email: "new-ace@example.com", password: "password123", password_confirmation: "password123" } }
     expect(response).to redirect_to(new_ace_session_path)
+    expect(response.cookies.keys).not_to include("ahoy_visit", "ahoy_visitor")
     follow_redirect!
     new_ace = Ace.find_by! email: "new-ace@example.com"
     expect(new_ace).not_to be_confirmed
+    event = Ahoy::Event.where(name: "signup_completed").sole
+    expect(event.user).to eq(new_ace)
+    expect(event.visit.user).to eq(new_ace)
+    expect(event.properties).to eq("method" => "email")
     new_ace.confirm
     post ace_session_path, params: { ace: { email: new_ace.email, password: "password123" } }
     expect(response).to redirect_to(player_path(player))
@@ -61,6 +66,7 @@ RSpec.describe "Account flow", type: :request do
     post ace_registration_path, params: { ace: { email: "bad", password: "short", password_confirmation: "different" } }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("account-errors", "Email is invalid", "Password confirmation")
+    expect(Ahoy::Event.where(name: "signup_completed")).to be_empty
     put ace_password_path, params: { ace: { reset_password_token: "expired", password: "replacement123", password_confirmation: "replacement123" } }
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Reset password token is invalid", "account-errors")

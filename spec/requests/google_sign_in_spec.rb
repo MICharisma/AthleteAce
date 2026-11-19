@@ -54,6 +54,7 @@ RSpec.describe "Google sign-in", type: :request do
     expect(ace.display_name).to eq("Courtside Tess")
     expect(ace.valid_password?("password123")).to be(true)
     expect(SignInEvent.where(ace: ace, outcome: "success").count).to eq(1)
+    expect(Ahoy::Event.where(name: "signup_completed")).to be_empty
     get profile_path
     expect(response).to have_http_status(:ok)
     expect(request.env["warden"].user(:ace)).to eq(ace)
@@ -129,6 +130,9 @@ RSpec.describe "Google sign-in", type: :request do
     expect(ace.valid_password?("tampered")).to be(false)
     expect(request.session["devise.google_identity"]).to be_nil
     expect(SignInEvent.where(ace: ace, outcome: "success").count).to eq(1)
+    event = Ahoy::Event.where(name: "signup_completed").sole
+    expect(event.user).to eq(ace)
+    expect(event.properties).to eq("method" => "google")
   end
 
   it "keeps the verified signup state across a handle validation error" do

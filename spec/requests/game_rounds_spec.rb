@@ -81,6 +81,12 @@ RSpec.describe "Game rounds", type: :request do
     follow_redirect!
     expect(response.body).to include("Not quite", "round-choice-wrong", "round-choice-correct")
     expect(round.current_attempt).not_to be_correct
+    event = Ahoy::Event.where(name: "game_attempt_saved", user: ace).sole
+    expect(event.properties["game_attempt_id"]).to eq(round.current_attempt.id)
+
+    expect {
+      post answer_game_round_path(round), params: { position: 0, choice_id: rival.id }
+    }.not_to change(Ahoy::Event, :count)
   end
 
   it "shows ordered completed results, links recorded attempts to the round, and starts a misses drill" do

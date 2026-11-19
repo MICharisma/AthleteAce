@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_18_235000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -133,6 +133,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "ahoy_events", force: :cascade do |t|
+    t.bigint "visit_id", null: false
+    t.bigint "user_id"
+    t.string "name", null: false
+    t.jsonb "properties", default: {}, null: false
+    t.datetime "time", null: false
+    t.index ["name", "time"], name: "index_ahoy_events_on_name_and_time"
+    t.index ["user_id"], name: "index_ahoy_events_on_user_id"
+    t.index ["visit_id"], name: "index_ahoy_events_on_visit_id"
+  end
+
+  create_table "ahoy_visits", force: :cascade do |t|
+    t.string "visit_token", null: false
+    t.bigint "user_id"
+    t.datetime "started_at", null: false
+    t.index ["user_id"], name: "index_ahoy_visits_on_user_id"
+    t.index ["visit_token"], name: "index_ahoy_visits_on_visit_token", unique: true
   end
 
   create_table "appearances", force: :cascade do |t|
@@ -1587,6 +1606,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_17_140000) do
   add_foreign_key "activations", "players"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "ahoy_events", "aces", column: "user_id", on_delete: :nullify
+  add_foreign_key "ahoy_events", "ahoy_visits", column: "visit_id", on_delete: :cascade
+  add_foreign_key "ahoy_visits", "aces", column: "user_id", on_delete: :nullify
   add_foreign_key "appearances", "contestants"
   add_foreign_key "appearances", "players"
   add_foreign_key "appearances", "stints"
