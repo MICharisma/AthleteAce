@@ -13,7 +13,7 @@ class StripeCheckout
       return session.status == "open" ? session.url : return_url
     end
     session = client.v1.checkout.sessions.create({
-      mode: "payment", payment_method_types: [ "card" ], client_reference_id: "athleteace:#{purchase.id}",
+      mode: "payment", client_reference_id: "athleteace:#{purchase.id}",
       metadata: { athleteace_purchase_id: purchase.id, ace_id: purchase.ace_id },
       line_items: [ { quantity: 1, price_data: { currency: "usd", unit_amount: purchase.amount_cents,
         product_data: { name: purchase.shout_out ? "Shout-out for #{purchase.shout_out.target_name}" : "AthleteAce credit" } } } ],
