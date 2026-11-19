@@ -25,6 +25,11 @@
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    <% if ENV["UMAMI_SCRIPT_URL"].present? && ENV["UMAMI_WEBSITE_ID"].present? %>
+      <%= tag.script defer: true, src: ENV["UMAMI_SCRIPT_URL"], data: {
+        website_id: ENV["UMAMI_WEBSITE_ID"], domains: ENV["UMAMI_DOMAINS"], exclude_search: true, exclude_hash: true
+      } %>
+    <% end %>
   </head>
 
   <body data-side="<%= current_side %>" data-controller="theme" data-theme-preference-value="<%= current_theme %>">
