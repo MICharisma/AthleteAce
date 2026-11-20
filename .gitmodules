@@ -6,4 +6,4 @@
 	url = git@github.com:mikeymicrophone/athlete_ace_ugc.git
 [submodule "lib/micharisma_seeders"]
 	path = lib/micharisma_seeders
-	url = https://github.com/mikeymicrophone/micharisma_seeders.git
+	url = https://github.com/MICharisma/micharisma_seeders.git

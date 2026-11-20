@@ -7,7 +7,7 @@ The [decision record](entity-code-decisions.md) captures the October 5 review an
 ## Repositories and responsibilities
 
 - [athlete_ace_data](https://github.com/mikeymicrophone/athlete_ace_data): committed catalog facts and sources, mounted at `db/seeds/athlete_ace_data`. The new `yaml/` library is independent of the existing JSON seed layout.
-- [micharisma_seeders](https://github.com/mikeymicrophone/micharisma_seeders): private shared Ruby repository, mounted at `lib/micharisma_seeders`. It reads safe YAML/JSON, merges scopes, normalizes sequences, and parses constructions. It contains no Rails models or database writes. Ascent can reuse it with its own persistence adapter and catalog.
+- [micharisma_seeders](https://github.com/MICharisma/micharisma_seeders): private shared Ruby repository, mounted at `lib/micharisma_seeders`. It reads safe YAML/JSON, merges scopes, normalizes sequences, and parses constructions. It contains no Rails models or database writes. Ascent can reuse it with its own persistence adapter and catalog.
 - AthleteAce: the model allowlist, relationship checks, code/alias registry, dependency resolution, and preservation policy in `Seeds::LibraryImporter` and `Seeds::EntitySequenceResolver`.
 
 Filenames and directory names only select input files and identify errors. Renaming or moving a manifest has no effect on fetching. A file can contain several teams, seasons, leagues, or nested groups.
