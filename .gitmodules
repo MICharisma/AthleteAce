@@ -1,9 +1,9 @@
 [submodule "db/seeds/athlete_ace_data"]
 	path = db/seeds/athlete_ace_data
-	url = https://github.com/mikeymicrophone/athlete_ace_data
+	url = https://github.com/MICharisma/athlete_ace_data.git
 [submodule "db/seeds/athlete_ace_ugc"]
 	path = db/seeds/athlete_ace_ugc
-	url = git@github.com:mikeymicrophone/athlete_ace_ugc.git
+	url = git@github.com:MICharisma/athlete_ace_ugc.git
 [submodule "lib/micharisma_seeders"]
 	path = lib/micharisma_seeders
 	url = https://github.com/MICharisma/micharisma_seeders.git
