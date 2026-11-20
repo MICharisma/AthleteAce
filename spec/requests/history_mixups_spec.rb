@@ -18,7 +18,7 @@ RSpec.describe "History mix-up drills", type: :request do
     get href
     expect(response).to have_http_status(:ok)
     doc = Nokogiri::HTML(response.body)
-    expect(doc.css('form.round-setup-form input[name="player_ids[]"]').map { |field| field["value"].to_i }).to match_array(players.map(&:id))
+    expect(doc.css('form.round-setup-form input[name="player_ids[]"]').map { |field| field["value"] }).to match_array(players.map(&:id))
     post game_rounds_path, params: { game_type: "name_ciphers", player_ids: players.map(&:id), include_inactive: true }
     saved = ace.game_rounds.last
     expect(response).to redirect_to(game_round_path(saved))

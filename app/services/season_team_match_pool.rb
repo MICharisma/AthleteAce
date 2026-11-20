@@ -45,7 +45,6 @@ class SeasonTeamMatchPool
         membership = "#{membership} UNION #{roster}"
       end
       connection.select_rows("SELECT DISTINCT player_id, team_id FROM (#{membership}) AS memberships")
-        .map { |player_id, team_id| [ player_id.to_i, team_id.to_i ] }
         .group_by(&:first).transform_values { |pairs| pairs.map(&:last).uniq }
     end
   end

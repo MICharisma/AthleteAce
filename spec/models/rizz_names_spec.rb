@@ -71,4 +71,18 @@ RSpec.describe "Rizz name consumption", type: :model do
     row.update!(display_name: nil)
     expect(GameNames.refresh([question])).to be_empty
   end
+
+  it "skips Rizz bindings made with pre-UUID Figure IDs and keeps current ones" do
+    allow(ENV).to receive(:fetch).and_call_original
+    allow(ENV).to receive(:fetch).with("RIZZ_SCOPE").and_return("athleteace-test")
+    store = RizzNames::Store.new("referring")
+    stale = Rizz::Projection.key(RizzNames.reference(42))
+    current = Rizz::Projection.key(RizzNames.reference(figure.id))
+
+    expect { store.put(stale, "state" => "current", "display_name" => "Stale") }.not_to change(RizzName, :count)
+    expect(store.get(stale)).to be_nil
+    expect(store.delete(stale)).to eq(0)
+    store.put(current, "state" => "current", "display_name" => "Joshua Hart")
+    expect(store.get(current).fetch("display_name")).to eq("Joshua Hart")
+  end
 end

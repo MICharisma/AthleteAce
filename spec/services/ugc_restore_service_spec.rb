@@ -12,15 +12,16 @@ RSpec.describe UgcRestoreService do
   end
 
   def quest_data(name, creator_id)
-    { "id" => 1, "name" => name, "description" => "From a backup", "creator_id" => creator_id,
+    { "id" => SecureRandom.uuid_v7, "name" => name, "description" => "From a backup", "creator_id" => creator_id,
       "achievements" => [], "highlights" => [], "goals" => [] }
   end
 
   it "maps quest creators through the backup's aces by email" do
     ace = create(:ace)
     # The backup's ids don't match this database's
-    write_backup aces: [{ "id" => ace.id + 1000, "email" => ace.email }],
-                 quests: [quest_data("Restored Quest", ace.id + 1000)]
+    backup_ace_id = SecureRandom.uuid_v7
+    write_backup aces: [{ "id" => backup_ace_id, "email" => ace.email }],
+                 quests: [quest_data("Restored Quest", backup_ace_id)]
 
     described_class.new(backup_dir).restore_all
 
@@ -55,10 +56,12 @@ RSpec.describe UgcRestoreService do
     EntityCode.create!(namespace: "MIC", catalog: "ALA", code: "BKT-NBA-NYK-2022-BRUNSON_JALEN", canonical_code: player.entity_code, record: player)
     ace = create(:ace)
     spectrum = create(:spectrum)
-    rating = { "ace_id" => 1, "spectrum_id" => 2, "target_type" => "Player", "value" => 50, "created_at" => 1.day.ago }
+    backup_ace_id = SecureRandom.uuid_v7
+    backup_spectrum_id = SecureRandom.uuid_v7
+    rating = { "ace_id" => backup_ace_id, "spectrum_id" => backup_spectrum_id, "target_type" => "Player", "value" => 50, "created_at" => 1.day.ago }
     File.write(backup_dir.join("aces_and_ratings.yml"), {
-      "aces" => [{ "id" => 1, "email" => ace.email }],
-      "spectrums" => [spectrum.attributes.merge("id" => 2)],
+      "aces" => [{ "id" => backup_ace_id, "email" => ace.email }],
+      "spectrums" => [spectrum.attributes.merge("id" => backup_spectrum_id)],
       "ratings" => [rating.merge("target_code" => "BKT-NBA-NYK-2022-BRUNSON_JALEN"),
                     rating.merge("target_identifier" => "Jalen Brunson", "created_at" => 2.days.ago)]
     }.to_yaml)

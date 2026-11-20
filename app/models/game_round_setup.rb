@@ -2,16 +2,23 @@ class GameRoundSetup
   include ActiveModel::Model
   include ActiveModel::Attributes
 
+  class IdString < ActiveModel::Type::String
+    def cast(value)
+      super&.presence
+    end
+  end
+  ID_STRING_TYPE = IdString.new
+
   attribute :game_type, :string, default: "player_team_match"
   attribute :length, :integer, default: 10
   attribute :include_inactive, :boolean, default: false
-  %i[sport_id league_id season_id conference_id division_id city_id state_id team_id].each { |key| attribute key, :integer }
+  %i[sport_id league_id season_id conference_id division_id city_id state_id team_id].each { |key| attribute key, ID_STRING_TYPE }
   attribute :team_ids, default: -> { [] }
   attribute :team_query, :string
-  attribute :goal_achievement_id, :integer
-  attribute :player_group_id, :integer
+  attribute :goal_achievement_id, ID_STRING_TYPE
+  attribute :player_group_id, ID_STRING_TYPE
   attribute :player_ids, default: -> { [] }
-  attribute :player_id, :integer
+  attribute :player_id, ID_STRING_TYPE
   attribute :fact_type, :string, default: "team"
   attribute :practice_filter, :string, default: "all"
   attribute :delay, :integer, default: 0
@@ -142,7 +149,7 @@ class GameRoundSetup
   end
 
   def selected_team_ids
-    team_ids.any? ? team_ids.map(&:to_i) : [ team_id ].compact
+    team_ids.any? ? team_ids.compact_blank.map(&:to_s) : [ team_id ].compact
   end
 
   def team_options
@@ -418,7 +425,7 @@ class GameRoundSetup
       errors.add(:practice_filter, "requires a player group") unless player_group
       errors.add(:practice_filter, "requires sign-in") unless ace
     end
-    if player_ids.any? && (player_ids.size > 30 || player_ids.map(&:to_i).uniq.size != player_ids.size || Player.where(id: player_ids).count != player_ids.size)
+    if player_ids.any? && (player_ids.size > 30 || player_ids.map(&:to_s).uniq.size != player_ids.size || Player.where(id: player_ids).count != player_ids.size)
       errors.add(:players, "must be between 1 and 30 different recorded players")
     end
     if goal_achievement_id && (!goal_achievement || goal_achievement.achievement.target_type != "PlayerGroup" || goal_achievement.achievement.target_id != player_group_id)
@@ -440,7 +447,7 @@ class GameRoundSetup
     errors.add(:division, "is no longer available") if division_id && !Division.exists?(division_id)
     errors.add(:city, "is no longer available") if city_id && !City.exists?(city_id)
     errors.add(:state, "is no longer available") if state_id && !State.exists?(state_id)
-    if team_ids.any? && (team_ids.map(&:to_i).uniq.size != team_ids.size || team_ids.size > 30 || teams.where(id: team_ids).count != team_ids.map(&:to_i).uniq.size)
+    if team_ids.any? && (team_ids.map(&:to_s).uniq.size != team_ids.size || team_ids.size > 30 || teams.where(id: team_ids).count != team_ids.map(&:to_s).uniq.size)
       errors.add :base, "Select between 1 and 30 different teams within the selected scope."
     end
   end

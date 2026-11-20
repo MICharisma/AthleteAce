@@ -1,6 +1,6 @@
 class GameHistory
   GAMES = GameRound::GAMES
-  CIPHER_TEAM = "(game_rounds.questions -> game_attempts.round_position ->> 'team_id')::bigint".freeze
+  CIPHER_TEAM = "NULLIF(game_rounds.questions -> game_attempts.round_position ->> 'team_id', '')::uuid".freeze
   RECORDED_GAMES = %w[name_ciphers multiple_choice phased_repetition image_recognition guess_the_league guess_the_sport].freeze
   attr_reader :attempts, :game_type, :team, :today, :time_zone
 

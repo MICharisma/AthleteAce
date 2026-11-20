@@ -19,7 +19,7 @@ module Moderation
       raise ArgumentError, "Choose a recorded action." if @action && !ACTIONS.include?(@action)
       @actor_id = actor_id.presence
       if @actor_id && @actor_id != "unattributed"
-        raise ArgumentError, "Choose a recorded actor." unless @actor_id.to_s.match?(/\A[1-9]\d*\z/) && Ace.exists?(id: @actor_id)
+        raise ArgumentError, "Choose a recorded actor." unless @actor_id.to_s.match?(ApplicationRecord::UUID_FORMAT) && Ace.exists?(id: @actor_id)
         @actor_id = @actor_id.to_s
       end
       start = Time.utc(@from.year, @from.month, @from.day)

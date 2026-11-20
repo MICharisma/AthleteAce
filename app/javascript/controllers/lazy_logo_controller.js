@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static values = {
-    entityId: Number,
+    entityId: String,
     entityType: String,
     url: String
   }

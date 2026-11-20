@@ -18,7 +18,7 @@ RSpec.describe "Admin catalog CSV exports", type: :request do
     expect(response.headers["Content-Disposition"]).to include("attachment", "athleteace-players-")
     rows = CSV.parse(response.body, headers: true)
     expect(rows.length).to eq(26)
-    expect(rows.map { |row| row["record_id"].to_i }).to eq(players.map(&:id))
+    expect(rows.map { |row| row["record_id"] }).to eq(players.map(&:id))
     expect(rows.map { |row| row["current_team_code"] }.uniq).to eq([ "TEAM-NYK" ])
     expect(rows.headers).not_to include("email", "editor", "reason", "bio")
     get admin_catalog_records_path(format: :html), params: { q: "Export", team_id: team.id, status: "active", page: 2 }

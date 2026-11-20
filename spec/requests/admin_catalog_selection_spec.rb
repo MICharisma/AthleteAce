@@ -19,12 +19,12 @@ RSpec.describe "Admin selected catalog exports", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.headers["Cache-Control"]).to include("private", "no-store")
     rows = CSV.parse(response.body, headers: true)
-    expect(rows.map { |row| row["record_id"].to_i }).to eq([ second.id, first.id ])
+    expect(rows.map { |row| row["record_id"] }).to eq([ second.id, first.id ])
     expect(rows.map { |row| row["number_on"] }.uniq).to eq([ "2024-06-30" ])
     expect(rows[1]["assigned_jersey_number"]).to eq("00")
     second.update!(active: false)
     export(status: "active")
-    expect(CSV.parse(response.body, headers: true).map { |row| row["record_id"].to_i }).to eq([ first.id ])
+    expect(CSV.parse(response.body, headers: true).map { |row| row["record_id"] }).to eq([ first.id ])
     export(q: "No matching identity")
     expect(CSV.parse(response.body, headers: true)).to be_empty
   end
@@ -37,7 +37,7 @@ RSpec.describe "Admin selected catalog exports", type: :request do
     end
     sign_in admin
     export(edited: "yes")
-    expect(CSV.parse(response.body, headers: true).map { |row| row["record_id"].to_i }).to eq([ first.id ])
+    expect(CSV.parse(response.body, headers: true).map { |row| row["record_id"] }).to eq([ first.id ])
   end
 
   it "handles selected teams separately and keeps spreadsheet protection without mutating data" do
@@ -51,7 +51,7 @@ RSpec.describe "Admin selected catalog exports", type: :request do
     end.not_to change(CatalogEdit, :count)
     expect(response).to have_http_status(:ok)
     rows = CSV.parse(response.body, headers: true)
-    expect(rows.map { |row| row["record_id"].to_i }).to eq([ alpha.id, beta.id ])
+    expect(rows.map { |row| row["record_id"] }).to eq([ alpha.id, beta.id ])
     expect(rows.first["territory"]).to eq("'=1+1")
     expect(rows.headers).not_to include("number_on")
     expect(alpha.reload.attributes).to eq(before_values)

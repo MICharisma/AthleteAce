@@ -41,9 +41,12 @@ class GameRound < ApplicationRecord
 
     history = ace.game_attempts.where(game_type: game_type, subject_entity_type: attempt.subject_entity_type,
       subject_entity_id: attempt.subject_entity_id, target_entity_type: attempt.target_entity_type,
-      target_entity_id: attempt.target_entity_id, id: ..attempt.id)
-    last_correct = history.where(is_correct: true).maximum(:id) || 0
-    history.where(is_correct: false).where("id > ?", last_correct).count
+      target_entity_id: attempt.target_entity_id)
+      .where("created_at < :at OR (created_at = :at AND id <= :id)", at: attempt.created_at, id: attempt.id)
+    last_correct = history.where(is_correct: true).order(created_at: :desc, id: :desc).pick(:created_at, :id)
+    scope = history.where(is_correct: false)
+    scope = scope.where("created_at > :at OR (created_at = :at AND id > :id)", at: last_correct[0], id: last_correct[1]) if last_correct
+    scope.count
   end
 
   # Lock the round and identify the question, so retries and stale tabs cannot

@@ -98,7 +98,7 @@ class RatingsController < ApplicationController
   def for_spectrums
     spectrum_ids = params[:spectrum_ids].presence || []
     spectrum_ids = spectrum_ids.split(',') if spectrum_ids.is_a?(String)
-    spectrum_ids = spectrum_ids.map(&:to_i).reject(&:zero?)
+    spectrum_ids = Array(spectrum_ids).map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) }
     
     # Find existing ratings for this ace, rated, and spectrums
     ratings = current_ace ? current_ace.ratings.active

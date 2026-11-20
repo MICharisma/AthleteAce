@@ -52,7 +52,7 @@ RSpec.describe "Moderation decision log", type: :request do
     expect(totals).to include("Recorded events 2", "Approved 2", "Rejected 0")
     link = Nokogiri::HTML(response.body).at_css('a[href*=".csv"]')
     get link["href"]
-    expect(CSV.parse(response.body, headers: true).map { |row| row["id"].to_i }).to eq([ finish.id, start.id ])
+    expect(CSV.parse(response.body, headers: true).map { |row| row["id"] }).to eq([ finish.id, start.id ])
   end
 
   it "keeps all matching history beyond the former 100-event cutoff with stable ties and filter pagination" do
@@ -73,7 +73,7 @@ RSpec.describe "Moderation decision log", type: :request do
     get moderation_log_path(format: :csv), params: filters.merge(page: 5)
     rows = CSV.parse(response.body, headers: true)
     expect(rows.size).to eq(101)
-    expect(rows.map { |row| row['id'].to_i }).to eq(records.reverse.map(&:id))
+    expect(rows.map { |row| row['id'] }).to eq(records.reverse.map(&:id))
   end
 
   it "retains recorded names after edits or deletion and includes unattributed actors without claiming they are system actions" do
@@ -86,7 +86,7 @@ RSpec.describe "Moderation decision log", type: :request do
     get moderation_log_path, params: { actor_id: "unattributed", decision_action: "approved" }
     expect(log_rows.text).to include("Know every Cubs starter", "System or deleted account")
     get moderation_log_path(format: :csv), params: { actor_id: "unattributed", decision_action: "approved" }
-    row = CSV.parse(response.body, headers: true).find { |entry| entry['id'].to_i == decision.id }
+    row = CSV.parse(response.body, headers: true).find { |entry| entry['id'] == decision.id }
     expect(row['recorded_name']).to eq("Know every Cubs starter")
     expect(row['actor_id']).to be_nil
     expect(row['actor_handle']).to be_nil
@@ -120,11 +120,11 @@ RSpec.describe "Moderation decision log", type: :request do
     get moderation_log_path(format: :csv)
     expect(response.headers['Content-Disposition']).to include('attachment', 'athleteace-decisions-2026-09-23-2026-10-22.csv')
     rows = CSV.parse(response.body, headers: true)
-    row = rows.find { |entry| entry['id'].to_i == decision.id }
+    row = rows.find { |entry| entry['id'] == decision.id }
     expect(row['reason']).to eq("'#{decision.reason}")
     expect(row['recorded_name']).to eq("'+Know the starters")
     expect(row['actor_handle']).to eq("'#{reviewer.handle}")
-    expect(rows.find { |entry| entry['id'].to_i == multiline.id }['reason']).to eq(multiline.reason)
+    expect(rows.find { |entry| entry['id'] == multiline.id }['reason']).to eq(multiline.reason)
     expect(response.body).not_to include(author.email, reviewer.email, "Excluded snapshot field")
   end
 

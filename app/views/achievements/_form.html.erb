@@ -28,7 +28,7 @@
     <p class="text-sm text-gray-500 mt-1">If selected, this achievement will be added to the quest</p>
   </div>
 
-  <div data-controller="dynamic-select" data-dynamic-select-selected-id-value="<%= achievement.target_id.to_i %>">
+  <div data-controller="dynamic-select" data-dynamic-select-selected-id-value="<%= achievement.target_id %>">
     <div class="my-5">
       <%= form.label :target_type %>
       <%= form.select :target_type, options_for_select(Achievement::TARGET_TYPES.map { |type| [type == 'PlayerGroup' ? 'Player group' : type, type] }, achievement.target_type), {}, class: "block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", data: { action: "change->dynamic-select#updateTargetOptions", dynamic_select_target: "targetType" } %>

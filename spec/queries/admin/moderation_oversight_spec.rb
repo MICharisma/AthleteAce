@@ -4,7 +4,8 @@ RSpec.describe Admin::ModerationOversight do
   include ActiveSupport::Testing::TimeHelpers
   around { |example| travel_to(Time.utc(2026, 10, 25, 12)) { example.run } }
 
-  let(:quest) { create :quest, id: 9001, name: "Learn the Northern backcourt" }
+  let(:shared_id) { SecureRandom.uuid_v7 }
+  let(:quest) { create :quest, id: shared_id, name: "Learn the Northern backcourt" }
 
   def event(action:, at:, revision: 1, subject: quest, from: nil, to: nil)
     ModerationDecision.create! subject: subject, actor: nil, action: action, revision: revision,
@@ -57,7 +58,7 @@ RSpec.describe Admin::ModerationOversight do
   end
 
   it "keeps types and subject ids separate and filters by the decision's content type" do
-    spectrum = create :spectrum, id: 9001, name: "Composure"
+    spectrum = create :spectrum, id: shared_id, name: "Composure"
     event action: "submitted", at: Time.utc(2026, 10, 24, 10)
     event action: "approved", from: "pending", subject: spectrum, at: Time.utc(2026, 10, 24, 11)
     stats = described_class.new(type: "Spectrum")

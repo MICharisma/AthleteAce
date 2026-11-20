@@ -64,7 +64,7 @@ module Admin
       raise ArgumentError, "Supply a local entity code of up to 120 letters, digits, underscores and hyphen-separated parts." unless entity_code.is_a?(String) && entity_code.strip.length.between?(1, 120) && entity_code.strip.match?(/\A[A-Za-z0-9_]+(?:-[A-Za-z0-9_]+)*\z/)
       code = entity_code.strip
       raise ArgumentError, "Use a local code without the MIC-ALA- prefix." if code.start_with?("MIC-ALA-")
-      raise ArgumentError, "Choose a sport." unless sport_id.nil? || (sport_id.is_a?(String) && (sport_id.blank? || sport_id.match?(/\A[1-9]\d{0,17}\z/)))
+      raise ArgumentError, "Choose a sport." unless sport_id.nil? || (sport_id.is_a?(String) && (sport_id.blank? || sport_id.match?(ApplicationRecord::UUID_FORMAT)))
       sport = sport_id.present? ? Sport.find_by(id: sport_id) : nil
       raise ArgumentError, "Choose an existing sport." if sport_id.present? && !sport
       submitted = { "operation" => "create_player", "attributes" => submitted, "entity_code" => code, "sport_id" => sport&.id }

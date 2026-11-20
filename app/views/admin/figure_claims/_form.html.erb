@@ -18,7 +18,7 @@
       <%= claim_select form, :protocol_id, @protocols.map { [ "#{it.name} · #{it.entity_code}", it.id ] }, @claim.protocol_id, label: "Protocol", blank: "No protocol" %>
       <fieldset class="claim-practices"><legend>Practices this Figure connects here</legend>
         <%= hidden_field_tag "claim[practice_ids][]", "" %>
-        <% selected = params.dig(:claim, :practice_ids)&.map(&:to_i) || @claim.practice_connections.map(&:practice_id) %>
+        <% selected = params.dig(:claim, :practice_ids)&.compact_blank&.map(&:to_s) || @claim.practice_connections.map(&:practice_id) %>
         <% @practices.each do |practice| %>
           <label><%= check_box_tag "claim[practice_ids][]", practice.id, selected.include?(practice.id), id: "claim_practice_#{practice.id}" %> <%= practice.name %></label>
         <% end %>

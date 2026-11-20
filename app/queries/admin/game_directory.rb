@@ -8,7 +8,7 @@ module Admin
       end
       @query = params[:q].to_s.strip.first(80)
       @competition_id, @season_id, @team_id = params.values_at(:competition_id, :season_id, :team_id).map(&:presence)
-      raise ArgumentError, "Choose a competition, season or team." if [ competition_id, season_id, team_id ].compact.any? { |id| !id.match?(/\A[1-9]\d{0,17}\z/) }
+      raise ArgumentError, "Choose a competition, season or team." if [ competition_id, season_id, team_id ].compact.any? { |id| !id.match?(ApplicationRecord::UUID_FORMAT) }
       @from, @to = params.values_at(:from, :to).map do |value|
         next if value.blank?
         raise ArgumentError, "Use dates in YYYY-MM-DD format." unless value.match?(/\A\d{4}-\d{2}-\d{2}\z/)

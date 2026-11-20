@@ -19,7 +19,8 @@ class PracticeReview < ApplicationRecord
       record.due_at = attempt.created_at + (attempt.correct? ? INTERVALS.first : 10.minutes)
     end
     review.with_lock do
-      next if review.last_attempt_id >= attempt.id
+      next if review.last_attempt_id == attempt.id
+      next if review.last_attempt && ([ review.last_attempt.created_at, review.last_attempt_id ] <=> [ attempt.created_at, attempt.id ]) >= 0
 
       streak = attempt.correct? ? review.correct_streak + 1 : 0
       review.update! question: question.merge("game_type" => mode), last_attempt: attempt, correct_streak: streak,

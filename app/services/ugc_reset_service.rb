@@ -37,16 +37,15 @@ class UgcResetService
     GameAttempt    # Game interaction data
   ].freeze
 
-  # UGC that points at core records by id. Reseeding reuses ids, so these rows end up
-  # attached to whichever new record gets their old id.
+  # UGC that points at core records by id. With UUIDv7 primary keys, reseeded records
+  # receive fresh UUIDs, so dependent UGC is cleared and restored by identifier.
   DEPENDENT_UGC_MODELS = [Highlight, Achievement, Rating, GameAttempt].freeze
 
-  # What happens to DEPENDENT_UGC_MODELS during a reset:
-  #   float - keep them; they attach to new records, which keeps content in the interface for testing and design
-  #   clear - delete them with the core data so ugc:restore can recreate them against the right records
-  MODES = %w[float clear].freeze
+  # Reset modes:
+  #   clear - delete dependent UGC with the core data so ugc:restore can recreate them against the right records
+  MODES = %w[clear].freeze
 
-  def initialize(mode: "float")
+  def initialize(mode: "clear")
     @mode = mode.to_s
     raise ArgumentError, "Unknown reset mode #{mode.inspect}; use #{MODES.join(' or ')}" unless MODES.include?(@mode)
 
@@ -57,13 +56,12 @@ class UgcResetService
     Rails.logger.info "Starting core model reset (#{@mode} mode)..."
 
     validate_model_separation
-    ensure_recent_backup! if @mode == "clear"
+    ensure_recent_backup!
 
     ActiveRecord::Base.transaction do
       disable_foreign_key_checks
-      clear_dependent_ugc if @mode == "clear"
+      clear_dependent_ugc
       clear_core_models
-      reset_sequences
       enable_foreign_key_checks
       
       # Run standard seeding
@@ -148,19 +146,6 @@ class UgcResetService
       rescue => e
         Rails.logger.error "Failed to clear #{model.table_name}: #{e.message}"
         raise e
-      end
-    end
-  end
-
-  def reset_sequences
-    # Reset auto-increment sequences for cleared models
-    CORE_MODELS.each do |model|
-      begin
-        ActiveRecord::Base.connection.reset_pk_sequence!(model.table_name)
-        Rails.logger.debug "Reset sequence for #{model.table_name}"
-      rescue => e
-        Rails.logger.warn "Could not reset sequence for #{model.table_name}: #{e.message}"
-        # Non-fatal - continue with reset
       end
     end
   end
@@ -392,7 +377,7 @@ class UgcResetService
     end.max
   end
 
-  def self.preview_reset(mode = "float")
+  def self.preview_reset(mode = "clear")
     # Show what would be reset without actually doing it
     puts "Core models that would be reset:"
     CORE_MODELS.each do |model|
@@ -400,7 +385,7 @@ class UgcResetService
       puts "  #{model.name}: #{count} records"
     end
 
-    cleared = mode.to_s == "clear" ? DEPENDENT_UGC_MODELS : []
+    cleared = DEPENDENT_UGC_MODELS
 
     if cleared.any?
       puts "\nUGC models that would be cleared (ugc:restore recreates them from the latest backup):"
@@ -413,8 +398,7 @@ class UgcResetService
     puts "\nUGC models that would be preserved:"
     (UGC_MODELS - cleared).each do |model|
       count = model.count rescue 0
-      note = DEPENDENT_UGC_MODELS.include?(model) ? " (will attach to whichever new records reuse their ids)" : ""
-      puts "  #{model.name}: #{count} records#{note}"
+      puts "  #{model.name}: #{count} records"
     end
   end
 end

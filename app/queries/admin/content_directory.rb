@@ -13,7 +13,7 @@ module Admin
       @sort = params[:sort].presence || "updated"
       raise ArgumentError, "Choose a content type." if type && !TYPES.key?(type)
       raise ArgumentError, "Choose a content status." if status && !Moderation::Queue::STATUSES.include?(status)
-      raise ArgumentError, "Choose a content creator." if creator_id && creator_id != "unattributed" && !creator_id.match?(/\A[1-9]\d{0,17}\z/)
+      raise ArgumentError, "Choose a content creator." if creator_id && creator_id != "unattributed" && !creator_id.match?(ApplicationRecord::UUID_FORMAT)
       raise ArgumentError, "Choose a content sort." unless SORTS.key?(sort)
     end
 

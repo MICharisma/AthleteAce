@@ -39,7 +39,7 @@ RSpec.describe "Round team selection", type: :system do
     click_button "Start round"
     expect(page).to have_css(".round-game-progress", text: "1 / 2")
     round = ace.game_rounds.last
-    expect(round.scope.fetch("team_ids").map(&:to_i)).to match_array([ knicks.id, nets.id ])
+    expect(round.scope.fetch("team_ids")).to match_array([ knicks.id, nets.id ])
     expect(round.questions.map { |question| question.fetch("target_id") }.uniq).to match_array([ knicks.id, nets.id ])
     expect(round.questions.flat_map { |question| question.fetch("choices").map { |choice| choice.fetch("id") } }.uniq).to match_array([ knicks.id, nets.id ])
     visit new_game_round_path(round.scope)

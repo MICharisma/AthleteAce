@@ -173,7 +173,7 @@ class StrengthController < ApplicationController
   # Method to handle quiz submissions
   def check_answer
     @player = Player.find(params[:player_id])
-    @selected_id = params[:selected_id].to_i
+    @selected_id = params[:selected_id].to_s
     @correct = (@player.id == @selected_id)
     
     respond_to do |format|
@@ -228,29 +228,24 @@ class StrengthController < ApplicationController
     nil
   end
 
-  # Coerce param value to int, returning nil for blank/invalid
-  def int_param(key)
-    value = params[key].presence
-    value.to_i.positive? ? value.to_i : nil
+  # Return param value when it is a valid UUID, else nil
+  def uuid_param(value)
+    str = value.to_s.presence
+    str if str&.match?(ApplicationRecord::UUID_FORMAT)
   end
 
   def id_collect
     # Collect and normalize filter parameters
-    @team_id = params[:team_id].presence
-    @sport_id = params[:sport_id].presence
-    @league_id = params[:league_id].presence
+    @team_id = uuid_param(params[:team_id])
+    @sport_id = uuid_param(params[:sport_id])
+    @league_id = uuid_param(params[:league_id])
     @include_inactive = params[:include_inactive].presence
-    
-    # Convert IDs to integers if they're present and valid
-    @team_id = @team_id.to_i if @team_id.present? && @team_id.to_i > 0
-    @sport_id = @sport_id.to_i if @sport_id.present? && @sport_id.to_i > 0
-    @league_id = @league_id.to_i if @league_id.present? && @league_id.to_i > 0
     
     # Log the collected parameters for debugging
     Rails.logger.debug { "ID COLLECT: team_id=#{@team_id.inspect}, sport_id=#{@sport_id.inspect}, league_id=#{@league_id.inspect}" }
     
     # Verify team exists if team_id is provided
-    if @team_id.present? && @team_id.to_i > 0
+    if @team_id.present?
       team = Team.find_by(id: @team_id)
       if team
         Rails.logger.debug { "Found team: #{team.name}" }
@@ -267,28 +262,19 @@ class StrengthController < ApplicationController
     players = Player.includes(:team, team: :league)
     
     # Apply team filter if provided
-    if filter_params[:team_id].present?
-      team_id = filter_params[:team_id].to_i
-      if team_id > 0
-        players = players.where(team_id: team_id)
-        Rails.logger.debug { "EXPLICIT FILTER: team_id=#{team_id}, found #{players.count} players" }
-      end
+    if (team_id = uuid_param(filter_params[:team_id]))
+      players = players.where(team_id: team_id)
+      Rails.logger.debug { "EXPLICIT FILTER: team_id=#{team_id}, found #{players.count} players" }
     end
     
     # Apply sport filter if provided
-    if filter_params[:sport_id].present?
-      sport_id = filter_params[:sport_id].to_i
-      if sport_id > 0
-        players = players.joins(team: :league).where(leagues: { sport_id: sport_id })
-      end
+    if (sport_id = uuid_param(filter_params[:sport_id]))
+      players = players.joins(team: :league).where(leagues: { sport_id: sport_id })
     end
     
     # Apply league filter if provided
-    if filter_params[:league_id].present?
-      league_id = filter_params[:league_id].to_i
-      if league_id > 0
-        players = players.joins(team: :league).where(leagues: { id: league_id })
-      end
+    if (league_id = uuid_param(filter_params[:league_id]))
+      players = players.joins(team: :league).where(leagues: { id: league_id })
     end
     
     # Limit to active players by default unless specifically requesting inactive

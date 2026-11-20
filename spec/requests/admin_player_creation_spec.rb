@@ -71,7 +71,7 @@ RSpec.describe "Admin player creation", type: :request do
   it "rejects invalid names, code shapes, sport choices and profile values without partial rows" do
     sign_in admin
     [ { entity_code: "" }, { entity_code: "BAD:CODE" }, { entity_code: "MIC-ALA-PLAYER-NEW" }, { entity_code: [ "PLAYER" ] },
-      { sport_id: "1tail" }, { sport_id: (sport.id + 100).to_s }, { record: { first_name: " ", last_name: " " } },
+      { sport_id: "1tail" }, { sport_id: SecureRandom.uuid_v7 }, { record: { first_name: " ", last_name: " " } },
       { record: { first_name: "Jordan", photo_urls: "javascript:alert(1)" } }, { record: { first_name: "Jordan", birthdate: "bad" } }, { record: { first_name: "Jordan", birthdate: "0000-01-01" } } ].each do |overrides|
       create_player(**overrides)
       expect(response).to have_http_status(:unprocessable_content)

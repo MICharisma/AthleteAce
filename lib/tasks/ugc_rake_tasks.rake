@@ -21,22 +21,17 @@ namespace :ugc do
     puts "⚠️  Next step: rails ugc:reset_core_models"
   end
 
-  desc "Reset core sports hierarchy models. mode=float (default) keeps ratings, achievements, and game attempts, which attach to the new records; mode=clear deletes them for ugc:restore to recreate (needs a fresh backup)"
+  desc "Reset core sports hierarchy models (clear mode: deletes dependent UGC for ugc:restore to recreate from a fresh backup)"
   task :reset_core_models, [:mode] => :environment do |t, args|
-    mode = args[:mode] || "float"
+    mode = args[:mode].presence || "clear"
     unless UgcResetService::MODES.include?(mode)
-      puts "❌ Unknown mode #{mode.inspect}. Use: rails \"ugc:reset_core_models[float]\" or rails \"ugc:reset_core_models[clear]\""
+      puts "❌ Unknown mode #{mode.inspect}. Only clear mode is supported with UUIDv7 primary keys: rails \"ugc:reset_core_models[clear]\""
       exit 1
     end
 
     puts "⚠️  WARNING: This will DELETE all core sports data and reseed from JSON files!"
-    if mode == "clear"
-      puts "🧹 Clear mode: ratings, achievements, highlights, and game attempts will also be deleted."
-      puts "   Restore them afterwards with rails ugc:restore[backup_timestamp]."
-    else
-      puts "🛡️  Float mode: UGC is kept. Ratings, achievements, and game attempts will attach to"
-      puts "   whichever new records reuse their ids."
-    end
+    puts "🧹 Clear mode: ratings, achievements, highlights, and game attempts will also be deleted."
+    puts "   Restore them afterwards with rails ugc:restore[backup_timestamp]."
     puts ""
 
     # Show what will be affected
@@ -58,7 +53,7 @@ namespace :ugc do
 
     puts "✅ Core model reset completed!"
     puts "📊 Check the reset report in tmp/ for details"
-    puts "🔧 Next step: rails ugc:restore[backup_timestamp]" if mode == "clear"
+    puts "🔧 Next step: rails ugc:restore[backup_timestamp]"
   end
 
   desc "Restore UGC data after core model reseed"
@@ -99,11 +94,11 @@ namespace :ugc do
     puts "🎉 Reseed with UGC preservation complete!"
   end
 
-  desc "Complete reseed workflow with UGC preservation: backup, reset in the given mode (float or clear), and restore after a clear reset"
+  desc "Complete reseed workflow with UGC preservation: backup, clear reset, and restore"
   task :full_reseed, [:mode] => :environment do |t, args|
-    mode = args[:mode] || "float"
+    mode = args[:mode].presence || "clear"
     unless UgcResetService::MODES.include?(mode)
-      puts "❌ Unknown mode #{mode.inspect}. Use: rails \"ugc:full_reseed[float]\" or rails \"ugc:full_reseed[clear]\""
+      puts "❌ Unknown mode #{mode.inspect}. Only clear mode is supported with UUIDv7 primary keys: rails \"ugc:full_reseed[clear]\""
       exit 1
     end
 
@@ -135,14 +130,6 @@ namespace :ugc do
     # Clear the reset task so it can be invoked again
     Rake::Task["ugc:reset_core_models"].reenable
     Rake::Task["ugc:reset_core_models"].invoke(mode)
-
-    if mode == "float"
-      # Float mode kept the UGC rows, so restoring would add copies next to them
-      puts ""
-      puts "🎉 Reseed finished. UGC was kept in place (float mode), so the restore step was skipped."
-      puts "🔧 Backup is available at: #{latest_backup}"
-      next
-    end
 
     puts ""
     puts "📋 Step 3: Restoring UGC data..."

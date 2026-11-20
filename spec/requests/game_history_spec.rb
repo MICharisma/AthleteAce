@@ -58,7 +58,7 @@ RSpec.describe "Game history", type: :request do
     get strength_team_match_path, params: { team_ids: requested_ids }
     expect(response).to have_http_status(:ok)
     document = Nokogiri::HTML(response.body)
-    actual_ids = document.css("[data-game-target=answerChoice]").map { |choice| choice["data-guessable-id"].to_i }
+    actual_ids = document.css("[data-game-target=answerChoice]").map { |choice| choice["data-guessable-id"] }
     expect(actual_ids).to match_array(requested_ids)
     subject_id = document.at_css("[data-game-target=questionCard]")["data-player-id"]
     expect(Player.find(subject_id).team_id).to be_in(requested_ids)

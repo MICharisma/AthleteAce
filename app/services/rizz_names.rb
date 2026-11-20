@@ -68,7 +68,8 @@ class RizzNames
     end
 
     def put(key, row)
-      record = rows.find_or_initialize_by figure_id: figure_id(key)
+      id = figure_id(key) or return
+      record = rows.find_or_initialize_by figure_id: id
       record.update!(
         state: row["state"], rizz_entity_id: row["entity_id"], rizz_code: row["code"], display_name: row["display_name"],
         sort_key: row["sort_key"], search_forms: row["search_forms"] || [], form_id: row["form_id"], rule_id: row["rule_id"],
@@ -114,10 +115,14 @@ class RizzNames
       Rizz::Projection.key RizzNames.reference(figure_id)
     end
 
+    # Rizz may still hold bindings made with pre-UUID integer Figure IDs; they match no Figure, so skip them.
     def figure_id(key)
       reference = JSON.parse key
       raise ArgumentError, "not an AthleteAce Figure reference: #{key}" unless reference["namespace"] == RizzNames.namespace
-      Integer reference.fetch("external_id")
+      id = reference.fetch("external_id").to_s
+      return id if id.match? ApplicationRecord::UUID_FORMAT
+      Rails.logger.info "Skipping Rizz reference to a pre-UUID Figure ID: #{key}"
+      nil
     end
 
     def to_row(record)

@@ -4,7 +4,7 @@ class PracticesController < ApplicationController
   include FigureConnectionBrowsing
 
   def index
-    @selected_ids = Array(params[:practice_ids]).compact_blank.map(&:to_i)
+    @selected_ids = Array(params[:practice_ids]).compact_blank.map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) }
     @protocol = Protocol.find_by(id: params[:protocol_id]) if params[:protocol_id].present?
     @predicate = params[:predicate].presence_in(FigurePracticeRelationship::PREDICATES)
     published = FigurePracticeRelationship.published

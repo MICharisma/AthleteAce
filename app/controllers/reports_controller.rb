@@ -21,7 +21,7 @@ class ReportsController < ApplicationController
     @post = ShoutOut.where.not(created_by_id: current_ace.id).find(params[:id])
     raise ActiveRecord::RecordNotFound unless @post.shout_out_reports.exists?
     @open_reports = @post.shout_out_reports.open
-    @last_report_id = @open_reports.maximum(:id)
+    @last_report_id = @open_reports.order(created_at: :desc, id: :desc).pick(:id)
     @own_report = @open_reports.where(reporter_id: current_ace.id).exists?
     @escalation = ModerationEscalation.open.visible_to(current_ace).find_by(subject: @post)
     @reason_counts = @open_reports.group(:reason).count
@@ -30,8 +30,10 @@ class ReportsController < ApplicationController
 
   def update
     post = ShoutOut.find(params[:id])
+    last_report_id = params.expect(:last_report_id).to_s
+    raise ArgumentError, "Invalid report reference." unless last_report_id.match?(ApplicationRecord::UUID_FORMAT)
     Moderation::ResolveReports.call(post: post, actor: current_ace, action: params.expect(:decision),
-      revision: Integer(params.expect(:revision).to_s, 10), last_report_id: Integer(params.expect(:last_report_id).to_s, 10), reason: params[:reason].to_s)
+      revision: Integer(params.expect(:revision).to_s, 10), last_report_id: last_report_id, reason: params[:reason].to_s)
     redirect_to report_path(post), status: :see_other, notice: "Reports resolved."
   rescue Moderation::Review::Forbidden => error
     render plain: error.message, status: :forbidden

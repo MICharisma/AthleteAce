@@ -39,7 +39,7 @@ module Seeds
         latest = Season.joins(:year).where("seasons.id IN (SELECT season_id FROM (#{listed}) AS listed)")
           .select("DISTINCT ON (seasons.league_id) seasons.id").order("seasons.league_id, years.number DESC, seasons.id DESC")
         ApplicationRecord.connection.select_rows("SELECT DISTINCT player_id, team_id FROM (#{listed}) AS listed WHERE season_id IN (#{latest.to_sql}) ORDER BY player_id, team_id")
-          .map { |row| row.map(&:to_i) }.group_by(&:first).transform_values { |rows| rows.map(&:last) }
+          .group_by(&:first).transform_values { |rows| rows.map(&:last) }
       end
     end
   end

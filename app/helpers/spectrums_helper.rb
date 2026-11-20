@@ -1,10 +1,10 @@
 module SpectrumsHelper
   # Get the current selected spectrum IDs based on params, session, or default to Familiarity.
   # @param params [ActionController::Parameters] The request parameters
-  # @return [Array<Integer>] The IDs of the current selected spectrums
+  # @return [Array<String>] The IDs of the current selected spectrums
   def selected_spectrum_ids
-    ids_from_params = params[:spectrum_ids].is_a?(Array) ? params[:spectrum_ids].map(&:to_i).reject(&:zero?) : []
-    ids_from_session = session[:selected_spectrum_ids].is_a?(Array) ? session[:selected_spectrum_ids].map(&:to_i).reject(&:zero?) : []
+    ids_from_params = params[:spectrum_ids].is_a?(Array) ? params[:spectrum_ids].map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) } : []
+    ids_from_session = session[:selected_spectrum_ids].is_a?(Array) ? session[:selected_spectrum_ids].map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) } : []
 
     selected_ids = ids_from_params.presence || ids_from_session.presence
 
@@ -20,9 +20,9 @@ module SpectrumsHelper
   end
 
   # Set the current selected spectrum IDs in the session.
-  # @param spectrum_ids [Array<Integer>] The IDs to set as current selected spectrums
+  # @param spectrum_ids [Array<String>] The IDs to set as current selected spectrums
   def set_selected_spectrum_ids(spectrum_ids)
-    session[:selected_spectrum_ids] = spectrum_ids.map(&:to_i).reject(&:zero?)
+    session[:selected_spectrum_ids] = Array(spectrum_ids).map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) }
   end
 
   # Select a single spectrum, e.g. from a ?spectrum_id= link

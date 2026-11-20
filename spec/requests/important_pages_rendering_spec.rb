@@ -265,17 +265,17 @@ RSpec.describe "Important Pages Rendering", type: :request do
 
   describe "Error handling" do
     it "handles missing resources with 404" do
-      get team_path(99999)
+      get team_path(SecureRandom.uuid_v7)
       expect(response).to have_http_status(:not_found)
     end
 
     it "handles missing players with 404" do
-      get player_path(99999)
+      get player_path(SecureRandom.uuid_v7)
       expect(response).to have_http_status(:not_found)
     end
 
     it "handles missing leagues with 404" do
-      get league_path(99999)
+      get league_path(SecureRandom.uuid_v7)
       expect(response).to have_http_status(:not_found)
     end
   end

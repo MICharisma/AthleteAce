@@ -20,10 +20,10 @@ module Moderation
       case kind
       when "warn"
         type, id = @attributes[:related_item].to_s.split(":", 2)
-        if @attributes[:related_item].present? && (!Queue::TYPES.key?(type) || !id.to_s.match?(/\A[1-9]\d*\z/))
+        if @attributes[:related_item].present? && (!Queue::TYPES.key?(type) || !id.to_s.match?(ApplicationRecord::UUID_FORMAT))
           raise ArgumentError, "Choose a submission by this ace."
         end
-        attrs = { reason: reason, subject_type: type.presence, subject_id: id&.to_i }
+        attrs = { reason: reason, subject_type: type.presence, subject_id: id.presence }
         record_once(@ace.warnings, attrs) do |values|
           if type.present?
             subject = Queue::TYPES.fetch(type).where(created_by: @ace).find(id)

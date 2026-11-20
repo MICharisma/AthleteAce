@@ -107,7 +107,7 @@ RSpec.describe "Admin player history", type: :request do
       get admin_player_history_path(player), params: { tab: tab }
       expect(response).to have_http_status(:bad_request)
     end
-    get admin_player_history_path(id: Player.maximum(:id) + 1)
+    get admin_player_history_path(id: SecureRandom.uuid_v7)
     expect(response).to have_http_status(:not_found)
   end
 

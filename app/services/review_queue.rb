@@ -10,7 +10,7 @@ class ReviewQueue
 
     @entries ||= begin
       scope = @ace.practice_reviews.due(@now)
-      scope = scope.where("(question ->> 'team_id')::bigint IN (?)", @teams.pluck(:id)) if @teams
+      scope = scope.where("NULLIF(question ->> 'team_id', '')::uuid IN (?)", @teams.pluck(:id)) if @teams
       scope = scope.where(subject_type: "Player", subject_id: @player_id) if @player_id
       if @players
         scope = scope.where(subject_type: "Player", subject_id: @players.select(:id))

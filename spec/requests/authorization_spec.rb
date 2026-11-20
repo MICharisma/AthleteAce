@@ -16,7 +16,7 @@ RSpec.describe "Authorization for shared content", type: :request do
 
     it "redirects achievement creation to sign in" do
       expect {
-        post achievements_path, params: { achievement: { name: "Sneaky", target_type: "Sport", target_id: 1 } }
+        post achievements_path, params: { achievement: { name: "Sneaky", target_type: "Sport", target_id: SecureRandom.uuid_v7 } }
       }.not_to change(Achievement, :count)
       expect(response).to redirect_to(new_ace_session_path)
     end

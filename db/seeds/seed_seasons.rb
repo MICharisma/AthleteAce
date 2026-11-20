@@ -97,7 +97,7 @@ class SeedSeasons
   end
 
   def self.find_team_by_reference(value)
-    return Team.find_by(id: value) if value.to_s.match?(/^\d+$/)
+    return Team.find_by(id: value) if value.to_s.match?(ApplicationRecord::UUID_FORMAT)
 
     Team.find_by(mascot: value) ||
       Team.find_by(territory: value) ||

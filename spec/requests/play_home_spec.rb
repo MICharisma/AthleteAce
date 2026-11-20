@@ -86,14 +86,15 @@ RSpec.describe "Play home and quests", type: :request do
     achievement = create(:achievement, target: team, name: "Learn the saved roster")
     create(:highlight, quest: quest, achievement: achievement)
     goal = create(:goal, ace: ace, quest: quest)
-    goal.goal_achievements.find_by!(achievement: achievement).update!(practice_scope: { team_id: team.id, season_id: 123, include_inactive: true })
+    season_id = SecureRandom.uuid_v7
+    goal.goal_achievements.find_by!(achievement: achievement).update!(practice_scope: { team_id: team.id, season_id: season_id, include_inactive: true })
     sign_in ace
 
     get strength_path
 
     link = Nokogiri::HTML(response.body).css("a").find { |node| node.text == "Play next: Learn the saved roster" }
     expect(link).to be_present
-    expect(Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)).to include("team_id" => team.id.to_s, "season_id" => "123")
+    expect(Rack::Utils.parse_nested_query(URI.parse(link["href"]).query)).to include("team_id" => team.id.to_s, "season_id" => season_id)
   end
 
   it "renders a useful empty quest list" do

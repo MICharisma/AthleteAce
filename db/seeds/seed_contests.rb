@@ -97,9 +97,9 @@ class SeedContests
     end
   end
   
-  # Convert a value that may be numeric id or team name to numeric id
+  # Convert a value that may be a UUID or team name to a team ID
   def self.numeric_id_or_team_name(value)
-    return value if value.is_a?(Integer) || value.to_s.match?(/^\d+$/)
+    return value.to_s if value.to_s.match?(ApplicationRecord::UUID_FORMAT)
     team_id_by_name(value)
   end
   

@@ -57,7 +57,7 @@ RSpec.describe "Admin moderation oversight", type: :request do
     expect(document.css(".moderation-list .moderation-row").size).to eq(1)
     export = document.at_css('a[href*=".csv"]')
     get export["href"]
-    expect(CSV.parse(response.body, headers: true).map { |row| row["id"].to_i }).to eq([ approved.id ])
+    expect(CSV.parse(response.body, headers: true).map { |row| row["id"] }).to eq([ approved.id ])
   end
 
   it "distinguishes zero-second waits from missing history" do
@@ -89,9 +89,9 @@ RSpec.describe "Admin moderation oversight", type: :request do
     get page_link["href"]
     expect(document.css(".moderation-list .moderation-row").size).to eq(1)
     get moderation_log_path(format: :csv), params: { reviews_only: "1", item_type: "Quest" }
-    expect(CSV.parse(response.body, headers: true).map { |row| row["id"].to_i }).not_to include(trusted.id)
+    expect(CSV.parse(response.body, headers: true).map { |row| row["id"] }).not_to include(trusted.id)
     get moderation_log_path(format: :csv), params: { item_type: "Quest" }
-    expect(CSV.parse(response.body, headers: true).map { |row| row["id"].to_i }).to include(trusted.id)
+    expect(CSV.parse(response.body, headers: true).map { |row| row["id"] }).to include(trusted.id)
     [ "0", "true", [ "1" ], { value: "1" } ].each do |value|
       get moderation_log_path, params: { reviews_only: value }
       expect(response).to have_http_status(:bad_request)

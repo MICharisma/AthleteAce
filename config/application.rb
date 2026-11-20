@@ -36,7 +36,10 @@ module AthleteAce
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
-    # Don't generate system test files.
-    config.generators.system_tests = nil
+    # Don't generate system test files, and default new tables to UUID primary keys.
+    config.generators do |generators|
+      generators.system_tests = nil
+      generators.orm :active_record, primary_key_type: :uuid
+    end
   end
 end

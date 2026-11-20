@@ -1,8 +1,9 @@
 class AllowFlexibleLeagueMemberships < ActiveRecord::Migration[8.1]
   def up
-    add_reference :divisions, :league, foreign_key: true
-    add_reference :memberships, :league, foreign_key: true
-    add_reference :memberships, :conference, foreign_key: true
+    id_type = connection.columns(:leagues).find { |col| col.name == "id" }.type
+    add_reference :divisions, :league, type: id_type, foreign_key: true
+    add_reference :memberships, :league, type: id_type, foreign_key: true
+    add_reference :memberships, :conference, type: id_type, foreign_key: true
 
     execute <<~SQL
       UPDATE divisions

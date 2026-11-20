@@ -8,8 +8,8 @@ export default class extends Controller {
   ];
 
   static values = {
-    teamId: Number,
-    correctDivisionId: Number
+    teamId: String,
+    correctDivisionId: String
   };
 
   connect() {

@@ -60,14 +60,14 @@ export default class extends Controller {
 
     const button = event.currentTarget
     const isCorrect = button.dataset.correct === "true"
-    const chosenId = parseInt(button.dataset.guessableId)
+    const chosenId = button.dataset.guessableId
     const chosenName = this.gameTypeValue === "team_match"
       ? button.querySelector(".team-name")?.textContent
       : button.querySelector(".division-name")?.textContent
 
     this.answerChoiceTargets.forEach(choice => choice.disabled = true)
 
-    const optionsPresented = this.answerChoiceTargets.map(choice => parseInt(choice.dataset.guessableId))
+    const optionsPresented = this.answerChoiceTargets.map(choice => choice.dataset.guessableId)
 
     this.sendAttemptData(this.currentSubjectId(), chosenId, optionsPresented)
     this.handleAnswerUI(button, isCorrect, chosenName)
@@ -77,7 +77,7 @@ export default class extends Controller {
   currentSubjectId() {
     const card = this.questionCardTarget
     const subjectId = this.gameTypeValue === "team_match" ? card.dataset.playerId : card.dataset.guessableId
-    return parseInt(subjectId)
+    return subjectId
   }
 
   handleAnswerUI(button, isCorrect, chosenName) {

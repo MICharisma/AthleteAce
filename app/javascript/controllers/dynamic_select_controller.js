@@ -3,7 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   static targets = ["targetType", "targetIdSelect"]
   static values = {
-    selectedId: Number
+    selectedId: String
   }
 
   connect() {
@@ -46,7 +46,7 @@ export default class extends Controller {
           opt.text = option.name;
           
           // If we have a previously selected ID, select it
-          if (this.hasSelectedIdValue && option.id === this.selectedIdValue) {
+          if (this.hasSelectedIdValue && this.selectedIdValue && String(option.id) === this.selectedIdValue) {
             opt.selected = true;
           }
           

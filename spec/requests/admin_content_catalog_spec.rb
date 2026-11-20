@@ -31,9 +31,10 @@ RSpec.describe "Admin content catalog", type: :request do
   end
 
   it "combines record types even when their ids overlap and includes all recorded statuses" do
-    quest = create :quest, id: 9001, name: "Learn the Northern roster", created_by: author
-    achievement = create :achievement, id: 9001, name: "Know the starting five", created_by: admin
-    spectrum = create :spectrum, id: 9001, name: "Composure", moderation_status: "hidden"
+    shared_id = SecureRandom.uuid_v7
+    quest = create :quest, id: shared_id, name: "Learn the Northern roster", created_by: author
+    achievement = create :achievement, id: shared_id, name: "Know the starting five", created_by: admin
+    spectrum = create :spectrum, id: shared_id, name: "Composure", moderation_status: "hidden"
     rejected = create :quest, name: "Archived roster challenge", moderation_status: "rejected"
     sign_in admin
     get admin_content_catalog_path

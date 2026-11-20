@@ -114,7 +114,7 @@ class PlayProgress
         :subject_entity_id, Arel.sql("MAX(total_correct)"),
         Arel.sql("BOOL_OR(is_correct) FILTER (WHERE recency = 1)"),
         Arel.sql("COUNT(*) FILTER (WHERE NOT is_correct AND newer_correct = 0)"),
-        Arel.sql("MAX(created_at)"), Arel.sql("MAX(id) FILTER (WHERE recency = 1)")
+        Arel.sql("MAX(created_at)"), Arel.sql("MAX(id::text) FILTER (WHERE recency = 1)")
       ).map do |id, correct, latest_correct, misses, last_seen, attempt_id|
         { player_id: id, correct: correct, latest_correct: latest_correct, misses: misses, last_seen: last_seen, attempt_id: attempt_id }
       end

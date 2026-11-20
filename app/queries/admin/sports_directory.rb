@@ -15,7 +15,7 @@ module Admin
       end
       if params[:selection]
         ids = params[:selected_ids]
-        unless params[:selection] == "selected" && ids.is_a?(Array) && ids.length.between?(1, 25) && ids.all? { |id| id.is_a?(String) && id.match?(/\A[1-9]\d{0,17}\z/) }
+        unless params[:selection] == "selected" && ids.is_a?(Array) && ids.length.between?(1, 25) && ids.all? { |id| id.is_a?(String) && id.match?(ApplicationRecord::UUID_FORMAT) }
           raise ArgumentError, "Select 1 to 25 records to export."
         end
         @selected_ids = ids.uniq
@@ -35,7 +35,7 @@ module Admin
       elsif params[:number_on].present?
         raise ArgumentError, "Number dates apply only to players."
       end
-      raise ArgumentError, "Choose a league or team." if [ league_id, team_id ].compact.any? { |id| !id.match?(/\A[1-9]\d{0,17}\z/) }
+      raise ArgumentError, "Choose a league or team." if [ league_id, team_id ].compact.any? { |id| !id.match?(ApplicationRecord::UUID_FORMAT) }
       raise ArgumentError, "Choose a player status." if status && !%w[active inactive unknown].include?(status)
       raise ArgumentError, "Choose a photo filter." if photo && !%w[present missing].include?(photo)
       raise ArgumentError, "Choose an edit filter." if edited && edited != "yes"

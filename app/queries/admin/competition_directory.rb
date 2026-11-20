@@ -9,7 +9,7 @@ module Admin
       @query = params[:q].to_s.strip.first(80)
       @kind, @season_id, @team_id, @titles = params.values_at(:kind, :season_id, :team_id, :titles).map(&:presence)
       raise ArgumentError, "Competition kind is too long." if kind && kind.length > 80
-      raise ArgumentError, "Choose a season or team." if [ season_id, team_id ].compact.any? { |id| !id.match?(/\A[1-9]\d{0,17}\z/) }
+      raise ArgumentError, "Choose a season or team." if [ season_id, team_id ].compact.any? { |id| !id.match?(ApplicationRecord::UUID_FORMAT) }
       raise ArgumentError, "Choose a title filter." if titles && !%w[awarded none].include?(titles)
     end
 

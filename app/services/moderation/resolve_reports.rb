@@ -11,8 +11,9 @@ module Moderation
         end
         reports = post.shout_out_reports.open
         raise Review::Forbidden, "Another reviewer must decide your report." if reports.where(reporter_id: actor.id).exists?
+        latest_report_id = reports.order(created_at: :desc, id: :desc).pick(:id)
         unless post.approved? && post.funding_status == "spent" && post.moderation_revision == revision &&
-            reports.exists? && reports.maximum(:id) == last_report_id
+            latest_report_id.present? && latest_report_id == last_report_id.to_s
           raise Review::Conflict, "The post or its reports changed. Reload before deciding."
         end
         if action == "hide"
