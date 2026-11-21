@@ -9,8 +9,8 @@ GIT
 
 GIT
   remote: https://github.com/MICharisma/rizz-integration.git
-  revision: 457ded07c3d4b63df71aa310f2e099a99588eb21
-  ref: 457ded07c3d4b63df71aa310f2e099a99588eb21
+  revision: 72ce12caf426f699d2f995bb6781eb0fd3c98fcb
+  ref: 72ce12caf426f699d2f995bb6781eb0fd3c98fcb
   glob: packages/rizz-auth/*.gemspec
   specs:
     rizz-auth (0.1.0)

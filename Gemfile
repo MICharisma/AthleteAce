@@ -9,7 +9,7 @@ end
 if ENV["RIZZ_AUTH_PATH"] && !ENV["RIZZ_AUTH_PATH"].empty?
   gem "rizz-auth", path: ENV.fetch("RIZZ_AUTH_PATH")
 else
-  gem "rizz-auth", git: "https://github.com/MICharisma/rizz-integration.git", ref: "457ded07c3d4b63df71aa310f2e099a99588eb21", glob: "packages/rizz-auth/*.gemspec"
+  gem "rizz-auth", git: "https://github.com/MICharisma/rizz-integration.git", ref: "72ce12caf426f699d2f995bb6781eb0fd3c98fcb", glob: "packages/rizz-auth/*.gemspec"
 end
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
