@@ -13,7 +13,9 @@ class Ace < ApplicationRecord
   THEMES = %w[light dark system].freeze
   AVATAR_COLORS = { "Umber" => "#7A4B2A", "Harbor" => "#365A78", "Forest" => "#32634A",
     "Plum" => "#704267", "Slate" => "#485569", "Rust" => "#93452F" }.freeze
-  RESERVED_USERNAMES = %w[admin administrator moderator athleteace athlete_ace support system staff help].freeze
+  RESERVED_USERNAMES = %w[admin administrator moderator athleteace athlete_ace support system staff help rizz micharisma].freeze
+
+  attr_accessor :password_digest_supplied
 
   normalizes :time_zone, with: ->(value) { value.presence }
   normalizes :username, with: ->(value) { value.strip.downcase.presence }
@@ -21,7 +23,8 @@ class Ace < ApplicationRecord
   validates :theme, inclusion: { in: THEMES }
   validates :username, presence: true, if: -> { new_record? || username_changed? || validation_context == :profile }
   validates :username, length: { in: 3..24 }, format: { with: /\A[a-z0-9_]+\z/, message: "can only contain letters, numbers, and underscores" },
-    uniqueness: { case_sensitive: false }, exclusion: { in: RESERVED_USERNAMES }, allow_nil: true
+    uniqueness: { case_sensitive: false }, allow_nil: true
+  validates :username, exclusion: { in: RESERVED_USERNAMES }, allow_nil: true, if: -> { new_record? || username_changed? }
   validates :display_name, presence: true, length: { maximum: 60 }, if: -> { username.present? }
   validates :avatar_color, inclusion: { in: AVATAR_COLORS.values }
   validates :google_uid, uniqueness: true, length: { maximum: 255 }, allow_nil: true
@@ -52,6 +55,8 @@ class Ace < ApplicationRecord
     inverse_of: :entered_by, dependent: :nullify
   has_many :warnings, class_name: "PostingWarning"
   has_many :mutes
+  has_one :active_rizz_binding, -> { active }, class_name: "AceRizzBinding"
+  has_many :rizz_bindings, class_name: "AceRizzBinding", dependent: :destroy
   has_many :moderator_notes
   validates :time_zone, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }, allow_nil: true
 
@@ -81,6 +86,15 @@ class Ace < ApplicationRecord
     end
   rescue ActiveRecord::RecordNotUnique
     raise GoogleAuthenticationError, "Your Google account could not be linked. Please try signing in again."
+  end
+
+  # A confirmed Ace whose password was chosen earlier and is held only as a bcrypt digest.
+  def self.build_with_password_digest(digest, **attributes)
+    new(attributes).tap do |ace|
+      ace.encrypted_password = digest
+      ace.password_digest_supplied = true
+      ace.skip_confirmation!
+    end
   end
 
   def play_time_zone
@@ -172,6 +186,12 @@ class Ace < ApplicationRecord
   # @return [Boolean] Whether the ace has rated the entity on the spectrum
   def rated?(rated, spectrum)
     ratings.active.exists?(rated: rated, spectrum: spectrum)
+  end
+
+  protected
+
+  def password_required?
+    !password_digest_supplied && super
   end
 
   private

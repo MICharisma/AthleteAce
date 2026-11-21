@@ -1,0 +1,16 @@
+<%= account_card "Connect to Rizz", "#{@handoff.speaker_label} wants to connect to your AthleteAce account. Confirm it's you first." do %>
+  <%= tag.p("This browser is signed in as #{@signed_in_ace.handle || masked_email(@signed_in_ace.email)}. Confirm with your password to continue.", class: "account-description") if @signed_in_ace %>
+  <%= form_with url: rizz_claim_verify_password_path, class: "account-form" do |form| %>
+    <%= tag.div(class: "account-field") {
+      form.label(:email, "Email") + form.email_field(:email, value: @signed_in_ace&.email, autocomplete: "email", required: true, class: "account-input")
+    } %>
+    <%= tag.div(class: "account-field") {
+      form.label(:password, "Password") + form.password_field(:password, autocomplete: "current-password", required: true, class: "account-input")
+    } %>
+    <%= form.submit "Confirm with password", class: "game-button" %>
+  <% end %>
+  <% if google_proof_enabled? %>
+    <%= button_to "Confirm with Google", "/auth/rizz/claim/google", method: :post, class: "game-button", form: { data: { turbo: false } } %>
+  <% end %>
+  <%= button_to "Cancel", rizz_claim_cancel_path, method: :post, class: "game-button" %>
+<% end %>

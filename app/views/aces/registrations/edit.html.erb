@@ -1,43 +1,23 @@
-<h2>Edit <%= resource_name.to_s.humanize %></h2>
-
-<%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put }) do |f| %>
-  <%= render "aces/shared/error_messages", resource: resource %>
-
-  <div class="field">
-    <%= f.label :email %><br />
-    <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
-  </div>
-
-  <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
-    <div>Currently waiting confirmation for: <%= resource.unconfirmed_email %></div>
-  <% end %>
-
-  <div class="field">
-    <%= f.label :password %> <i>(leave blank if you don't want to change it)</i><br />
-    <%= f.password_field :password, autocomplete: "new-password" %>
-    <% if @minimum_password_length %>
-      <br />
-      <em><%= @minimum_password_length %> characters minimum</em>
+<%= account_card "Account settings", "Manage your email, password, and account closure." do %>
+  <%= ace_identity resource %>
+  <%= form_for resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, class: "account-form" } do |form| %>
+    <%= render "aces/shared/error_messages", resource: resource %>
+    <%= account_field form, :email, type: :email, autofocus: true, autocomplete: "email", required: true %>
+    <% if devise_mapping.confirmable? && resource.pending_reconfirmation? %>
+      <p class="account-hint" role="status">Currently waiting confirmation for: <%= resource.unconfirmed_email %></p>
     <% end %>
-  </div>
-
-  <div class="field">
-    <%= f.label :password_confirmation %><br />
-    <%= f.password_field :password_confirmation, autocomplete: "new-password" %>
-  </div>
-
-  <div class="field">
-    <%= f.label :current_password %> <i>(we need your current password to confirm your changes)</i><br />
-    <%= f.password_field :current_password, autocomplete: "current-password" %>
-  </div>
-
-  <div class="actions">
-    <%= f.submit "Update" %>
-  </div>
+    <%= account_field form, :password, type: :password, label: "New password", autocomplete: "new-password", hint: [ "Leave blank to keep your current password.", account_password_hint ].compact.join(" ") %>
+    <%= account_field form, :password_confirmation, type: :password, label: "Confirm new password", autocomplete: "new-password" %>
+    <%= account_field form, :current_password, type: :password, label: "Current password", autocomplete: "current-password", required: true, hint: "Required to save changes to your email or password." %>
+    <%= form.submit "Save account settings", class: "game-button" %>
+  <% end %>
+  <section class="account-danger" aria-labelledby="account-danger-title">
+    <h2 id="account-danger-title" class="account-danger-title">Close account</h2>
+    <p class="account-description">Permanently close your Athlete Ace account. Accounts with financial records cannot be closed here.</p>
+    <%= button_to "Cancel my account", registration_path(resource_name), method: :delete, class: "account-danger-button", data: { turbo_confirm: "Are you sure you want to permanently close your account?" } %>
+  </section>
+  <nav class="account-links" aria-label="Account navigation">
+    <%= link_to "View profile", profile_path %>
+    <%= link_to "Edit profile", edit_profile_path %>
+  </nav>
 <% end %>
-
-<h3>Cancel my account</h3>
-
-<div>Unhappy? <%= button_to "Cancel my account", registration_path(resource_name), data: { confirm: "Are you sure?", turbo_confirm: "Are you sure?" }, method: :delete %></div>
-
-<%= link_to "Back", :back %>

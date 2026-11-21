@@ -1,0 +1,9 @@
+<%= account_card "Connect to Rizz", "Check both sides before you connect." do %>
+  <%= tag.dl(class: "account-summary") {
+    tag.dt("AthleteAce account") + tag.dd("#{@ace.handle} · #{masked_email(@ace.email)}".strip.delete_prefix("· ")) +
+      tag.dt("Requested by Rizz") + tag.dd(@handoff.speaker_label)
+  } %>
+  <%= tag.p("Connecting lets #{@handoff.speaker_label} sign you in to this AthleteAce account. You can still sign in here with your own password.", class: "account-description") %>
+  <%= button_to "Connect this account", rizz_claim_confirm_path, method: :post, class: "game-button", form: { data: { turbo: false } } %>
+  <%= button_to "Cancel", rizz_claim_cancel_path, method: :post, class: "game-button" %>
+<% end %>

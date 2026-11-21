@@ -26,7 +26,7 @@ export default class extends Controller {
   close() {
     clearTimeout(this.timer)
     this.request?.abort()
-    this.dialogTarget.close()
+    if (this.dialogTarget.open) this.dialogTarget.close()
   }
 
   closed() {

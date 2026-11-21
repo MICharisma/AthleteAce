@@ -9,7 +9,7 @@ See [Railway deployment](docs/railway.md) for staging configuration and the firs
 
 In development, registration on a host ending in `.test` confirms the account immediately without a confirmation email. Signing in on that host also confirms an existing unconfirmed account after a correct password and retains the saved return page.
 
-Email/password signups on other hosts and environments keep the normal email confirmation flow. [Google sign-in](docs/google-sign-in.md) uses Google's verified email and automatically links matching accounts.
+Email/password signups on other hosts and environments keep the normal email confirmation flow. [Google sign-in](docs/google-sign-in.md) uses Google's verified email and automatically links matching accounts. [Sign in with Rizz](docs/sign-in-with-rizz.md) connects an existing account to Rizz or creates one from a verified Google email.
 
 Registration asks for a handle and display name. Handles use 3–24 letters, numbers, or underscores, are stored in lowercase, and are unique without regard to case. System names such as `admin`, `moderator`, and `athleteace` are reserved. Handles stay fixed after selection. Display names can change and have a 60-character limit.
 

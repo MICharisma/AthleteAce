@@ -146,4 +146,32 @@ RSpec.describe "Navigation", type: :system do
     expect(page).to have_link("Next Quest")
     expect(page).not_to have_css("dialog[open]")
   end
+
+  it "lets a visitor continue with Google immediately after signing out from Feed" do
+    ace = create(:ace, email: "google.visitor@example.test", google_uid: "google-uid-nav-1")
+    previous_mode = OmniAuth.config.test_mode
+    previous_auth = OmniAuth.config.mock_auth[:google_oauth2]
+    allow(Rails.application.config.x.google_oauth).to receive(:enabled).and_return(true)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(
+      provider: "google_oauth2", uid: ace.google_uid,
+      info: { email: ace.email, email_verified: true, name: ace.display_name }
+    )
+
+    sign_in ace
+    visit feed_path
+    open_menu
+    within("dialog[open]") { click_button "Sign Out" }
+
+    expect(page).to have_current_path(feed_path)
+    expect(page).not_to have_css("dialog[open]")
+    expect(page).to have_css('button[aria-label="Appearance"][aria-expanded="false"]')
+    expect(page).to have_css("button.google-sign-in")
+
+    find("button.google-sign-in").click
+    expect(page).to have_css('button[aria-label="Account menu"]')
+  ensure
+    OmniAuth.config.test_mode = previous_mode
+    OmniAuth.config.mock_auth[:google_oauth2] = previous_auth
+  end
 end
