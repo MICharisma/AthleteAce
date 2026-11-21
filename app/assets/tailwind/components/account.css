@@ -31,3 +31,8 @@
 .avatar-color input { accent-color: var(--color-accent-text); }
 .avatar-swatch { @apply inline-block w-5 h-5 rounded-full; }
 .shell-account-toggle .ace-avatar { @apply w-8 h-8; }
+.account-danger { @apply border-t border-line mt-7 pt-6 space-y-3; }
+.account-danger-title { @apply text-base font-semibold text-bad-ink; }
+.account-danger-button { @apply inline-flex items-center justify-center min-h-11 px-4 py-2 rounded-lg border border-bad bg-bad-tint text-bad-ink font-semibold text-sm cursor-pointer transition-colors; }
+.account-danger-button:hover { @apply bg-bad text-surface; }
+.account-danger-button:focus-visible { @apply outline-2 outline-offset-2 outline-bad; }

@@ -7,6 +7,7 @@ require_relative 'routes/filterable'
 Rails.application.routes.draw do
   # Load modular route files
   draw :auth          # Authentication (Devise)
+  draw :rizz_auth     # Sign in with Rizz, claim handoff, back-channel logout
   draw :sports        # Core sports resources (index/show only)
   draw :locations     # Filterable location resources (auto-generated)
   draw :ratings       # Rating system

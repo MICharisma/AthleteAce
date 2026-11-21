@@ -6,7 +6,7 @@
       <%= link_to "Profile", profile_path %><%= link_to "My ratings", ratings_path %><%= link_to "Settings", edit_ace_registration_path %>
       <%= link_to "Posting status", posting_status_path %>
       <%= link_to "Begin Quest", random_quests_path %>
-      <%= button_to "Sign Out", destroy_ace_session_path, method: :delete, class: "shell-sign-out" %>
+      <%= button_to "Sign Out", destroy_ace_session_path, method: :delete, class: "shell-sign-out", form: { data: { turbo: false } } %>
     </nav>
   <% end %>
   <section class="shell-theme" aria-labelledby="shell-theme-title"><h3 id="shell-theme-title">Theme</h3>

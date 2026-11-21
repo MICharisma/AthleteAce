@@ -6,6 +6,12 @@ else
   gem "shared-ratings", git: "https://github.com/MICharisma/rizz-integration.git", ref: "2069a5225f708927b5b05ea032e10be6c71e17ae", glob: "packages/shared-ratings/*.gemspec", require: ["shared-ratings", "shared_ratings/engine"]
 end
 
+if ENV["RIZZ_AUTH_PATH"] && !ENV["RIZZ_AUTH_PATH"].empty?
+  gem "rizz-auth", path: ENV.fetch("RIZZ_AUTH_PATH")
+else
+  gem "rizz-auth", git: "https://github.com/MICharisma/rizz-integration.git", ref: "72ce12caf426f699d2f995bb6781eb0fd3c98fcb", glob: "packages/rizz-auth/*.gemspec"
+end
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
@@ -52,6 +58,7 @@ gem 'pagy', '~> 43.6'
 gem 'devise', '~> 5.0'
 gem "omniauth-google-oauth2", "~> 1.2"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
+gem "jwt", "~> 3.3"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

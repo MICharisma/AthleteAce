@@ -1,4 +1,4 @@
-<header class="navigation-container" data-controller="shell search" data-search-context-value="<%= current_ace ? "ace-#{current_ace.id}" : 'visitor' %>:<%= current_side %>" data-action="turbo:before-cache@document->shell#close turbo:before-cache@document->search#close keydown@window->search#shortcut">
+<header class="navigation-container" data-controller="shell search" data-search-context-value="<%= current_ace ? "ace-#{current_ace.id}" : 'visitor' %>:<%= current_side %>" data-action="turbo:before-cache@document->shell#close turbo:before-render@document->shell#close turbo:before-cache@document->search#close turbo:before-render@document->search#close keydown@window->search#shortcut">
   <div class="navigation-inner">
     <%= link_to root_path, class: "ace-brand", aria: { label: "Athlete Ace home" } do %>
       <span class="ace-brand-mark"><%= icon "bolt", size: 24 %></span><span>Athlete Ace</span>
