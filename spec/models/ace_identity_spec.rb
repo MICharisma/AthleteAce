@@ -33,7 +33,7 @@ RSpec.describe Ace, type: :model do
     }.to raise_error(ActiveRecord::RecordNotUnique)
   end
 
-  %w[ab name-with-dashes @tess tess.moreno café admin MODERATOR AthleteAce].each do |username|
+  %w[ab name-with-dashes @tess tess.moreno café admin MODERATOR AthleteAce rizz Rizz micharisma].each do |username|
     it "rejects the invalid or reserved handle #{username}" do
       expect(build(:ace, username: username)).not_to be_valid
     end

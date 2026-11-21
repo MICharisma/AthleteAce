@@ -62,14 +62,16 @@ module RizzSignIn
       handoff.build_ace
     end
 
-    # Email or handle taken since onboarding: nothing is created or linked, and the whole transaction rolls back.
+    # Email, handle or Google account taken since onboarding: nothing is created or linked, and the whole transaction
+    # rolls back. A Google account that now belongs to an Ace is reported like a taken email.
     def create_ace!(ace, receipt)
       ace.transaction(requires_new: true) { ace.save! }
       receipt.handoff.discard_draft!
     rescue ActiveRecord::RecordInvalid => error
-      raise(error.record.errors.of_kind?(:email, :taken) ? EmailTaken : Conflict)
+      errors = error.record.errors
+      raise(errors.of_kind?(:email, :taken) || errors.of_kind?(:google_uid, :taken) ? EmailTaken : Conflict)
     rescue ActiveRecord::RecordNotUnique
-      raise(Ace.exists?(email: ace.email) ? EmailTaken : Conflict)
+      raise(Ace.exists?(email: ace.email) || (ace.google_uid.present? && Ace.exists?(google_uid: ace.google_uid)) ? EmailTaken : Conflict)
     end
 
     def replay

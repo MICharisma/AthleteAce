@@ -295,6 +295,26 @@ RSpec.describe "Rizz claim", type: :request do
         expect(RizzClaimHandoff.last.verified_ace_id).to be_nil
       end
 
+      it "keeps the Claim proof intact for a Create browser steered to it by an already-linked Google account" do
+        post rizz_create_start_path, params: { handoff: speaker.create_handoff(callback_uri: callback_uri, email: "new.fan@example.com") }
+        expect(Array(response.headers["set-cookie"]).join).to match(/rizz_create_local=/)
+        expect { prove_with_google(email: "new.fan@example.com") }.not_to change(Ace, :count)
+        expect(response).to redirect_to(rizz_claim_prove_path)
+        expect(RizzClaimHandoff.last).to have_attributes(intent: "claim", email: nil, google_uid: nil)
+
+        prove_with_google
+        expect(response).to redirect_to(rizz_claim_confirm_path)
+        expect(RizzClaimHandoff.last.verified_ace).to eq(ace)
+      end
+
+      it "clears a Create cookie when the claim starts" do
+        post rizz_create_start_path, params: { handoff: speaker.create_handoff(callback_uri: callback_uri, email: "new.fan@example.com") }
+        start_claim(jti: "claim-after-create")
+        expect(Array(response.headers["set-cookie"]).join("\n")).to match(/rizz_create_local=;/)
+        get rizz_create_path
+        expect(response).to redirect_to(new_ace_session_path)
+      end
+
       it "returns to the proof page when Google is cancelled" do
         OmniAuth.config.mock_auth[:rizz_claim_google] = :access_denied
         post "/auth/rizz/claim/google"

@@ -10,6 +10,8 @@ module RizzSignIn
     MAX_LIFETIME = 10.minutes
     CREATE_HANDOFF_LIFETIME = 5.minutes
     DISPLAY_NAME_MAX = 60
+    USERNAME_FORMAT = /\A[A-Za-z0-9_]{3,24}\z/
+    USERNAME_MAX = 24
     EMAIL_MAX = 255
     LEEWAY = 30
 
@@ -29,7 +31,8 @@ module RizzSignIn
       claims
     end
 
-    # A claim handoff plus the Speaker's verified Google email (normalized here) and a suggested display name.
+    # A claim handoff plus the Speaker's verified Google email (normalized here), a suggested display name and an
+    # optional suggested handle (lowercased here; nil when absent or empty).
     def verify_create_handoff(token)
       claims = decode(token, typ: CREATE_HANDOFF_TYP, max_lifetime: CREATE_HANDOFF_LIFETIME)
       invalid! unless %w[jti operation_id speaker_label callback_uri email].all? { claims[it].is_a?(String) && claims[it].present? }
@@ -37,7 +40,14 @@ module RizzSignIn
 
       email = claims["email"].strip.downcase
       invalid! unless email.length <= EMAIL_MAX && email.match?(URI::MailTo::EMAIL_REGEXP)
-      claims.merge("email" => email, "display_name" => claims["display_name"].strip)
+      claims.merge("email" => email, "display_name" => claims["display_name"].strip, "username" => suggested_username(claims["username"]))
+    end
+
+    def suggested_username(value)
+      return if value.nil? || value == ""
+
+      invalid! unless value.is_a?(String) && value.length <= USERNAME_MAX && value.match?(USERNAME_FORMAT)
+      value.downcase
     end
 
     def verify_logout_token(token)

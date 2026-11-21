@@ -37,6 +37,19 @@ RSpec.describe RizzSignIn::TokenVerifier do
       expect(claims).to include("email" => "marcus.tate@gmail.com", "display_name" => "Marcus Tate", "operation_id" => "op-1")
     end
 
+    it "lowercases an optional suggested username and treats an absent or empty one as nil" do
+      expect(described_class.verify_create_handoff(speaker.create_handoff(username: "Marcus_Tate"))["username"]).to eq("marcus_tate")
+      expect(described_class.verify_create_handoff(speaker.create_handoff(username: "a" * 24))["username"]).to eq("a" * 24)
+      expect(described_class.verify_create_handoff(speaker.create_handoff)["username"]).to be_nil
+      expect(described_class.verify_create_handoff(speaker.create_handoff(username: ""))["username"]).to be_nil
+    end
+
+    it "rejects a non-empty suggested username that is not a string of 3 to 24 letters, numbers or underscores" do
+      [ 42, [ "marcus" ], "ab", "a" * 25, "marcus tate", "marcus-tate", "@marcus", "café_x", " marcus", "marcus\n" ].each do |username|
+        expect { described_class.verify_create_handoff(speaker.create_handoff(username: username)) }.to raise_error(RizzSignIn::InvalidToken), username.inspect
+      end
+    end
+
     it "accepts an empty suggested display name" do
       expect(described_class.verify_create_handoff(speaker.create_handoff(display_name: ""))["display_name"]).to eq("")
     end

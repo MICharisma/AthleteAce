@@ -23,6 +23,7 @@ class RizzAuth::ClaimsController < ApplicationController
     return claim_rejected unless RizzClaimHandoff.acceptable?(claims)
 
     handoff, token = RizzClaimHandoff.start!(claims)
+    delete_rizz_cookie RizzAuth::CreationsController::COOKIE # a browser never holds both flows' cookies
     write_rizz_cookie COOKIE, { "handoff_id" => handoff.id, "token" => token }, expires_in: RizzClaimHandoff::LIFETIME
     redirect_to rizz_claim_prove_path, status: :see_other
   rescue RizzSignIn::InvalidToken, ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
@@ -45,14 +46,14 @@ class RizzAuth::ClaimsController < ApplicationController
   end
 
   # OmniAuth (the claim-only Google strategy, never Devise's) lands here. Only an Ace already linked to this
-  # Google subject counts; no email matching and no account creation.
+  # Google subject counts; no email matching and no account creation. A browser in the Create flow reuses this
+  # callback to optionally prove its Google account (see #create_google_callback).
   def google_callback
     auth = request.env["omniauth.auth"]
-    id_info = auth&.dig("extra", "id_info")
-    iat = id_info&.[]("iat")
-    fresh = iat.is_a?(Integer) && iat.between?(GOOGLE_AUTH_MAX_AGE.ago.to_i, 1.minute.from_now.to_i)
-    uid = auth&.[]("uid").to_s
-    ace = Ace.find_by(google_uid: uid) if auth&.[]("provider").to_s == GOOGLE_PROVIDER && fresh && uid.present? && id_info&.[]("sub") == uid
+    uid = verified_google_uid(auth)
+    return create_google_callback(auth, uid) if @create_flow
+
+    ace = Ace.find_by(google_uid: uid) if uid
     return prove_failed "Google couldn't confirm an account linked to AthleteAce. Try picking the linked Google account or use your password instead." unless ace
     return prove_failed "That account can't be connected right now." unless claimable?(ace)
 
@@ -61,7 +62,12 @@ class RizzAuth::ClaimsController < ApplicationController
   end
 
   def google_failure
-    redirect_to rizz_claim_prove_path, status: :see_other, alert: "Google sign-in was cancelled or could not be completed."
+    message = "Google sign-in was cancelled or could not be completed."
+    if cookie_handoff(COOKIE)&.claim_intent? || !cookie_handoff(RizzAuth::CreationsController::COOKIE)&.create_intent?
+      redirect_to rizz_claim_prove_path, status: :see_other, alert: message
+    else
+      redirect_to rizz_create_path, status: :see_other, alert: message
+    end
   end
 
   def confirm
@@ -85,14 +91,58 @@ class RizzAuth::ClaimsController < ApplicationController
 
   private
 
+  # The Claim cookie first. Only the Google callback also accepts the Create cookie, for the optional "Link Google now".
   def load_handoff
-    data = read_rizz_cookie(COOKIE)
-    handoff = RizzClaimHandoff.find_by(id: data["handoff_id"]) if data.is_a?(Hash) && data["token"].is_a?(String)
-    if handoff&.claim_intent? && handoff.usable? && ActiveSupport::SecurityUtils.secure_compare(handoff.browser_token_digest, RizzClaimHandoff.digest(data["token"]))
+    if (handoff = cookie_handoff(COOKIE))&.claim_intent?
       @handoff = handoff
+    elsif action_name == "google_callback" && (handoff = cookie_handoff(RizzAuth::CreationsController::COOKIE))&.create_intent?
+      @handoff, @create_flow = handoff, true
     else
       claim_rejected "This connect link expired or was opened in a different browser. Start again from Rizz."
     end
+  end
+
+  # The usable handoff whose browser token matches the named cookie, whatever its intent.
+  def cookie_handoff(cookie)
+    data = read_rizz_cookie(cookie)
+    handoff = RizzClaimHandoff.find_by(id: data["handoff_id"]) if data.is_a?(Hash) && data["token"].is_a?(String)
+    handoff if handoff&.usable? && ActiveSupport::SecurityUtils.secure_compare(handoff.browser_token_digest, RizzClaimHandoff.digest(data["token"]))
+  end
+
+  # The Google subject of a fresh, verified, claim-only sign-in, or nil.
+  def verified_google_uid(auth)
+    id_info = auth&.dig("extra", "id_info")
+    iat = id_info&.[]("iat")
+    fresh = iat.is_a?(Integer) && iat.between?(GOOGLE_AUTH_MAX_AGE.ago.to_i, 1.minute.from_now.to_i)
+    uid = auth&.[]("uid").to_s
+    uid if auth&.[]("provider").to_s == GOOGLE_PROVIDER && fresh && uid.present? && id_info&.[]("sub") == uid
+  end
+
+  # Create flow: Google only proves control of the verified email's Google account so it can be linked once the
+  # Ace is created. It never signs in, links by email, calls Ace.from_google, or creates an Ace.
+  def create_google_callback(auth, uid)
+    unless uid && auth.dig("info", "email_verified") == true
+      return create_google_rejected "Google couldn't verify that account. Try again, or create your account without linking Google now."
+    end
+
+    if Ace.exists?(google_uid: uid)
+      token = read_rizz_cookie(RizzAuth::CreationsController::COOKIE)["token"]
+      @handoff.switch_to_claim!
+      delete_rizz_cookie RizzAuth::CreationsController::COOKIE
+      write_rizz_cookie COOKIE, { "handoff_id" => @handoff.id, "token" => token }, expires_in: RizzClaimHandoff::LIFETIME
+      return redirect_to rizz_claim_prove_path, status: :see_other, notice: "That Google account already belongs to an AthleteAce account. Confirm it's you to connect it."
+    end
+
+    unless auth.dig("info", "email").to_s.strip.downcase == @handoff.email
+      return create_google_rejected "Choose the Google account matching #{masked_email(@handoff.email)}, or create your account without linking Google now."
+    end
+
+    @handoff.attach_google!(uid)
+    redirect_to rizz_create_path, status: :see_other, notice: "Google account verified and will be linked when you create your account."
+  end
+
+  def create_google_rejected(message)
+    redirect_to rizz_create_path, status: :see_other, alert: message
   end
 
   def require_proof

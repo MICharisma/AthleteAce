@@ -159,7 +159,7 @@ RSpec.describe "Rizz create", type: :request do
   describe "onboarding form" do
     before { start_create }
 
-    it "shows the verified email read-only, with editable handle and display name and a confirmed password, over a no-Turbo form" do
+    it "shows the verified email read-only, with editable handle and display name and an optional collapsed password, over a no-Turbo form" do
       get rizz_create_path
       page = Nokogiri::HTML(response.body)
       form = page.at_css("form[action='#{rizz_create_path}']")
@@ -167,8 +167,15 @@ RSpec.describe "Rizz create", type: :request do
       expect(form.at_css("input[type=email][readonly]")["value"]).to eq(email)
       expect(form.at_css("input[name='ace[username]']")["readonly"]).to be_nil
       expect(form.at_css("input[name='ace[display_name]']")["value"]).to eq("Marcus Tate")
-      expect(form.at_css("input[name='ace[password]'][type=password]")).to be_present
-      expect(form.at_css("input[name='ace[password_confirmation]'][type=password]")).to be_present
+      details = form.at_css("details")
+      expect(details.at_css("summary").text).to eq("Set a password (optional)")
+      expect(details["open"]).to be_nil
+      %w[password password_confirmation].each do |field|
+        input = details.at_css("input[name='ace[#{field}]'][type=password]")
+        expect(input).to be_present
+        expect(input["required"]).to be_nil
+      end
+      expect(form.at_css("input[type=submit]")["value"]).to eq("Create account")
       expect(response.headers["Cache-Control"]).to include("no-store")
       expect(page.at_css("form[action='#{rizz_create_cancel_path}']").text).to include("Cancel")
     end
@@ -268,7 +275,8 @@ RSpec.describe "Rizz create", type: :request do
       "a mismatched password confirmation" => { password_confirmation: "different-1" },
       "a missing password confirmation" => { password_confirmation: nil },
       "a password shorter than Devise allows" => { password: "abc", password_confirmation: "abc" },
-      "a blank password" => { password: "", password_confirmation: "" },
+      "a password without its confirmation" => { password_confirmation: "" },
+      "a confirmation without its password" => { password: "" },
       "a blank display name" => { display_name: " " },
       "a reserved username" => { username: "admin" },
       "an invalid username" => { username: "Marcus T!" }
@@ -279,6 +287,392 @@ RSpec.describe "Rizz create", type: :request do
         expect(RizzClaimHandoff.last.consumed_at).to be_nil
         expect(RizzClaimReceipt.count).to eq(0)
       end
+    end
+  end
+
+  describe "passwordless create" do
+    let(:passwordless) { { ace: { username: "marcus_tate", display_name: "Marcus Tate" } } }
+
+    def create_and_exchange(attributes)
+      start_create
+      submit attributes
+      expect(response).to have_http_status(:see_other)
+      receipt_from_redirect.tap { |receipt| reset!.then { exchange(receipt: receipt) } }
+    end
+
+    it "creates a confirmed Ace in one click when the password fields are omitted or blank, with a random internal password" do
+      [ passwordless, { ace: passwordless[:ace].merge(password: "", password_confirmation: "") } ].each_with_index do |attributes, index|
+        reset!
+        start_create(jti: "one-click-#{index}", operation_id: "op-#{index}", email: "one.click#{index}@example.com")
+        submit ace: attributes[:ace].merge(username: "one_click_#{index}")
+        expect(response.location).to start_with(callback_uri)
+        digest = RizzClaimHandoff.order(:created_at).last.encrypted_password
+        expect(digest).to match(/\A\$2/)
+        receipt = receipt_from_redirect
+        reset!
+        exchange(receipt: receipt, operation_id: "op-#{index}", rizz_sub: "sub-#{index}")
+        expect(response).to have_http_status(:ok)
+        ace = Ace.find_by!(email: "one.click#{index}@example.com")
+        expect(ace).to be_confirmed
+        expect(ace.valid_password?("")).to be(false)
+        expect(ace.encrypted_password).to eq(digest)
+      end
+    end
+
+    it "lets the Ace sign in with Google directly after the Rizz binding is disconnected" do
+      create_and_exchange(passwordless)
+      expect(response).to have_http_status(:ok)
+      AceRizzBinding.last.update!(status: "disconnected", disconnected_at: Time.current)
+      auth = OmniAuth::AuthHash.new(provider: "google_oauth2", uid: "google-direct-1", info: { email: email, email_verified: true, name: "Marcus Tate" })
+      ace = Ace.from_google(auth)
+      expect(ace).to have_attributes(email: email, username: "marcus_tate", google_uid: "google-direct-1")
+      expect(Ace.where(email: email).count).to eq(1)
+    end
+
+    it "runs normal password validation as soon as either password field is filled" do
+      start_create
+      { password: "hardwood-9", password_confirmation: "hardwood-9" }.each_key do |filled|
+        other = filled == :password ? :password_confirmation : :password
+        submit ace: passwordless[:ace].merge(filled => "hardwood-9", other => "")
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+      expect(RizzClaimReceipt.count).to eq(0)
+    end
+
+    it "opens the password section when its validation fails, and a corrected password works for direct sign-in after disconnect" do
+      start_create
+      submit ace: passwordless[:ace].merge(password: "abc", password_confirmation: "abc")
+      expect(response).to have_http_status(:unprocessable_content)
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("details[open] input[name='ace[password]']")).to be_present
+      expect(RizzClaimHandoff.last).to have_attributes(consumed_at: nil, encrypted_password: nil)
+
+      submit ace: passwordless[:ace].merge(password: "hardwood-9", password_confirmation: "different-1")
+      expect(Nokogiri::HTML(response.body).at_css("details[open] input[name='ace[password_confirmation]']")).to be_present
+
+      submit ace: passwordless[:ace].merge(password: "hardwood-9", password_confirmation: "hardwood-9")
+      receipt = receipt_from_redirect
+      reset!
+      exchange(receipt: receipt)
+      AceRizzBinding.last.update!(status: "disconnected", disconnected_at: Time.current)
+      post ace_session_path, params: { ace: { email: email, password: "hardwood-9" } }
+      expect(request.env["warden"].user(:ace)).to have_attributes(email: email, username: "marcus_tate")
+    end
+
+    it "keeps the password section closed when the form re-renders for a non-password error" do
+      create(:ace, username: "marcus_tate")
+      start_create
+      submit passwordless
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(Nokogiri::HTML(response.body).at_css("details[open]")).to be_nil
+    end
+  end
+
+  describe "handle and display name defaults" do
+    it "prefills the handle from the signed username and the display name from the signed display_name" do
+      start_create(username: "Marcus_T", display_name: "Marcus Tate")
+      expect(RizzClaimHandoff.last).to have_attributes(suggested_username: "marcus_t", username: nil)
+      get rizz_create_path
+      form = Nokogiri::HTML(response.body).at_css("form[action='#{rizz_create_path}']")
+      expect(form.at_css("input[name='ace[username]']")["value"]).to eq("marcus_t")
+      expect(form.at_css("input[name='ace[display_name]']")["value"]).to eq("Marcus Tate")
+      expect(response.body).not_to include("already taken")
+    end
+
+    it "leaves the handle empty without a suggestion" do
+      start_create(username: "")
+      expect(RizzClaimHandoff.last.suggested_username).to be_nil
+      get rizz_create_path
+      expect(Nokogiri::HTML(response.body).at_css("input[name='ace[username]']")["value"]).to be_nil
+    end
+
+    it "warns inline when the suggested handle is already taken on AthleteAce, in any case" do
+      create(:ace, username: "marcus_t")
+      start_create(username: "Marcus_T")
+      get rizz_create_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("@marcus_t is already taken on AthleteAce")
+      expect(Nokogiri::HTML(response.body).at_css("input[name='ace[username]']")["value"]).to eq("marcus_t")
+    end
+
+    it "treats rizz and micharisma as reserved and warns about them" do
+      expect(Ace::RESERVED_USERNAMES).to include("rizz", "micharisma")
+      start_create(username: "Rizz")
+      get rizz_create_path
+      expect(response.body).to include("@rizz is already taken")
+      submit ace: { username: "micharisma", display_name: "Marcus Tate" }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("Username is reserved")
+    end
+
+    it "rejects an invalid suggested handle at start" do
+      %w[ab marcus-t].each do |username|
+        start_create(username: username)
+        expect(response).to redirect_to(new_ace_session_path)
+      end
+      expect(RizzClaimHandoff.count).to eq(0)
+    end
+  end
+
+  describe "optional Google link" do
+    let(:uid) { "google-link-1" }
+
+    around do |example|
+      previous = [ OmniAuth.config.test_mode, OmniAuth.config.mock_auth[:rizz_claim_google] ]
+      OmniAuth.config.test_mode = true
+      example.run
+    ensure
+      OmniAuth.config.test_mode, OmniAuth.config.mock_auth[:rizz_claim_google] = previous
+    end
+
+    before { allow(Rails.application.config.x.google_oauth).to receive(:enabled).and_return(true) }
+
+    def link_google(uid: self.uid, google_email: email, iat: Time.now.to_i, id_sub: uid, provider: "rizz_claim_google", verified: true)
+      OmniAuth.config.mock_auth[:rizz_claim_google] = OmniAuth::AuthHash.new(provider: provider, uid: uid,
+        info: { email: google_email, email_verified: verified, name: "Marcus" }, extra: { id_info: { sub: id_sub, iat: iat }.compact })
+      post "/auth/rizz/claim/google"
+      expect(response).to redirect_to("http://www.example.com/auth/rizz/claim/google/callback")
+      follow_redirect!
+    end
+
+    it "offers a collapsed Link Google now button outside the form that reuses the claim Google path, and hides it when Google is off" do
+      start_create
+      get rizz_create_path
+      page = Nokogiri::HTML(response.body)
+      details = page.css("details").find { it.at_css("summary").text == "Link Google now (optional)" }
+      expect(details["open"]).to be_nil
+      expect(page.at_css("form[action='#{rizz_create_path}']").at_css("form[action='/auth/rizz/claim/google']")).to be_nil
+      button_form = details.at_css("form[action='/auth/rizz/claim/google']")
+      expect(button_form["method"]).to eq("post")
+      expect(button_form["data-turbo"]).to eq("false")
+      expect(button_form.at_css("button, input[type=submit]").then { it["value"] || it.text }).to eq("Link Google account now")
+
+      allow(Rails.application.config.x.google_oauth).to receive(:enabled).and_return(false)
+      get rizz_create_path
+      expect(response.body).not_to include("Link Google")
+    end
+
+    it "binds a verified matching Google account to the handoff without creating or signing in an Ace, then to the Ace at exchange" do
+      expect(Ace).not_to receive(:from_google)
+      start_create
+      expect { link_google }.not_to change(Ace, :count)
+      expect(response).to redirect_to(rizz_create_path)
+      expect(flash[:notice]).to eq("Google account verified and will be linked when you create your account.")
+      expect(RizzClaimHandoff.last).to have_attributes(google_uid: uid, intent: "create", consumed_at: nil)
+      expect(request.env["warden"].user(:ace)).to be_nil
+
+      follow_redirect!
+      expect(response.body).to include("Google account verified — will be linked for direct sign-in.")
+      expect(response.body).not_to include("Link Google account now")
+
+      submit
+      receipt = receipt_from_redirect
+      reset!
+      exchange(receipt: receipt)
+      expect(response).to have_http_status(:ok)
+      expect(Ace.find_by!(email: email)).to have_attributes(google_uid: uid)
+      expect(RizzClaimHandoff.last.google_uid).to be_nil
+    end
+
+    it "lets an Ace created with a linked Google account sign in with Google after Rizz is disconnected" do
+      start_create
+      link_google
+      submit ace: onboarding[:ace].except(:password, :password_confirmation)
+      receipt = receipt_from_redirect
+      reset!
+      exchange(receipt: receipt)
+      AceRizzBinding.last.update!(status: "disconnected", disconnected_at: Time.current)
+      auth = OmniAuth::AuthHash.new(provider: "google_oauth2", uid: uid, info: { email: email, email_verified: true, name: "Marcus" })
+      expect(Ace.from_google(auth)).to eq(Ace.find_by!(email: email))
+    end
+
+    it "rejects a Google account for another email and links nothing" do
+      start_create
+      link_google(google_email: "someone.else@gmail.com")
+      expect(response).to redirect_to(rizz_create_path)
+      expect(flash[:alert]).to eq("Choose the Google account matching #{RizzSignIn.mask_email(email)}, or create your account without linking Google now.")
+      expect(RizzClaimHandoff.last.google_uid).to be_nil
+      expect(Ace.count).to eq(0)
+    end
+
+    it "matches the Google email regardless of case and whitespace" do
+      start_create
+      link_google(google_email: " Marcus.Tate@GMAIL.com ")
+      expect(RizzClaimHandoff.last.google_uid).to eq(uid)
+    end
+
+    {
+      "a stale iat" => { iat: 10.minutes.ago.to_i },
+      "a missing iat" => { iat: nil },
+      "a mismatched id token subject" => { id_sub: "someone-else" },
+      "another provider" => { provider: "google_oauth2" },
+      "an unverified email" => { verified: false }
+    }.each do |description, options|
+      it "does not link a Google proof with #{description}" do
+        start_create
+        link_google(**options)
+        expect(response).to redirect_to(rizz_create_path)
+        expect(flash[:alert]).to be_present
+        expect(RizzClaimHandoff.last.google_uid).to be_nil
+        expect(Ace.count).to eq(0)
+      end
+    end
+
+    it "steers a Google account that already belongs to an Ace to the Claim proof, never calling Ace.from_google or creating an Ace" do
+      owner = create(:ace, username: "hoops_marcus", email: "owner@example.com", google_uid: uid)
+      expect(Ace).not_to receive(:from_google)
+      start_create
+      expect { link_google(google_email: "owner@example.com") }.not_to change(Ace, :count)
+      expect(response).to redirect_to(rizz_claim_prove_path)
+      expect(flash[:notice]).to eq("That Google account already belongs to an AthleteAce account. Confirm it's you to connect it.")
+      expect(RizzClaimHandoff.last).to have_attributes(intent: "claim", email: nil, display_name: nil, suggested_username: nil, google_uid: nil, verified_ace_id: nil)
+      expect(set_cookies).to match(/rizz_claim_local=[^;]/)
+      expect(owner.reload.google_uid).to eq(uid)
+      expect(owner.active_rizz_binding).to be_nil
+
+      get rizz_create_path
+      expect(response).to redirect_to(new_ace_session_path)
+      get rizz_claim_prove_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Marcus T. (Rizz)")
+    end
+
+    it "returns to the Create form when Google is cancelled, and to the claim proof for a claim browser" do
+      start_create
+      OmniAuth.config.mock_auth[:rizz_claim_google] = :access_denied
+      post "/auth/rizz/claim/google"
+      follow_redirect!
+      expect(response).to redirect_to(rizz_create_path)
+      expect(RizzClaimHandoff.last.google_uid).to be_nil
+
+      reset!
+      post rizz_claim_start_path, params: { handoff: speaker.claim_handoff(callback_uri: callback_uri) }
+      post "/auth/rizz/claim/google"
+      follow_redirect!
+      expect(response).to redirect_to(rizz_claim_prove_path)
+
+      reset!
+      post "/auth/rizz/claim/google"
+      follow_redirect!
+      expect(response).to redirect_to(rizz_claim_prove_path)
+    end
+
+    it "refuses the Google callback without either cookie, or with a cookie that does not match" do
+      start_create
+      attacker = open_session
+      OmniAuth.config.mock_auth[:rizz_claim_google] = OmniAuth::AuthHash.new(provider: "rizz_claim_google", uid: uid,
+        info: { email: email, email_verified: true }, extra: { id_info: { sub: uid, iat: Time.now.to_i } })
+      attacker.post "/auth/rizz/claim/google"
+      attacker.follow_redirect!
+      expect(redirect_path(attacker)).to eq(new_ace_session_path)
+      expect(RizzClaimHandoff.last.google_uid).to be_nil
+
+      RizzClaimHandoff.last.update!(browser_token_digest: RizzClaimHandoff.digest("another browser"))
+      post "/auth/rizz/claim/google"
+      follow_redirect!
+      expect(response).to redirect_to(new_ace_session_path)
+      expect(RizzClaimHandoff.last.google_uid).to be_nil
+    end
+
+    it "does not attach Google to a spent or expired handoff" do
+      start_create
+      handoff = RizzClaimHandoff.last
+      handoff.update!(expires_at: 1.second.ago)
+      expect(handoff.attach_google!(uid)).to be_nil
+      expect(handoff.reload.google_uid).to be_nil
+      expect(RizzClaimHandoff.new(intent: "claim", expires_at: 1.minute.from_now).attach_google!(uid)).to be_nil
+    end
+
+    it "switches to the claim when the linked Google account is taken before the form is submitted" do
+      start_create
+      link_google
+      create(:ace, google_uid: uid)
+      expect { submit }.not_to change(Ace, :count)
+      expect(response).to redirect_to(rizz_claim_prove_path)
+      expect(RizzClaimHandoff.last).to have_attributes(intent: "claim", google_uid: nil, suggested_username: nil, email: nil, consumed_at: nil)
+      expect(RizzClaimReceipt.count).to eq(0)
+    end
+
+    it "answers 409 email_taken and creates nothing when the linked Google account is taken after the receipt" do
+      start_create
+      link_google
+      submit
+      receipt = receipt_from_redirect
+      reset!
+      create(:ace, google_uid: uid)
+      expect { exchange(receipt: receipt) }.not_to change(Ace, :count)
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body).to eq("error" => "email_taken")
+      expect(AceRizzBinding.count).to eq(0)
+      expect(RizzClaimReceipt.last.consumed_at).to be_nil
+    end
+
+    it "answers 409 when the unique index rejects a Google account that validation did not see" do
+      start_create
+      link_google
+      submit
+      receipt = receipt_from_redirect
+      reset!
+      create(:ace, google_uid: uid)
+      allow_any_instance_of(Ace).to receive(:valid?).and_return(true)
+      expect { exchange(receipt: receipt) }.not_to change(Ace, :count)
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body).to eq("error" => "email_taken")
+      expect(AceRizzBinding.count).to eq(0)
+    end
+
+    it "clears the Google subject and suggested handle on cancel, discard, purge and switch" do
+      start_create(username: "marcus_t")
+      link_google
+      handoff = RizzClaimHandoff.last
+      expect(handoff).to have_attributes(google_uid: uid, suggested_username: "marcus_t")
+      post rizz_create_cancel_path
+      expect(handoff.reload).to have_attributes(google_uid: nil, suggested_username: nil, email: nil)
+
+      handoff.update!(email: email, google_uid: uid, suggested_username: "marcus_t")
+      handoff.discard_draft!
+      expect(handoff.reload).to have_attributes(google_uid: nil, suggested_username: nil)
+
+      handoff.update!(email: email, google_uid: uid, suggested_username: "marcus_t", consumed_at: nil, expires_at: 1.second.ago)
+      RizzClaimHandoff.purge_spent_drafts!
+      expect(handoff.reload).to have_attributes(google_uid: nil, suggested_username: nil, email: nil)
+
+      handoff.update!(intent: "create", email: email, google_uid: uid, suggested_username: "marcus_t")
+      handoff.switch_to_claim!
+      expect(handoff.reload).to have_attributes(intent: "claim", google_uid: nil, suggested_username: nil)
+    end
+
+    it "does not let the Google callback prove a Claim for a Create browser" do
+      create(:ace, email: "owner@example.com", google_uid: uid)
+      start_create
+      link_google(google_email: "owner@example.com")
+      get rizz_claim_confirm_path
+      expect(response).to redirect_to(rizz_claim_prove_path)
+      expect(RizzClaimHandoff.last.verified_ace_id).to be_nil
+    end
+  end
+
+  describe "cookie exclusivity" do
+    it "clears the Create cookie when a Claim starts, so the browser never holds both" do
+      start_create
+      post rizz_claim_start_path, params: { handoff: speaker.claim_handoff(callback_uri: callback_uri, jti: "claim-after-create") }
+      expect(set_cookies).to match(/rizz_create_local=;|rizz_create_local=$/m)
+      expect(set_cookies).to match(/rizz_claim_local=[^;\s]/)
+      get rizz_create_path
+      expect(response).to redirect_to(new_ace_session_path)
+      get rizz_claim_prove_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "clears the Claim cookie when a Create starts" do
+      post rizz_claim_start_path, params: { handoff: speaker.claim_handoff(callback_uri: callback_uri) }
+      start_create(jti: "create-after-claim")
+      expect(set_cookies).to match(/rizz_claim_local=;|rizz_claim_local=$/m)
+      expect(set_cookies).to match(/rizz_create_local=[^;\s]/)
+      get rizz_claim_prove_path
+      expect(response).to redirect_to(new_ace_session_path)
+      get rizz_create_path
+      expect(response).to have_http_status(:ok)
     end
   end
 

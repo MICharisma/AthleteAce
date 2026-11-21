@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_21_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_21_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -1144,6 +1144,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_120000) do
     t.string "username"
     t.string "display_name"
     t.string "encrypted_password"
+    t.string "suggested_username"
+    t.string "google_uid"
     t.index ["handoff_jti"], name: "index_rizz_claim_handoffs_on_handoff_jti", unique: true
     t.index ["operation_id"], name: "index_rizz_claim_handoffs_on_operation_id"
     t.index ["verified_ace_id"], name: "index_rizz_claim_handoffs_on_verified_ace_id"

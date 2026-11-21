@@ -13,7 +13,7 @@ class Ace < ApplicationRecord
   THEMES = %w[light dark system].freeze
   AVATAR_COLORS = { "Umber" => "#7A4B2A", "Harbor" => "#365A78", "Forest" => "#32634A",
     "Plum" => "#704267", "Slate" => "#485569", "Rust" => "#93452F" }.freeze
-  RESERVED_USERNAMES = %w[admin administrator moderator athleteace athlete_ace support system staff help].freeze
+  RESERVED_USERNAMES = %w[admin administrator moderator athleteace athlete_ace support system staff help rizz micharisma].freeze
 
   attr_accessor :password_digest_supplied
 

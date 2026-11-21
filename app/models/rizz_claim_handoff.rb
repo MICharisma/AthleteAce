@@ -2,8 +2,9 @@
 # (intent "claim") or finishes onboarding a new one (intent "create"). The browser only carries a token
 # matching browser_token_digest.
 #
-# A create handoff holds the verified Google email and suggested display name the Speaker signed. Onboarding
-# stores the chosen username, display name and a bcrypt digest of the chosen password here; the Ace itself is
+# A create handoff holds the verified Google email, suggested display name and optional suggested handle the Speaker
+# signed, plus the Google subject the browser optionally proved. Onboarding stores the chosen username, display name
+# and a bcrypt digest of the chosen (or generated) password here; the Ace itself is
 # built only when the Speaker spends the receipt (RizzSignIn::ClaimExchange), so a handoff replayed in another
 # browser can never provision an account. A create handoff becomes a claim handoff when its email already
 # belongs to an Ace.
@@ -36,7 +37,7 @@ class RizzClaimHandoff < ApplicationRecord
   # A create handoff never outlives the Speaker's signed exp.
   def self.start!(claims, intent: "claim", expires_at: LIFETIME.from_now)
     token = SecureRandom.urlsafe_base64(32)
-    create_attributes = intent == "create" ? claims.slice("email", "display_name").symbolize_keys : {}
+    create_attributes = intent == "create" ? claims.slice("email", "display_name").symbolize_keys.merge(suggested_username: claims["username"]) : {}
     handoff = create!({ handoff_jti: claims["jti"], operation_id: claims["operation_id"], speaker_label: claims["speaker_label"],
       callback_uri: claims["callback_uri"], browser_token_digest: digest(token), expires_at: expires_at, intent: intent }.merge(create_attributes))
     [ handoff, token ]
@@ -47,7 +48,7 @@ class RizzClaimHandoff < ApplicationRecord
     stale = where(consumed_at: nil, expires_at: ..Time.current)
       .or(where(consumed_at: ...RizzClaimReceipt::LIFETIME.ago))
     stale.where(intent: "create").where.not(email: nil)
-      .update_all(email: nil, username: nil, display_name: nil, encrypted_password: nil)
+      .update_all(email: nil, username: nil, display_name: nil, encrypted_password: nil, suggested_username: nil, google_uid: nil)
   end
 
   def return_url(receipt)
@@ -66,17 +67,22 @@ class RizzClaimHandoff < ApplicationRecord
     update!(verified_ace: ace, verified_at: Time.current)
   end
 
+  # The Google subject the browser proved on the create form, bound to the new Ace when its receipt is spent.
+  def attach_google!(uid)
+    update!(google_uid: uid) if create_intent? && usable?
+  end
+
   def onboard!(ace)
     update!(username: ace.username, display_name: ace.display_name, encrypted_password: ace.encrypted_password)
   end
 
   # The confirmed Ace onboarding described. Its email comes only from the verified handoff.
   def build_ace
-    Ace.build_with_password_digest(encrypted_password, email: email, username: username, display_name: display_name)
+    Ace.build_with_password_digest(encrypted_password, email: email, username: username, display_name: display_name, google_uid: google_uid)
   end
 
   def discard_draft!
-    update_columns(email: nil, username: nil, display_name: nil, encrypted_password: nil)
+    update_columns(email: nil, username: nil, display_name: nil, encrypted_password: nil, suggested_username: nil, google_uid: nil)
   end
 
   def cancel_create!
@@ -85,7 +91,7 @@ class RizzClaimHandoff < ApplicationRecord
 
   # A create handoff whose email turned out to belong to an Ace continues as an ordinary claim: no proof carries over.
   def switch_to_claim!
-    update!(intent: "claim", email: nil, display_name: nil, verified_ace: nil, verified_at: nil)
+    update!(intent: "claim", email: nil, display_name: nil, suggested_username: nil, google_uid: nil, verified_ace: nil, verified_at: nil)
   end
 
   # Atomic: only one caller can spend the handoff.

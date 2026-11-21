@@ -14,7 +14,7 @@ class RizzAuth::CreationsController < ApplicationController
   before_action :load_handoff, except: :start
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to rizz_create_path, status: :see_other, alert: "Too many attempts. Try again in a few minutes." }
 
-  helper_method :minimum_password_length
+  helper_method :minimum_password_length, :google_proof_enabled?
 
   def start
     claims = RizzSignIn::TokenVerifier.verify_create_handoff(params[:handoff])
@@ -27,6 +27,7 @@ class RizzAuth::CreationsController < ApplicationController
       continue_as_claim handoff, token
     else
       handoff, token = RizzClaimHandoff.start!(claims, intent: "create", expires_at: expires_at)
+      delete_rizz_cookie RizzAuth::ClaimsController::COOKIE # a browser never holds both flows' cookies
       write_rizz_cookie COOKIE, { "handoff_id" => handoff.id, "token" => token }, expires_in: RizzClaimHandoff::LIFETIME
       redirect_to rizz_create_path, status: :see_other
     end
@@ -37,7 +38,9 @@ class RizzAuth::CreationsController < ApplicationController
   end
 
   def new
-    @ace = Ace.new(display_name: @handoff.display_name)
+    @ace = Ace.new(username: @handoff.username.presence || @handoff.suggested_username, display_name: @handoff.display_name)
+    @suggested_username_taken = @ace.username.present? &&
+      (Ace::RESERVED_USERNAMES.include?(@ace.username.downcase) || Ace.where("LOWER(username) = ?", @ace.username.downcase).exists?)
   end
 
   def create
@@ -74,8 +77,9 @@ class RizzAuth::CreationsController < ApplicationController
     end
   end
 
+  # The password fields are optional: both blank (or omitted) means a passwordless create.
   def ace_params
-    params.expect(ace: %i[username display_name password password_confirmation]).to_h.with_defaults("password_confirmation" => "")
+    params.expect(ace: %i[username display_name password password_confirmation]).to_h.with_defaults("password" => "", "password_confirmation" => "")
   end
 
   # The handoff is now an ordinary claim handoff, so hand the browser to the Claim proof with its own cookie.
@@ -87,6 +91,10 @@ class RizzAuth::CreationsController < ApplicationController
 
   def create_rejected(message = "That link isn't valid. Start again from Rizz.")
     redirect_to new_ace_session_path, status: :see_other, alert: message
+  end
+
+  def google_proof_enabled?
+    Rails.application.config.x.google_oauth.enabled
   end
 
   def minimum_password_length
