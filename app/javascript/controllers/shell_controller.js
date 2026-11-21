@@ -9,7 +9,7 @@ export default class extends Controller {
   }
 
   close() {
-    this.accountTarget.close()
+    if (this.accountTarget.open) this.accountTarget.close()
   }
 
   closed() {
