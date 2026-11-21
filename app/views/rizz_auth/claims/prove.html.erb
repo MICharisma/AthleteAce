@@ -1,5 +1,15 @@
 <%= account_card "Connect to Rizz", "#{@handoff.speaker_label} wants to connect to your AthleteAce account. Confirm it's you first." do %>
-  <%= tag.p("This browser is signed in as #{@signed_in_ace.handle || masked_email(@signed_in_ace.email)}. Confirm with your password to continue.", class: "account-description") if @signed_in_ace %>
+  <%= tag.p("This browser is signed in as #{@signed_in_ace.handle || masked_email(@signed_in_ace.email)}. Confirm with Google or your password to continue.", class: "account-description") if @signed_in_ace %>
+  <% if google_proof_enabled? %>
+    <%= button_to "/auth/rizz/claim/google", method: :post,
+      class: "google-sign-in google-sign-in--prominent",
+      form: { class: "google-sign-in-form google-sign-in-form--prominent", data: { turbo: false } } do %>
+      <%= image_tag("/google-g.png", alt: "", width: 20, height: 20) %>
+      <span class="google-sign-in-label">Confirm with Google</span>
+      <%= image_tag("/google-sign-in-site.svg", alt: "", width: 22, height: 22, class: "google-sign-in-site") %>
+    <% end %>
+    <div class="auth-divider"><span>or confirm with your password</span></div>
+  <% end %>
   <%= form_with url: rizz_claim_verify_password_path, class: "account-form" do |form| %>
     <%= tag.div(class: "account-field") {
       form.label(:email, "Email") + form.email_field(:email, value: @signed_in_ace&.email, autocomplete: "email", required: true, class: "account-input")
@@ -9,8 +19,7 @@
     } %>
     <%= form.submit "Confirm with password", class: "game-button" %>
   <% end %>
-  <% if google_proof_enabled? %>
-    <%= button_to "Confirm with Google", "/auth/rizz/claim/google", method: :post, class: "game-button", form: { data: { turbo: false } } %>
-  <% end %>
-  <%= button_to "Cancel", rizz_claim_cancel_path, method: :post, class: "game-button" %>
+  <div class="account-links">
+    <%= button_to "Cancel", rizz_claim_cancel_path, method: :post, class: "tool-button w-full" %>
+  </div>
 <% end %>

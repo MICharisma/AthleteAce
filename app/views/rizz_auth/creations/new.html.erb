@@ -2,6 +2,23 @@
   <% if @signed_in_ace %>
     <p class="account-description" role="status"><%= t(".signed_in_notice", account: @signed_in_ace.handle || RizzSignIn.mask_email(@signed_in_ace.email)) %></p>
   <% end %>
+  <% if google_proof_enabled? %>
+    <div class="google-link-callout">
+      <% if @handoff.google_uid.present? %>
+        <p class="account-hint" role="status"><%= t(".google_linked") %></p>
+      <% else %>
+        <p class="google-link-callout-title"><%= t(".google_summary") %></p>
+        <p class="account-hint"><%= t(".google_hint", email: RizzSignIn.mask_email(@handoff.email)) %></p>
+        <%= button_to "/auth/rizz/claim/google", method: :post,
+          class: "google-sign-in google-sign-in--prominent",
+          form: { class: "google-sign-in-form google-sign-in-form--prominent", data: { turbo: false } } do %>
+          <%= image_tag("/google-g.png", alt: "", width: 20, height: 20) %>
+          <span class="google-sign-in-label"><%= t(".google_button") %></span>
+          <%= image_tag("/google-sign-in-site.svg", alt: "", width: 22, height: 22, class: "google-sign-in-site") %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
   <%= form_with model: @ace, scope: :ace, url: rizz_create_path, class: "account-form", data: { turbo: false, controller: "single-submit", action: "submit->single-submit#submit pageshow@window->single-submit#reset" } do |form| %>
     <%= render "aces/shared/error_messages", resource: @ace %>
     <%= account_field form, :email, type: :email, value: @handoff.email, readonly: true, hint: t(".email_hint") %>
@@ -17,16 +34,7 @@
     </details>
     <%= form.submit t(".submit"), class: "game-button", data: { single_submit_target: "button" } %>
   <% end %>
-  <% if google_proof_enabled? %>
-    <% if @handoff.google_uid.present? %>
-      <p class="account-hint" role="status"><%= t(".google_linked") %></p>
-    <% else %>
-      <details class="account-field">
-        <summary><%= t(".google_summary") %></summary>
-        <p class="account-hint"><%= t(".google_hint", email: RizzSignIn.mask_email(@handoff.email)) %></p>
-        <%= button_to t(".google_button"), "/auth/rizz/claim/google", method: :post, class: "game-button", form: { data: { turbo: false } } %>
-      </details>
-    <% end %>
-  <% end %>
-  <%= button_to t(".cancel"), rizz_create_cancel_path, method: :post, class: "game-button" %>
+  <div class="account-links">
+    <%= button_to t(".cancel"), rizz_create_cancel_path, method: :post, class: "tool-button w-full" %>
+  </div>
 <% end %>

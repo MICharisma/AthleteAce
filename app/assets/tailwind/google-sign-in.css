@@ -24,6 +24,37 @@
   font: 500 14px/20px "Google Sans", Arial, sans-serif;
   white-space: nowrap;
   cursor: pointer;
+  transition: transform 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.account-card .google-sign-in-form,
+.google-sign-in-form--prominent {
+  display: flex;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.account-card .google-sign-in,
+.google-sign-in--prominent {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 20px;
+  border: 2px solid #131418;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow: 0 4px 0 #000000;
+}
+
+.account-card .google-sign-in:hover,
+.google-sign-in--prominent:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #000000;
+}
+
+.account-card .google-sign-in:active,
+.google-sign-in--prominent:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #000000;
 }
 
 .google-sign-in img {
@@ -33,17 +64,72 @@
   object-fit: contain;
 }
 
+.account-card .google-sign-in img,
+.google-sign-in--prominent img {
+  width: 20px;
+  height: 20px;
+}
+
 .google-sign-in .google-sign-in-site {
   width: 20px;
   height: 20px;
   border-radius: 4px;
 }
 
+.account-card .google-sign-in .google-sign-in-site,
+.google-sign-in--prominent .google-sign-in-site {
+  width: 22px;
+  height: 22px;
+}
+
 .google-sign-in:hover { background: var(--google-button-hover); }
-.google-sign-in:focus-visible { outline: 2px solid var(--google-button-foreground); outline-offset: 3px; }
+.google-sign-in:focus-visible { outline: 3px solid var(--color-play, #d4ff3a); outline-offset: 3px; }
+
+.google-link-callout {
+  display: grid;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--color-line-2);
+  border-radius: var(--radius-tool);
+  background: var(--color-surface-2);
+}
+
+.google-link-callout .google-sign-in-form {
+  margin-bottom: 0;
+}
+
+.google-link-callout .account-hint {
+  margin-top: 0;
+}
+
+.google-link-callout-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin: 0.75rem 0 1rem;
+  color: var(--color-ink-3);
+  font-size: 0.85rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-line);
+}
 
 @media (pointer: coarse) {
   .google-sign-in { min-height: 44px; }
+  .account-card .google-sign-in,
+  .google-sign-in--prominent { min-height: 52px; }
 }
 
 @media (max-width: 700px) {
