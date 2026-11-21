@@ -18,17 +18,13 @@ module RizzSignIn
     # status: :ok, :invalid (bad or spent receipt), :conflict (already bound elsewhere, or the new Ace's handle is taken),
     # :email_taken (a create receipt's email now belongs to an Ace)
     def call
-      result = begin
-        ApplicationRecord.transaction { bind }
-      rescue ActiveRecord::RecordNotUnique
-        replay || Result.new(:conflict)
-      rescue EmailTaken
-        Result.new(:email_taken)
-      rescue Conflict
-        Result.new(:conflict)
-      end
-      @draft&.discard_password! if %i[conflict email_taken].include?(result.status)
-      result
+      ApplicationRecord.transaction { bind }
+    rescue ActiveRecord::RecordNotUnique
+      replay || Result.new(:conflict)
+    rescue EmailTaken
+      Result.new(:email_taken)
+    rescue Conflict
+      Result.new(:conflict)
     end
 
     private
@@ -63,14 +59,13 @@ module RizzSignIn
       handoff = receipt.handoff
       return unless handoff&.create_intent? && handoff.encrypted_password.present?
 
-      @draft = handoff
       handoff.build_ace
     end
 
     # Email or handle taken since onboarding: nothing is created or linked, and the whole transaction rolls back.
     def create_ace!(ace, receipt)
       ace.transaction(requires_new: true) { ace.save! }
-      receipt.handoff.discard_password!
+      receipt.handoff.discard_draft!
     rescue ActiveRecord::RecordInvalid => error
       raise(error.record.errors.of_kind?(:email, :taken) ? EmailTaken : Conflict)
     rescue ActiveRecord::RecordNotUnique

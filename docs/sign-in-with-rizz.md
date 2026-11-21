@@ -23,6 +23,6 @@ The token lives at most five minutes, and the stored handoff never outlives its 
 
 If the email or handle was taken after onboarding, or the Rizz subject is bound elsewhere, the exchange creates nothing and answers 409. The body is `{"error":"email_taken"}` when the email now belongs to an Ace, and `{"error":"conflict"}` otherwise.
 
-## Staged password digests
+## Staged account details
 
-The bcrypt digest is held on the handoff only until the receipt is spent or fails. A successful exchange and any conflicting exchange clear it. `RizzClaimHandoff.purge_spent_drafts!` clears digests of handoffs spent more than 60 seconds ago. It runs when a handoff starts and every five minutes from `config/recurring.yml` in production. The digest is never logged, and the `handoff`, `receipt`, `email` and password parameters are filtered from logs.
+A successful exchange or cancellation clears the staged email, handle, display name and bcrypt digest. A conflicting exchange keeps the draft available during the receipt's 60-second retry window. `RizzClaimHandoff.purge_spent_drafts!` clears the details from expired and spent drafts after that window. It runs when a Create handoff starts and every five minutes from `config/recurring.yml` in production. The digest stays out of logs, and Rails filters the `handoff`, `receipt`, `email` and password parameters.

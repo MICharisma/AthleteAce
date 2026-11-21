@@ -20,11 +20,13 @@ class RizzAuth::CreationsController < ApplicationController
     claims = RizzSignIn::TokenVerifier.verify_create_handoff(params[:handoff])
     return create_rejected unless RizzClaimHandoff.acceptable?(claims)
 
+    RizzClaimHandoff.purge_spent_drafts!
+    expires_at = Time.zone.at(claims.fetch("exp"))
     if Ace.exists?(email: claims["email"])
-      handoff, token = RizzClaimHandoff.start!(claims)
+      handoff, token = RizzClaimHandoff.start!(claims, expires_at: expires_at)
       continue_as_claim handoff, token
     else
-      handoff, token = RizzClaimHandoff.start!(claims, intent: "create")
+      handoff, token = RizzClaimHandoff.start!(claims, intent: "create", expires_at: expires_at)
       write_rizz_cookie COOKIE, { "handoff_id" => handoff.id, "token" => token }, expires_in: RizzClaimHandoff::LIFETIME
       redirect_to rizz_create_path, status: :see_other
     end
@@ -55,7 +57,7 @@ class RizzAuth::CreationsController < ApplicationController
   end
 
   def cancel
-    @handoff.consume!
+    @handoff.cancel_create!
     delete_rizz_cookie COOKIE
     redirect_to root_path, status: :see_other, notice: "Nothing was created."
   end

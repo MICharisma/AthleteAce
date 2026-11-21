@@ -298,7 +298,7 @@ RSpec.describe "Rizz create", type: :request do
       expect { start_create }.not_to change(Ace, :count)
       expect_claim_proof_without_changes
       expect(RizzClaimHandoff.last).to have_attributes(intent: "claim", email: nil, verified_ace_id: nil)
-      expect(RizzClaimHandoff.last.expires_at).to be_within(10.seconds).of(RizzClaimHandoff::LIFETIME.from_now)
+      expect(RizzClaimHandoff.last.expires_at).to be_within(5.seconds).of(5.minutes.from_now)
       expect(set_cookies).to match(/rizz_claim_local=/)
       follow_redirect!
       expect(response.body).to include("Confirm with password", "Marcus T. (Rizz)")
@@ -340,7 +340,7 @@ RSpec.describe "Rizz create", type: :request do
       expect(late.reload.active_rizz_binding).to be_nil
     end
 
-    it "when the email is taken after the receipt, the exchange answers 409 email_taken, links nothing, and drops the staged digest" do
+    it "keeps returning 409 email_taken on retry when the email is taken after the receipt" do
       other_email = "last.second@example.com"
       start_create(email: other_email)
       submit
@@ -354,9 +354,9 @@ RSpec.describe "Rizz create", type: :request do
       expect(late.reload).to have_attributes(username: "first_to_arrive", google_uid: nil)
       expect(AceRizzBinding.count).to eq(0)
       expect(RizzClaimReceipt.last.consumed_at).to be_nil
-      expect(RizzClaimHandoff.last.encrypted_password).to be_nil
       exchange(receipt: receipt)
-      expect(response).to have_http_status(:bad_request)
+      expect(response).to have_http_status(:conflict)
+      expect(response.parsed_body).to eq("error" => "email_taken")
     end
 
     it "answers 409 email_taken when the email index rejects an insert that validation did not see" do
@@ -372,7 +372,6 @@ RSpec.describe "Rizz create", type: :request do
       expect(response.parsed_body).to eq("error" => "email_taken")
       expect(Ace.where(email: other_email)).to contain_exactly(racing)
       expect(AceRizzBinding.count).to eq(0)
-      expect(RizzClaimHandoff.last.encrypted_password).to be_nil
     end
 
     it "when the handle is taken after the receipt, the exchange answers a plain 409 conflict and creates nothing" do
@@ -386,7 +385,6 @@ RSpec.describe "Rizz create", type: :request do
       expect(response.parsed_body).to eq("error" => "conflict")
       expect(Ace.where(email: "new.handle@example.com")).to be_empty
       expect(AceRizzBinding.count).to eq(0)
-      expect(RizzClaimHandoff.last.encrypted_password).to be_nil
     end
   end
 
@@ -479,7 +477,7 @@ RSpec.describe "Rizz create", type: :request do
       start_create
       post rizz_create_cancel_path
       expect(response).to redirect_to(root_path)
-      expect(RizzClaimHandoff.last.consumed_at).to be_present
+      expect(RizzClaimHandoff.last).to have_attributes(consumed_at: be_present, email: nil, display_name: nil)
       submit
       expect(RizzClaimReceipt.count).to eq(0)
       expect(Ace.count).to eq(0)
@@ -523,7 +521,7 @@ RSpec.describe "Rizz create", type: :request do
 
     it "treats a create receipt whose handoff lost its password as invalid" do
       receipt = onboarded_receipt
-      RizzClaimHandoff.last.discard_password!
+      RizzClaimHandoff.last.discard_draft!
       exchange(receipt: receipt)
       expect(response).to have_http_status(:bad_request)
       expect(Ace.where(email: email)).to be_empty
@@ -551,7 +549,7 @@ RSpec.describe "Rizz create", type: :request do
       expect(response).to have_http_status(:conflict)
       expect(Ace.where(email: email)).to be_empty
       expect(RizzClaimReceipt.last.consumed_at).to be_nil
-      expect(RizzClaimHandoff.last.encrypted_password).to be_nil
+      expect(RizzClaimHandoff.last.encrypted_password).to be_present
     end
 
     it "keeps the digest only while the receipt can still be spent, and purges it from spent or abandoned drafts" do
@@ -564,7 +562,17 @@ RSpec.describe "Rizz create", type: :request do
 
       handoff.update!(consumed_at: (RizzClaimReceipt::LIFETIME + 5.seconds).ago)
       RizzClaimHandoff.purge_spent_drafts!
-      expect(handoff.reload).to have_attributes(encrypted_password: nil, username: "marcus_tate")
+      expect(handoff.reload).to have_attributes(email: nil, display_name: nil, encrypted_password: nil, username: nil)
+    end
+
+    it "clears personal data from expired drafts even if the form was never submitted" do
+      start_create
+      handoff = RizzClaimHandoff.last
+      handoff.update!(expires_at: 1.second.ago)
+
+      RizzClaimHandoff.purge_spent_drafts!
+
+      expect(handoff.reload).to have_attributes(email: nil, display_name: nil, consumed_at: nil)
     end
 
     it "purges abandoned digests whenever another handoff starts, and the exchange then refuses the stale receipt" do

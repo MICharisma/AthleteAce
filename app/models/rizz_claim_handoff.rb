@@ -34,18 +34,20 @@ class RizzClaimHandoff < ApplicationRecord
 
   # Persists a verified handoff and returns it with the random token the browser keeps in its cookie.
   # A create handoff never outlives the Speaker's signed exp.
-  def self.start!(claims, intent: "claim")
-    purge_spent_drafts!
+  def self.start!(claims, intent: "claim", expires_at: LIFETIME.from_now)
     token = SecureRandom.urlsafe_base64(32)
-    create_attributes = intent == "create" ? claims.slice("email", "display_name").symbolize_keys.merge(expires_at: [ LIFETIME.from_now, Time.zone.at(claims["exp"]) ].min) : {}
+    create_attributes = intent == "create" ? claims.slice("email", "display_name").symbolize_keys : {}
     handoff = create!({ handoff_jti: claims["jti"], operation_id: claims["operation_id"], speaker_label: claims["speaker_label"],
-      callback_uri: claims["callback_uri"], browser_token_digest: digest(token), expires_at: LIFETIME.from_now, intent: intent }.merge(create_attributes))
+      callback_uri: claims["callback_uri"], browser_token_digest: digest(token), expires_at: expires_at, intent: intent }.merge(create_attributes))
     [ handoff, token ]
   end
 
-  # Onboarded password digests are only needed until the Speaker spends the receipt, which lives 60 seconds.
+  # A spent handoff can still have a redeemable receipt after the handoff expires.
   def self.purge_spent_drafts!
-    where.not(encrypted_password: nil).where(consumed_at: ...RizzClaimReceipt::LIFETIME.ago).update_all(encrypted_password: nil)
+    stale = where(consumed_at: nil, expires_at: ..Time.current)
+      .or(where(consumed_at: ...RizzClaimReceipt::LIFETIME.ago))
+    stale.where(intent: "create").where.not(email: nil)
+      .update_all(email: nil, username: nil, display_name: nil, encrypted_password: nil)
   end
 
   def return_url(receipt)
@@ -73,8 +75,12 @@ class RizzClaimHandoff < ApplicationRecord
     Ace.build_with_password_digest(encrypted_password, email: email, username: username, display_name: display_name)
   end
 
-  def discard_password!
-    update_columns(encrypted_password: nil)
+  def discard_draft!
+    update_columns(email: nil, username: nil, display_name: nil, encrypted_password: nil)
+  end
+
+  def cancel_create!
+    with_lock { discard_draft! if consume! }
   end
 
   # A create handoff whose email turned out to belong to an Ace continues as an ordinary claim: no proof carries over.
