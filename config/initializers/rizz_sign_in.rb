@@ -15,7 +15,7 @@ module OmniAuth
 end
 
 Rails.application.config.middleware.use OmniAuth::Strategies::RizzClaimGoogle, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"],
-  name: :rizz_claim_google, request_path: "/auth/rizz/claim/google", callback_path: "/auth/rizz/claim/google/callback",
+  name: "rizz_claim_google", request_path: "/auth/rizz/claim/google", callback_path: "/auth/rizz/claim/google/callback",
   scope: "openid,email,profile", access_type: "online", prompt: "select_account",
   overridable_authorize_options: []
 

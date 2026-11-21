@@ -55,7 +55,7 @@ class RizzAuth::ClaimsController < ApplicationController
     iat = id_info&.[]("iat")
     fresh = iat.is_a?(Integer) && iat.between?(GOOGLE_AUTH_MAX_AGE.ago.to_i, 1.minute.from_now.to_i)
     uid = auth&.[]("uid").to_s
-    ace = Ace.find_by(google_uid: uid) if auth&.[]("provider") == GOOGLE_PROVIDER && fresh && uid.present? && id_info&.[]("sub") == uid
+    ace = Ace.find_by(google_uid: uid) if auth&.[]("provider").to_s == GOOGLE_PROVIDER && fresh && uid.present? && id_info&.[]("sub") == uid
     return prove_failed "Google couldn't confirm an account linked to AthleteAce. Try picking the linked Google account or use your password instead." unless ace
     return prove_failed "That account can't be connected right now." unless claimable?(ace)
 

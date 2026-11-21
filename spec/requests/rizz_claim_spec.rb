@@ -246,10 +246,19 @@ RSpec.describe "Rizz claim", type: :request do
       end
 
       it "accepts a Google identity already linked to an Ace with a fresh iat and matching sub" do
+        middleware = Rails.application.config.middleware.find { it.klass == OmniAuth::Strategies::RizzClaimGoogle }
+        expect(middleware.args.last[:name]).to eq("rizz_claim_google")
+
         prove_with_google
         expect(response).to redirect_to(rizz_claim_confirm_path)
         expect(RizzClaimHandoff.last.verified_ace_id).to eq(ace.id)
         expect(request.env["warden"].user(:ace)).to be_nil
+      end
+
+      it "accepts a Symbol provider in omniauth.auth as well as a String" do
+        prove_with_google(provider: :rizz_claim_google)
+        expect(response).to redirect_to(rizz_claim_confirm_path)
+        expect(RizzClaimHandoff.last.verified_ace_id).to eq(ace.id)
       end
 
       it "never goes through Ace.from_google, links by email, or creates an Ace" do
