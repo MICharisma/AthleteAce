@@ -1,5 +1,5 @@
 class RizzAuth::SessionsController < ApplicationController
-  include RizzAuthCookie
+  include RizzAuth::CookieHelper
 
   FLOW_COOKIE = "rizz_auth_flow".freeze
 
@@ -34,6 +34,7 @@ class RizzAuth::SessionsController < ApplicationController
     return rizz_failed "Your account can't sign in right now." unless ace.active_for_authentication?
 
     sign_in :ace, ace, event: :authentication, force: true
+    cookies.delete(:remember_ace_token)
     session["rizz_binding_id"] = binding.id
     session["rizz_session_epoch"] = binding.rizz_session_epoch
     SignInEvent.record!(ace, request, outcome: "success")

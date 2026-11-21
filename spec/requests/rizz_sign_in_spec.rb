@@ -66,6 +66,16 @@ RSpec.describe "Sign in with Rizz", type: :request do
     expect(response).to have_http_status(:ok)
   end
 
+  it "clears any existing remember_ace_token cookie on Rizz sign-in" do
+    post ace_session_path, params: { ace: { email: ace.email, password: "password123", remember_me: "1" } }
+    expect(cookies[:remember_ace_token]).to be_present
+
+    sign_in_with_rizz
+    expect(response).to redirect_to("/strength")
+    expect(Array(response.headers["set-cookie"]).join("\n")).to match(/remember_ace_token=;|remember_ace_token=$/m)
+    expect(cookies[:remember_ace_token]).to be_blank
+  end
+
   it "does not sign in again with a replayed authorization code" do
     sign_in_with_rizz
     callback_url = speaker.codes.values.first[:query]["redirect_uri"]

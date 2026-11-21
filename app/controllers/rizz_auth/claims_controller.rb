@@ -2,11 +2,9 @@
 # controls a local Ace (fresh password or fresh claim-only Google), see both the Ace and the requesting
 # Speaker, and confirm before a single-use receipt is minted for the Speaker's server-to-server exchange.
 class RizzAuth::ClaimsController < ApplicationController
-  include RizzAuthCookie
+  include RizzAuth::CookieHelper
 
   COOKIE = "rizz_claim_local".freeze
-  GOOGLE_PROVIDER = "rizz_claim_google".freeze
-  GOOGLE_AUTH_MAX_AGE = 5.minutes
 
   skip_before_action :require_ace_identity
   skip_after_action :store_browsing_location
@@ -50,7 +48,7 @@ class RizzAuth::ClaimsController < ApplicationController
   # callback to optionally prove its Google account (see #create_google_callback).
   def google_callback
     auth = request.env["omniauth.auth"]
-    uid = verified_google_uid(auth)
+    uid = RizzAuth::GoogleProof.verified_uid(auth)
     return create_google_callback(auth, uid) if @create_flow
 
     ace = Ace.find_by(google_uid: uid) if uid
@@ -75,10 +73,16 @@ class RizzAuth::ClaimsController < ApplicationController
   end
 
   def connect
-    ace = @handoff.verified_ace
-    return claim_rejected unless RizzSignIn.configuration.issuer_origin?(@handoff.callback_uri) && @handoff.consume!
+    receipt = nil
+    @handoff.with_lock do
+      ace = @handoff.verified_ace
+      next unless @handoff.claim_intent? && @handoff.usable? && @handoff.proven? && claimable?(ace) &&
+        RizzSignIn.configuration.issuer_origin?(@handoff.callback_uri) && @handoff.consume!
 
-    receipt = RizzClaimReceipt.issue!(ace: ace, operation_id: @handoff.operation_id)
+      receipt = RizzClaimReceipt.issue!(ace: ace, operation_id: @handoff.operation_id)
+    end
+    return claim_rejected unless receipt
+
     delete_rizz_cookie COOKIE
     redirect_to @handoff.return_url(receipt), allow_other_host: true, status: :see_other
   end
@@ -107,15 +111,6 @@ class RizzAuth::ClaimsController < ApplicationController
     data = read_rizz_cookie(cookie)
     handoff = RizzClaimHandoff.find_by(id: data["handoff_id"]) if data.is_a?(Hash) && data["token"].is_a?(String)
     handoff if handoff&.usable? && ActiveSupport::SecurityUtils.secure_compare(handoff.browser_token_digest, RizzClaimHandoff.digest(data["token"]))
-  end
-
-  # The Google subject of a fresh, verified, claim-only sign-in, or nil.
-  def verified_google_uid(auth)
-    id_info = auth&.dig("extra", "id_info")
-    iat = id_info&.[]("iat")
-    fresh = iat.is_a?(Integer) && iat.between?(GOOGLE_AUTH_MAX_AGE.ago.to_i, 1.minute.from_now.to_i)
-    uid = auth&.[]("uid").to_s
-    uid if auth&.[]("provider").to_s == GOOGLE_PROVIDER && fresh && uid.present? && id_info&.[]("sub") == uid
   end
 
   # Create flow: Google only proves control of the verified email's Google account so it can be linked once the

@@ -1,4 +1,7 @@
 <%= account_card t(".title"), t(".description") do %>
+  <% if @signed_in_ace %>
+    <p class="account-description" role="status"><%= t(".signed_in_notice", account: @signed_in_ace.handle || RizzSignIn.mask_email(@signed_in_ace.email)) %></p>
+  <% end %>
   <%= form_with model: @ace, scope: :ace, url: rizz_create_path, class: "account-form", data: { turbo: false, controller: "single-submit", action: "submit->single-submit#submit pageshow@window->single-submit#reset" } do |form| %>
     <%= render "aces/shared/error_messages", resource: @ace %>
     <%= account_field form, :email, type: :email, value: @handoff.email, readonly: true, hint: t(".email_hint") %>

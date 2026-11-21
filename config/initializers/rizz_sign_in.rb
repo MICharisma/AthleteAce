@@ -3,21 +3,10 @@
 # does not support max_age=0 or reliably emit auth_time, so we enforce an explicit account chooser
 # (prompt=select_account) that cannot be overridden from the request, and pair it with fresh ID token
 # issuance (iat), browser-bound __Host-rizz_claim, strict google_uid lookup, and dual-identity confirmation.
-module OmniAuth
-  module Strategies
-    # Inert (never intercepts its paths) unless Sign in with Rizz and Google sign-in are both enabled.
-    class RizzClaimGoogle < GoogleOauth2
-      def on_path?(path)
-        RizzSignIn.enabled? && Rails.application.config.x.google_oauth.enabled && super
-      end
-    end
-  end
-end
+require "rizz_auth/omniauth/rizz_claim_google"
 
 Rails.application.config.middleware.use OmniAuth::Strategies::RizzClaimGoogle, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"],
-  name: "rizz_claim_google", request_path: "/auth/rizz/claim/google", callback_path: "/auth/rizz/claim/google/callback",
-  scope: "openid,email,profile", access_type: "online", prompt: "select_account",
-  overridable_authorize_options: []
+  **RizzAuth::OmniAuth::RizzClaimGoogle.middleware_options(enabled_check: -> { RizzSignIn.enabled? && Rails.application.config.x.google_oauth.enabled })
 
 Rails.application.config.after_initialize do
   devise_failure = OmniAuth.config.on_failure
@@ -34,21 +23,12 @@ end
 # its Rizz epoch is behind the binding's (back-channel logout). The marker is written only by the Rizz callback
 # (an :authentication event); any other sign-in (password, Google, remember-me) clears it first, so a stale
 # marker can never log a different sign-in out.
-Warden::Manager.after_set_user scope: :ace do |ace, auth, options|
-  session = auth.request.session
-  if options[:event] != :fetch
-    session.delete "rizz_binding_id"
-    session.delete "rizz_session_epoch"
-    next
-  end
-
-  binding_id = session["rizz_binding_id"]
-  next if binding_id.blank?
-
-  status, epoch, ace_id = AceRizzBinding.where(id: binding_id).pick(:status, :rizz_session_epoch, :ace_id)
-  unless RizzSignIn.enabled? && status == "active" && ace_id == ace.id && epoch <= session["rizz_session_epoch"].to_i
-    auth.logout :ace
-    session.delete "rizz_binding_id"
-    session.delete "rizz_session_epoch"
-  end
-end
+RizzAuth::WardenHook.install!(
+  scope: :ace,
+  enabled: -> { RizzSignIn.enabled? },
+  binding_lookup: ->(binding_id, ace) {
+    status, epoch, ace_id = AceRizzBinding.where(id: binding_id).pick(:status, :rizz_session_epoch, :ace_id)
+    { active: status == "active" && ace_id == ace.id, epoch: epoch }
+  },
+  remember_cookie: :remember_ace_token
+)

@@ -3,8 +3,8 @@ class RizzAuth::ExchangesController < ActionController::API
   include ActionController::HttpAuthentication::Basic::ControllerMethods
 
   before_action -> { response.headers["Cache-Control"] = "no-store" }
-  before_action :authenticate_client
   rate_limit to: 120, within: 1.minute
+  before_action :authenticate_client
 
   def create
     operation_id, receipt, rizz_sub, epoch = params.values_at(:operation_id, :receipt, :rizz_sub, :rizz_session_epoch)
@@ -26,8 +26,7 @@ class RizzAuth::ExchangesController < ActionController::API
   def authenticate_client
     configuration = RizzSignIn.configuration
     authenticate_or_request_with_http_basic("Rizz") do |client_id, client_secret|
-      ActiveSupport::SecurityUtils.secure_compare(Digest::SHA256.hexdigest(client_id), Digest::SHA256.hexdigest(configuration.client_id)) &
-        ActiveSupport::SecurityUtils.secure_compare(Digest::SHA256.hexdigest(client_secret), Digest::SHA256.hexdigest(configuration.claim_exchange_secret))
+      configuration.valid_exchange_credentials?(client_id, client_secret)
     end
   end
 end

@@ -8,6 +8,7 @@ en:
       new:
         title: "Create your AthleteAce account"
         description: "Confirm your handle and display name to finish. A password is optional."
+        signed_in_notice: "This browser is currently signed in as %{account}. Creating a new account here won't change that session."
         email_hint: "Your email was verified with Google through Rizz."
         handle: "Handle"
         handle_hint: "3–24 letters, numbers, or underscores. Your handle stays fixed."

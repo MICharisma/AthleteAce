@@ -6,6 +6,12 @@ else
   gem "shared-ratings", git: "https://github.com/MICharisma/rizz-integration.git", ref: "2069a5225f708927b5b05ea032e10be6c71e17ae", glob: "packages/shared-ratings/*.gemspec", require: ["shared-ratings", "shared_ratings/engine"]
 end
 
+if ENV["RIZZ_AUTH_PATH"] && !ENV["RIZZ_AUTH_PATH"].empty?
+  gem "rizz-auth", path: ENV.fetch("RIZZ_AUTH_PATH")
+else
+  gem "rizz-auth", git: "https://github.com/MICharisma/rizz-integration.git", ref: "457ded07c3d4b63df71aa310f2e099a99588eb21", glob: "packages/rizz-auth/*.gemspec"
+end
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]

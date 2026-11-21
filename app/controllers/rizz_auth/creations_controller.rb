@@ -3,7 +3,7 @@
 # until the Speaker spends the receipt (RizzSignIn::ClaimExchange). An email that already has an Ace continues
 # as an ordinary Claim, which this controller never proves, links or modifies.
 class RizzAuth::CreationsController < ApplicationController
-  include RizzAuthCookie
+  include RizzAuth::CookieHelper
 
   COOKIE = "rizz_create_local".freeze
 
@@ -12,6 +12,7 @@ class RizzAuth::CreationsController < ApplicationController
   skip_forgery_protection only: :start # start is entered from the Speaker; its JWT is the credential
   before_action -> { response.headers["Cache-Control"] = "no-store" }
   before_action :load_handoff, except: :start
+  before_action :load_signed_in_ace, only: %i[new create]
   rate_limit to: 10, within: 3.minutes, only: :create, with: -> { redirect_to rizz_create_path, status: :see_other, alert: "Too many attempts. Try again in a few minutes." }
 
   helper_method :minimum_password_length, :google_proof_enabled?
@@ -75,6 +76,10 @@ class RizzAuth::CreationsController < ApplicationController
     else
       create_rejected "This link expired or was opened in a different browser. Start again from Rizz."
     end
+  end
+
+  def load_signed_in_ace
+    @signed_in_ace = current_ace
   end
 
   # The password fields are optional: both blank (or omitted) means a passwordless create.

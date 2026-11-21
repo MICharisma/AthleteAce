@@ -14,11 +14,19 @@ RSpec.describe RizzSignIn::HttpClient do
     expect(described_class.get_json("https://rizz.test/x")).to eq("a" => 1)
   end
 
-  it "treats a 4xx as a rejected request (InvalidToken), not an outage" do
-    [ 400, 401, 404, 499 ].each do |code|
+  it "treats 4xx on get_json as unavailable and rejects 4xx (except 429) on post_form as InvalidToken" do
+    [ 400, 401, 403, 404, 429, 499 ].each do |code|
       stub_response http_response(Net::HTTPClientError, code, "{}")
-      expect { described_class.get_json("https://rizz.test/x") }.to raise_error(RizzSignIn::InvalidToken)
+      expect { described_class.get_json("https://rizz.test/x") }.to raise_error(RizzSignIn::Unavailable)
     end
+
+    [ 400, 401 ].each do |code|
+      stub_response http_response(Net::HTTPClientError, code, "{}")
+      expect { described_class.post_form("https://rizz.test/x", { code: "x" }, basic_auth: %w[id secret]) }.to raise_error(RizzSignIn::InvalidToken)
+    end
+
+    stub_response http_response(Net::HTTPClientError, 429, "{}")
+    expect { described_class.post_form("https://rizz.test/x", { code: "x" }, basic_auth: %w[id secret]) }.to raise_error(RizzSignIn::Unavailable)
   end
 
   it "treats 5xx and redirects as unavailable" do

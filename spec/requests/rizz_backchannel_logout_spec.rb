@@ -175,6 +175,27 @@ RSpec.describe "Rizz back-channel logout", type: :request do
     expect(request.session["rizz_binding_id"]).to be_nil
   end
 
+  it "clears remember_ace_token on epoch revocation so remember-me cannot revive the session" do
+    post ace_session_path, params: { ace: { email: ace.email, password: "password123", remember_me: "1" } }
+    remember_token = cookies[:remember_ace_token]
+    expect(remember_token).to be_present
+
+    sign_in_with_rizz
+    cookies[:remember_ace_token] = remember_token
+
+    logout speaker.logout_token(epoch: 3)
+    expect(response).to have_http_status(:ok)
+
+    get profile_path
+    expect(response).to redirect_to(new_ace_session_path)
+    expect(Array(response.headers["set-cookie"]).join("\n")).to match(/remember_ace_token=;|remember_ace_token=$/m)
+    expect(cookies[:remember_ace_token]).to be_blank
+
+    get profile_path
+    expect(response).to redirect_to(new_ace_session_path)
+    expect(request.env["warden"].user(:ace)).to be_nil
+  end
+
   it "signs out when only the epoch is behind, even if the binding was reactivated" do
     sign_in_with_rizz
     binding.update!(rizz_session_epoch: 5)

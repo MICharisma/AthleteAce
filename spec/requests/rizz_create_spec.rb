@@ -185,6 +185,25 @@ RSpec.describe "Rizz create", type: :request do
       expect(RizzClaimHandoff.last.email).to eq(email)
       expect(RizzClaimReceipt.last.handoff).to eq(RizzClaimHandoff.last)
     end
+
+    it "omits the signed-in browser notice when signed out" do
+      get rizz_create_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("This browser is currently signed in as")
+    end
+
+    it "shows the signed-in browser notice on initial GET and invalid POST re-render when signed in" do
+      signed_in = create(:ace, username: "courtside_tess")
+      sign_in signed_in
+
+      get rizz_create_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("This browser is currently signed in as @courtside_tess. Creating a new account here won&#39;t change that session.")
+
+      submit ace: onboarding[:ace].merge(username: "ab")
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(response.body).to include("This browser is currently signed in as @courtside_tess. Creating a new account here won&#39;t change that session.")
+    end
   end
 
   describe "happy path" do
@@ -589,13 +608,13 @@ RSpec.describe "Rizz create", type: :request do
       expect(RizzClaimHandoff.last.google_uid).to be_nil
     end
 
-    it "does not attach Google to a spent or expired handoff" do
+    it "does not attach Google to an expired handoff" do
       start_create
       handoff = RizzClaimHandoff.last
       handoff.update!(expires_at: 1.second.ago)
-      expect(handoff.attach_google!(uid)).to be_nil
+      link_google
+      expect(response).to redirect_to(new_ace_session_path)
       expect(handoff.reload.google_uid).to be_nil
-      expect(RizzClaimHandoff.new(intent: "claim", expires_at: 1.minute.from_now).attach_google!(uid)).to be_nil
     end
 
     it "switches to the claim when the linked Google account is taken before the form is submitted" do
