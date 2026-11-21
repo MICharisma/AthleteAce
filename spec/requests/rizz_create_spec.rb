@@ -329,12 +329,16 @@ RSpec.describe "Rizz create", type: :request do
       expect(Ace.where(email: email).count).to eq(1)
     end
 
-    it "runs normal password validation as soon as either password field is filled" do
+    it "runs normal password validation as soon as either password field is filled (including spaces only)" do
       start_create
-      { password: "hardwood-9", password_confirmation: "hardwood-9" }.each_key do |filled|
-        other = filled == :password ? :password_confirmation : :password
-        submit ace: passwordless[:ace].merge(filled => "hardwood-9", other => "")
+      [
+        { password: "hardwood-9", password_confirmation: "" },
+        { password: "", password_confirmation: "hardwood-9" },
+        { password: "        ", password_confirmation: "        " }
+      ].each do |password_attrs|
+        submit ace: passwordless[:ace].merge(password_attrs)
         expect(response).to have_http_status(:unprocessable_content)
+        expect(RizzClaimHandoff.last.encrypted_password).to be_nil
       end
       expect(RizzClaimReceipt.count).to eq(0)
     end
@@ -518,14 +522,14 @@ RSpec.describe "Rizz create", type: :request do
       end
     end
 
-    it "steers a Google account that already belongs to an Ace to the Claim proof, never calling Ace.from_google or creating an Ace" do
-      owner = create(:ace, username: "hoops_marcus", email: "owner@example.com", google_uid: uid)
+    it "steers a matching-email Google account whose subject already belongs to an Ace to Claim, never calling Ace.from_google" do
       expect(Ace).not_to receive(:from_google)
       start_create
-      expect { link_google(google_email: "owner@example.com") }.not_to change(Ace, :count)
+      owner = create(:ace, username: "hoops_marcus", email: email, google_uid: uid)
+      expect { link_google(google_email: email) }.not_to change(Ace, :count)
       expect(response).to redirect_to(rizz_claim_prove_path)
       expect(flash[:notice]).to eq("That Google account already belongs to an AthleteAce account. Confirm it's you to connect it.")
-      expect(RizzClaimHandoff.last).to have_attributes(intent: "claim", email: nil, display_name: nil, suggested_username: nil, google_uid: nil, verified_ace_id: nil)
+      expect(RizzClaimHandoff.last).to have_attributes(intent: "claim", email: nil, username: nil, display_name: nil, encrypted_password: nil, suggested_username: nil, google_uid: nil, verified_ace_id: nil)
       expect(set_cookies).to match(/rizz_claim_local=[^;]/)
       expect(owner.reload.google_uid).to eq(uid)
       expect(owner.active_rizz_binding).to be_nil
@@ -535,6 +539,17 @@ RSpec.describe "Rizz create", type: :request do
       get rizz_claim_prove_path
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Marcus T. (Rizz)")
+    end
+
+    it "rejects a wrong-email Google account linked to another Ace without converting Create to Claim" do
+      create(:ace, username: "hoops_other", email: "other@example.com", google_uid: uid)
+      start_create
+      expect { link_google(google_email: "other@example.com") }.not_to change(Ace, :count)
+      expect(response).to redirect_to(rizz_create_path)
+      expect(flash[:alert]).to eq("Choose the Google account matching #{RizzSignIn.mask_email(email)}, or create your account without linking Google now.")
+      expect(RizzClaimHandoff.last).to have_attributes(intent: "create", email: email, google_uid: nil, verified_ace_id: nil)
+      get rizz_create_path
+      expect(response).to have_http_status(:ok)
     end
 
     it "returns to the Create form when Google is cancelled, and to the claim proof for a claim browser" do
@@ -637,15 +652,28 @@ RSpec.describe "Rizz create", type: :request do
       RizzClaimHandoff.purge_spent_drafts!
       expect(handoff.reload).to have_attributes(google_uid: nil, suggested_username: nil, email: nil)
 
-      handoff.update!(intent: "create", email: email, google_uid: uid, suggested_username: "marcus_t")
+      handoff.update!(intent: "create", email: email, username: "marcus_t", encrypted_password: "digest", google_uid: uid, suggested_username: "marcus_t")
       handoff.switch_to_claim!
-      expect(handoff.reload).to have_attributes(intent: "claim", google_uid: nil, suggested_username: nil)
+      expect(handoff.reload).to have_attributes(intent: "claim", email: nil, username: nil, encrypted_password: nil, google_uid: nil, suggested_username: nil)
+
+      handoff.update!(username: "marcus_t", encrypted_password: "digest", consumed_at: 2.minutes.ago)
+      RizzClaimHandoff.purge_spent_drafts!
+      expect(handoff.reload).to have_attributes(username: nil, encrypted_password: nil)
+    end
+
+    it "does not attach Google to a handoff already spent by Create" do
+      start_create
+      handoff = RizzClaimHandoff.last
+      handoff.consume!
+      link_google
+      expect(response).to redirect_to(new_ace_session_path)
+      expect(handoff.reload.google_uid).to be_nil
     end
 
     it "does not let the Google callback prove a Claim for a Create browser" do
-      create(:ace, email: "owner@example.com", google_uid: uid)
       start_create
-      link_google(google_email: "owner@example.com")
+      create(:ace, email: "other@example.com", google_uid: uid)
+      link_google(google_email: email)
       get rizz_claim_confirm_path
       expect(response).to redirect_to(rizz_claim_prove_path)
       expect(RizzClaimHandoff.last.verified_ace_id).to be_nil

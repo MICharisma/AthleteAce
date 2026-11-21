@@ -39,7 +39,7 @@ module RizzSignIn
     # (the owner can sign in with Google or Rizz, or reset it by email). Typing into either field runs normal validation.
     def password_attributes
       password, confirmation = @attributes["password"].to_s, @attributes["password_confirmation"].to_s
-      return { "password" => password, "password_confirmation" => confirmation } unless password.blank? && confirmation.blank?
+      return { "password" => password, "password_confirmation" => confirmation } unless password.empty? && confirmation.empty?
 
       generated = Devise.friendly_token(32)
       { "password" => generated, "password_confirmation" => generated }

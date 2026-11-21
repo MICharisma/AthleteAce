@@ -47,7 +47,12 @@ class RizzClaimHandoff < ApplicationRecord
   def self.purge_spent_drafts!
     stale = where(consumed_at: nil, expires_at: ..Time.current)
       .or(where(consumed_at: ...RizzClaimReceipt::LIFETIME.ago))
-    stale.where(intent: "create").where.not(email: nil)
+    with_draft_data = where.not(email: nil)
+      .or(where.not(encrypted_password: nil))
+      .or(where.not(google_uid: nil))
+      .or(where.not(username: nil))
+      .or(where.not(suggested_username: nil))
+    stale.merge(with_draft_data)
       .update_all(email: nil, username: nil, display_name: nil, encrypted_password: nil, suggested_username: nil, google_uid: nil)
   end
 
@@ -69,7 +74,13 @@ class RizzClaimHandoff < ApplicationRecord
 
   # The Google subject the browser proved on the create form, bound to the new Ace when its receipt is spent.
   def attach_google!(uid)
-    update!(google_uid: uid) if create_intent? && usable?
+    return unless persisted? && create_intent? && usable?
+
+    with_lock do
+      next unless create_intent? && usable?
+
+      update!(google_uid: uid)
+    end
   end
 
   def onboard!(ace)
@@ -91,7 +102,8 @@ class RizzClaimHandoff < ApplicationRecord
 
   # A create handoff whose email turned out to belong to an Ace continues as an ordinary claim: no proof carries over.
   def switch_to_claim!
-    update!(intent: "claim", email: nil, display_name: nil, suggested_username: nil, google_uid: nil, verified_ace: nil, verified_at: nil)
+    update!(intent: "claim", email: nil, username: nil, display_name: nil, encrypted_password: nil,
+      suggested_username: nil, google_uid: nil, verified_ace: nil, verified_at: nil)
   end
 
   # Atomic: only one caller can spend the handoff.

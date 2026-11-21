@@ -23,7 +23,8 @@ class Ace < ApplicationRecord
   validates :theme, inclusion: { in: THEMES }
   validates :username, presence: true, if: -> { new_record? || username_changed? || validation_context == :profile }
   validates :username, length: { in: 3..24 }, format: { with: /\A[a-z0-9_]+\z/, message: "can only contain letters, numbers, and underscores" },
-    uniqueness: { case_sensitive: false }, exclusion: { in: RESERVED_USERNAMES }, allow_nil: true
+    uniqueness: { case_sensitive: false }, allow_nil: true
+  validates :username, exclusion: { in: RESERVED_USERNAMES }, allow_nil: true, if: -> { new_record? || username_changed? }
   validates :display_name, presence: true, length: { maximum: 60 }, if: -> { username.present? }
   validates :avatar_color, inclusion: { in: AVATAR_COLORS.values }
   validates :google_uid, uniqueness: true, length: { maximum: 255 }, allow_nil: true

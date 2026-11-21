@@ -125,20 +125,36 @@ class RizzAuth::ClaimsController < ApplicationController
       return create_google_rejected "Google couldn't verify that account. Try again, or create your account without linking Google now."
     end
 
-    if Ace.exists?(google_uid: uid)
+    google_email = auth.dig("info", "email").to_s.strip.downcase
+    handoff_email = nil
+    outcome = @handoff.with_lock do
+      next :gone unless @handoff.create_intent? && @handoff.usable?
+
+      handoff_email = @handoff.email
+      next :email_mismatch unless google_email == handoff_email
+
+      if Ace.exists?(google_uid: uid)
+        @handoff.switch_to_claim!
+        :existing_ace
+      else
+        @handoff.update!(google_uid: uid)
+        :attached
+      end
+    end
+
+    case outcome
+    when :gone
+      claim_rejected
+    when :email_mismatch
+      create_google_rejected "Choose the Google account matching #{masked_email(handoff_email)}, or create your account without linking Google now."
+    when :existing_ace
       token = read_rizz_cookie(RizzAuth::CreationsController::COOKIE)["token"]
-      @handoff.switch_to_claim!
       delete_rizz_cookie RizzAuth::CreationsController::COOKIE
       write_rizz_cookie COOKIE, { "handoff_id" => @handoff.id, "token" => token }, expires_in: RizzClaimHandoff::LIFETIME
-      return redirect_to rizz_claim_prove_path, status: :see_other, notice: "That Google account already belongs to an AthleteAce account. Confirm it's you to connect it."
+      redirect_to rizz_claim_prove_path, status: :see_other, notice: "That Google account already belongs to an AthleteAce account. Confirm it's you to connect it."
+    when :attached
+      redirect_to rizz_create_path, status: :see_other, notice: "Google account verified and will be linked when you create your account."
     end
-
-    unless auth.dig("info", "email").to_s.strip.downcase == @handoff.email
-      return create_google_rejected "Choose the Google account matching #{masked_email(@handoff.email)}, or create your account without linking Google now."
-    end
-
-    @handoff.attach_google!(uid)
-    redirect_to rizz_create_path, status: :see_other, notice: "Google account verified and will be linked when you create your account."
   end
 
   def create_google_rejected(message)
