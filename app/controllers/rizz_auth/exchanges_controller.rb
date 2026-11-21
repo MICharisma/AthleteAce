@@ -16,6 +16,7 @@ class RizzAuth::ExchangesController < ActionController::API
     case result.status
     when :ok then render json: { ok: true, local_handle: result.ace.handle.presence || RizzSignIn.mask_email(result.ace.email), has_independent_recovery: result.ace.confirmed? }
     when :conflict then render json: { error: "conflict" }, status: :conflict
+    when :email_taken then render json: { error: "email_taken" }, status: :conflict
     else render json: { error: "invalid_receipt" }, status: :bad_request
     end
   end

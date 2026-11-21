@@ -3,3 +3,16 @@ en:
     continue_with_google: "Continue with Google"
     google_label: "Continue with Google to %{site}"
     sign_in_with_rizz: "Sign in with Rizz"
+  rizz_auth:
+    creations:
+      new:
+        title: "Create your AthleteAce account"
+        description: "Choose your handle and a password to finish."
+        email_hint: "Your email was verified with Google through Rizz."
+        handle: "Handle"
+        handle_hint: "3–24 letters, numbers, or underscores. Your handle stays fixed."
+        display_name: "Display name"
+        password_hint: "At least %{minimum} characters. You can sign in to AthleteAce with it, with or without Rizz."
+        password_confirmation: "Confirm password"
+        submit: "Create account"
+        cancel: "Cancel"

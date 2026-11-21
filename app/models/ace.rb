@@ -15,6 +15,8 @@ class Ace < ApplicationRecord
     "Plum" => "#704267", "Slate" => "#485569", "Rust" => "#93452F" }.freeze
   RESERVED_USERNAMES = %w[admin administrator moderator athleteace athlete_ace support system staff help].freeze
 
+  attr_accessor :password_digest_supplied
+
   normalizes :time_zone, with: ->(value) { value.presence }
   normalizes :username, with: ->(value) { value.strip.downcase.presence }
   normalizes :display_name, with: ->(value) { value.strip }
@@ -83,6 +85,15 @@ class Ace < ApplicationRecord
     end
   rescue ActiveRecord::RecordNotUnique
     raise GoogleAuthenticationError, "Your Google account could not be linked. Please try signing in again."
+  end
+
+  # A confirmed Ace whose password was chosen earlier and is held only as a bcrypt digest.
+  def self.build_with_password_digest(digest, **attributes)
+    new(attributes).tap do |ace|
+      ace.encrypted_password = digest
+      ace.password_digest_supplied = true
+      ace.skip_confirmation!
+    end
   end
 
   def play_time_zone
@@ -174,6 +185,12 @@ class Ace < ApplicationRecord
   # @return [Boolean] Whether the ace has rated the entity on the spectrum
   def rated?(rated, spectrum)
     ratings.active.exists?(rated: rated, spectrum: spectrum)
+  end
+
+  protected
+
+  def password_required?
+    !password_digest_supplied && super
   end
 
   private

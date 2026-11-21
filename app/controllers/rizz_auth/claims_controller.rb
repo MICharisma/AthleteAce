@@ -7,7 +7,6 @@ class RizzAuth::ClaimsController < ApplicationController
   COOKIE = "rizz_claim_local".freeze
   GOOGLE_PROVIDER = "rizz_claim_google".freeze
   GOOGLE_AUTH_MAX_AGE = 5.minutes
-  HANDOFF_LIFETIME = 10.minutes
 
   skip_before_action :require_ace_identity
   skip_after_action :store_browsing_location
@@ -21,12 +20,10 @@ class RizzAuth::ClaimsController < ApplicationController
 
   def start
     claims = RizzSignIn::TokenVerifier.verify_claim_handoff(params[:handoff])
-    return claim_rejected unless RizzSignIn.configuration.issuer_origin?(claims["callback_uri"]) && claims["speaker_label"].length <= 120
+    return claim_rejected unless RizzClaimHandoff.acceptable?(claims)
 
-    token = SecureRandom.urlsafe_base64(32)
-    handoff = RizzClaimHandoff.create!(handoff_jti: claims["jti"], operation_id: claims["operation_id"], speaker_label: claims["speaker_label"],
-      callback_uri: claims["callback_uri"], browser_token_digest: RizzClaimHandoff.digest(token), expires_at: HANDOFF_LIFETIME.from_now)
-    write_rizz_cookie COOKIE, { "handoff_id" => handoff.id, "token" => token }, expires_in: HANDOFF_LIFETIME
+    handoff, token = RizzClaimHandoff.start!(claims)
+    write_rizz_cookie COOKIE, { "handoff_id" => handoff.id, "token" => token }, expires_in: RizzClaimHandoff::LIFETIME
     redirect_to rizz_claim_prove_path, status: :see_other
   rescue RizzSignIn::InvalidToken, ActiveRecord::RecordNotUnique, ActiveRecord::RecordInvalid
     claim_rejected
@@ -77,8 +74,7 @@ class RizzAuth::ClaimsController < ApplicationController
 
     receipt = RizzClaimReceipt.issue!(ace: ace, operation_id: @handoff.operation_id)
     delete_rizz_cookie COOKIE
-    redirect_to "#{@handoff.callback_uri}#{@handoff.callback_uri.include?("?") ? "&" : "?"}#{{ operation_id: @handoff.operation_id, receipt: receipt }.to_query}",
-      allow_other_host: true, status: :see_other
+    redirect_to @handoff.return_url(receipt), allow_other_host: true, status: :see_other
   end
 
   def cancel
@@ -92,7 +88,7 @@ class RizzAuth::ClaimsController < ApplicationController
   def load_handoff
     data = read_rizz_cookie(COOKIE)
     handoff = RizzClaimHandoff.find_by(id: data["handoff_id"]) if data.is_a?(Hash) && data["token"].is_a?(String)
-    if handoff&.usable? && ActiveSupport::SecurityUtils.secure_compare(handoff.browser_token_digest, RizzClaimHandoff.digest(data["token"]))
+    if handoff&.claim_intent? && handoff.usable? && ActiveSupport::SecurityUtils.secure_compare(handoff.browser_token_digest, RizzClaimHandoff.digest(data["token"]))
       @handoff = handoff
     else
       claim_rejected "This connect link expired or was opened in a different browser. Start again from Rizz."

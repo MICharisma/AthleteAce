@@ -1,15 +1,55 @@
-# A verified Speaker claim handoff, held server-side while the browser proves
-# it controls a local Ace. The browser only carries a token matching
-# browser_token_digest.
+# A verified Speaker handoff, held server-side while the browser either proves it controls a local Ace
+# (intent "claim") or finishes onboarding a new one (intent "create"). The browser only carries a token
+# matching browser_token_digest.
+#
+# A create handoff holds the verified Google email and suggested display name the Speaker signed. Onboarding
+# stores the chosen username, display name and a bcrypt digest of the chosen password here; the Ace itself is
+# built only when the Speaker spends the receipt (RizzSignIn::ClaimExchange), so a handoff replayed in another
+# browser can never provision an account. A create handoff becomes a claim handoff when its email already
+# belongs to an Ace.
 class RizzClaimHandoff < ApplicationRecord
   PROOF_WINDOW = 5.minutes
+  LIFETIME = 10.minutes
+  SPEAKER_LABEL_MAX = 120
+  INTENTS = %w[claim create].freeze
 
   belongs_to :verified_ace, class_name: "Ace", optional: true
 
   validates :handoff_jti, :operation_id, :speaker_label, :callback_uri, :browser_token_digest, :expires_at, presence: true
+  validates :intent, inclusion: { in: INTENTS }
+  validates :email, presence: true, if: :create_intent?
+
+  INTENTS.each do |name|
+    define_method(:"#{name}_intent?") { intent == name }
+  end
 
   def self.digest(token)
     Digest::SHA256.hexdigest(token.to_s)
+  end
+
+  # Whether a verified handoff's callback is the issuer's own origin and its label fits the confirmation page.
+  def self.acceptable?(claims)
+    RizzSignIn.configuration.issuer_origin?(claims["callback_uri"]) && claims["speaker_label"].length <= SPEAKER_LABEL_MAX
+  end
+
+  # Persists a verified handoff and returns it with the random token the browser keeps in its cookie.
+  # A create handoff never outlives the Speaker's signed exp.
+  def self.start!(claims, intent: "claim")
+    purge_spent_drafts!
+    token = SecureRandom.urlsafe_base64(32)
+    create_attributes = intent == "create" ? claims.slice("email", "display_name").symbolize_keys.merge(expires_at: [ LIFETIME.from_now, Time.zone.at(claims["exp"]) ].min) : {}
+    handoff = create!({ handoff_jti: claims["jti"], operation_id: claims["operation_id"], speaker_label: claims["speaker_label"],
+      callback_uri: claims["callback_uri"], browser_token_digest: digest(token), expires_at: LIFETIME.from_now, intent: intent }.merge(create_attributes))
+    [ handoff, token ]
+  end
+
+  # Onboarded password digests are only needed until the Speaker spends the receipt, which lives 60 seconds.
+  def self.purge_spent_drafts!
+    where.not(encrypted_password: nil).where(consumed_at: ...RizzClaimReceipt::LIFETIME.ago).update_all(encrypted_password: nil)
+  end
+
+  def return_url(receipt)
+    "#{callback_uri}#{callback_uri.include?("?") ? "&" : "?"}#{{ operation_id: operation_id, receipt: receipt }.to_query}"
   end
 
   def usable?
@@ -22,6 +62,24 @@ class RizzClaimHandoff < ApplicationRecord
 
   def prove!(ace)
     update!(verified_ace: ace, verified_at: Time.current)
+  end
+
+  def onboard!(ace)
+    update!(username: ace.username, display_name: ace.display_name, encrypted_password: ace.encrypted_password)
+  end
+
+  # The confirmed Ace onboarding described. Its email comes only from the verified handoff.
+  def build_ace
+    Ace.build_with_password_digest(encrypted_password, email: email, username: username, display_name: display_name)
+  end
+
+  def discard_password!
+    update_columns(encrypted_password: nil)
+  end
+
+  # A create handoff whose email turned out to belong to an Ace continues as an ordinary claim: no proof carries over.
+  def switch_to_claim!
+    update!(intent: "claim", email: nil, display_name: nil, verified_ace: nil, verified_at: nil)
   end
 
   # Atomic: only one caller can spend the handoff.

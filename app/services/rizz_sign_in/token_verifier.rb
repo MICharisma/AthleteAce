@@ -4,9 +4,13 @@ module RizzSignIn
   module TokenVerifier
     ID_TOKEN_TYP = "JWT".freeze
     CLAIM_HANDOFF_TYP = "rizz-claim-handoff+jwt".freeze
+    CREATE_HANDOFF_TYP = "rizz-create-handoff+jwt".freeze
     LOGOUT_TYP = "logout+jwt".freeze
     BACKCHANNEL_LOGOUT_EVENT = "http://schemas.openid.net/event/backchannel-logout".freeze
     MAX_LIFETIME = 10.minutes
+    CREATE_HANDOFF_LIFETIME = 5.minutes
+    DISPLAY_NAME_MAX = 60
+    EMAIL_MAX = 255
     LEEWAY = 30
 
     module_function
@@ -25,6 +29,17 @@ module RizzSignIn
       claims
     end
 
+    # A claim handoff plus the Speaker's verified Google email (normalized here) and a suggested display name.
+    def verify_create_handoff(token)
+      claims = decode(token, typ: CREATE_HANDOFF_TYP, max_lifetime: CREATE_HANDOFF_LIFETIME)
+      invalid! unless %w[jti operation_id speaker_label callback_uri email].all? { claims[it].is_a?(String) && claims[it].present? }
+      invalid! unless claims["display_name"].is_a?(String) && claims["display_name"].length <= DISPLAY_NAME_MAX
+
+      email = claims["email"].strip.downcase
+      invalid! unless email.length <= EMAIL_MAX && email.match?(URI::MailTo::EMAIL_REGEXP)
+      claims.merge("email" => email, "display_name" => claims["display_name"].strip)
+    end
+
     def verify_logout_token(token)
       claims = decode(token, typ: LOGOUT_TYP)
       invalid! unless %w[sub jti].all? { claims[it].is_a?(String) && claims[it].present? }
@@ -33,7 +48,7 @@ module RizzSignIn
       claims
     end
 
-    def decode(token, typ:)
+    def decode(token, typ:, max_lifetime: MAX_LIFETIME)
       invalid! unless token.is_a?(String) && token.bytesize <= 8.kilobytes && token.count(".") == 2
 
       header = JWT.decode(token, nil, false).last
@@ -44,7 +59,7 @@ module RizzSignIn
       claims = JWT.decode(token, key, true, algorithms: [ "ES256" ], iss: configuration.issuer, verify_iss: true,
         aud: configuration.client_id, verify_aud: true, verify_expiration: true, verify_iat: { leeway: LEEWAY },
         required_claims: %w[exp iat], leeway: LEEWAY).first
-      invalid! unless claims["exp"].is_a?(Integer) && claims["iat"].is_a?(Integer) && claims["exp"] - claims["iat"] <= MAX_LIFETIME
+      invalid! unless claims["exp"].is_a?(Integer) && claims["iat"].is_a?(Integer) && claims["exp"] - claims["iat"] <= max_lifetime
       claims
     rescue JWT::DecodeError
       invalid!

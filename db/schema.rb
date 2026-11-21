@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_21_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -1139,22 +1139,31 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
     t.datetime "consumed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "intent", default: "claim", null: false
+    t.string "email"
+    t.string "username"
+    t.string "display_name"
+    t.string "encrypted_password"
     t.index ["handoff_jti"], name: "index_rizz_claim_handoffs_on_handoff_jti", unique: true
     t.index ["operation_id"], name: "index_rizz_claim_handoffs_on_operation_id"
     t.index ["verified_ace_id"], name: "index_rizz_claim_handoffs_on_verified_ace_id"
+    t.check_constraint "intent::text = ANY (ARRAY['claim'::character varying, 'create'::character varying]::text[])", name: "rizz_claim_handoffs_intent"
   end
 
   create_table "rizz_claim_receipts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "receipt_digest", null: false
-    t.uuid "ace_id", null: false
+    t.uuid "ace_id"
     t.string "operation_id", null: false
     t.datetime "expires_at", null: false
     t.datetime "consumed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "rizz_claim_handoff_id"
     t.index ["ace_id"], name: "index_rizz_claim_receipts_on_ace_id"
     t.index ["operation_id"], name: "index_rizz_claim_receipts_on_operation_id"
     t.index ["receipt_digest"], name: "index_rizz_claim_receipts_on_receipt_digest", unique: true
+    t.index ["rizz_claim_handoff_id"], name: "index_rizz_claim_receipts_on_rizz_claim_handoff_id"
+    t.check_constraint "ace_id IS NOT NULL OR rizz_claim_handoff_id IS NOT NULL", name: "rizz_claim_receipts_subject"
   end
 
   create_table "rizz_feed_cursors", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1737,6 +1746,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
   add_foreign_key "ratings", "spectrums"
   add_foreign_key "rizz_claim_handoffs", "aces", column: "verified_ace_id", on_delete: :nullify
   add_foreign_key "rizz_claim_receipts", "aces", on_delete: :cascade
+  add_foreign_key "rizz_claim_receipts", "rizz_claim_handoffs", on_delete: :cascade
   add_foreign_key "rizz_names", "figures", on_delete: :cascade
   add_foreign_key "rizz_syncs", "figures"
   add_foreign_key "roster_entries", "players"

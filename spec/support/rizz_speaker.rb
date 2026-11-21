@@ -50,6 +50,12 @@ class RizzSpeaker
       typ: "rizz-claim-handoff+jwt", **signing_options(overrides))
   end
 
+  def create_handoff(operation_id: "op-1", speaker_label: "Marcus T. (Rizz)", callback_uri: "#{ISSUER}/claims/op-1/return", jti: SecureRandom.uuid,
+    email: "marcus.tate@gmail.com", display_name: "Marcus Tate", **overrides)
+    sign(base_claims({ "jti" => jti, "operation_id" => operation_id, "speaker_label" => speaker_label, "callback_uri" => callback_uri,
+      "email" => email, "display_name" => display_name }.merge(overrides)), typ: "rizz-create-handoff+jwt", **signing_options(overrides))
+  end
+
   def logout_token(sub: "pairwise-sub-1", epoch: 2, jti: SecureRandom.uuid, typ: "logout+jwt", **overrides)
     events = { "http://schemas.openid.net/event/backchannel-logout" => {} }
     sign(base_claims({ "sub" => sub, "jti" => jti, "events" => events, "rizz_epoch" => epoch }.merge(overrides)), typ: typ, **signing_options(overrides))

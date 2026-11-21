@@ -30,4 +30,35 @@ RSpec.describe RizzSignIn::TokenVerifier do
       expect { described_class.verify_claim_handoff(speaker.claim_handoff(iat: now + 60, exp: now + 360)) }.to raise_error(RizzSignIn::InvalidToken)
     end
   end
+
+  describe ".verify_create_handoff" do
+    it "returns the claims with the email normalized and the display name trimmed" do
+      claims = described_class.verify_create_handoff(speaker.create_handoff(email: " Marcus.Tate@Gmail.com ", display_name: " Marcus Tate "))
+      expect(claims).to include("email" => "marcus.tate@gmail.com", "display_name" => "Marcus Tate", "operation_id" => "op-1")
+    end
+
+    it "accepts an empty suggested display name" do
+      expect(described_class.verify_create_handoff(speaker.create_handoff(display_name: ""))["display_name"]).to eq("")
+    end
+
+    it "accepts exactly five minutes and rejects longer, since a create handoff expires in five minutes" do
+      expect { described_class.verify_create_handoff(speaker.create_handoff(iat: now, exp: now + 300)) }.not_to raise_error
+      expect { described_class.verify_create_handoff(speaker.create_handoff(iat: now, exp: now + 301)) }.to raise_error(RizzSignIn::InvalidToken)
+      expect { described_class.verify_claim_handoff(speaker.claim_handoff(iat: now, exp: now + 600)) }.not_to raise_error
+    end
+
+    it "is not interchangeable with a claim handoff" do
+      expect { described_class.verify_create_handoff(speaker.claim_handoff) }.to raise_error(RizzSignIn::InvalidToken)
+      expect { described_class.verify_claim_handoff(speaker.create_handoff) }.to raise_error(RizzSignIn::InvalidToken)
+    end
+
+    it "rejects a missing or malformed email and a missing, non-string or overlong display name" do
+      [ { email: nil }, { email: "" }, { email: 5 }, { email: "no-at-sign" }, { email: "a b@example.com" }, { email: "#{"a" * 250}@example.com" } ].each do |overrides|
+        expect { described_class.verify_create_handoff(speaker.create_handoff(**overrides)) }.to raise_error(RizzSignIn::InvalidToken), overrides.inspect
+      end
+      [ { display_name: nil }, { display_name: 7 }, { display_name: "M" * 61 } ].each do |overrides|
+        expect { described_class.verify_create_handoff(speaker.create_handoff(**overrides)) }.to raise_error(RizzSignIn::InvalidToken), overrides.inspect
+      end
+    end
+  end
 end
