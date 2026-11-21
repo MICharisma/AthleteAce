@@ -1,7 +1,8 @@
 # Claim-only Google proof: a second Google OmniAuth strategy on its own paths, so Devise's normal Google
-# sign-in (Aces::OmniauthCallbacksController, Ace.from_google) never handles a claim. It forces an account
-# chooser and a fresh login (max_age=0), asks Google to return auth_time in the ID token, and cannot have
-# prompt overridden from the request.
+# sign-in (Aces::OmniauthCallbacksController, Ace.from_google) never handles a claim. Consumer Google OAuth
+# does not support max_age=0 or reliably emit auth_time, so we enforce an explicit account chooser
+# (prompt=select_account) that cannot be overridden from the request, and pair it with fresh ID token
+# issuance (iat), browser-bound __Host-rizz_claim, strict google_uid lookup, and dual-identity confirmation.
 module OmniAuth
   module Strategies
     # Inert (never intercepts its paths) unless Sign in with Rizz and Google sign-in are both enabled.
@@ -16,7 +17,6 @@ end
 Rails.application.config.middleware.use OmniAuth::Strategies::RizzClaimGoogle, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"],
   name: :rizz_claim_google, request_path: "/auth/rizz/claim/google", callback_path: "/auth/rizz/claim/google/callback",
   scope: "openid,email,profile", access_type: "online", prompt: "select_account",
-  authorize_params: { max_age: 0, claims: { id_token: { auth_time: { essential: true } } }.to_json },
   overridable_authorize_options: []
 
 Rails.application.config.after_initialize do

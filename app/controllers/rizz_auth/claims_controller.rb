@@ -51,11 +51,12 @@ class RizzAuth::ClaimsController < ApplicationController
   # Google subject counts; no email matching and no account creation.
   def google_callback
     auth = request.env["omniauth.auth"]
-    auth_time = auth&.dig("extra", "id_info", "auth_time")
-    fresh = auth_time.is_a?(Integer) && auth_time.between?(GOOGLE_AUTH_MAX_AGE.ago.to_i, 1.minute.from_now.to_i)
+    id_info = auth&.dig("extra", "id_info")
+    iat = id_info&.[]("iat")
+    fresh = iat.is_a?(Integer) && iat.between?(GOOGLE_AUTH_MAX_AGE.ago.to_i, 1.minute.from_now.to_i)
     uid = auth&.[]("uid").to_s
-    ace = Ace.find_by(google_uid: uid) if auth&.[]("provider") == GOOGLE_PROVIDER && fresh && uid.present?
-    return prove_failed "Google couldn't confirm a recent sign-in for an account linked to AthleteAce. Use your password instead." unless ace
+    ace = Ace.find_by(google_uid: uid) if auth&.[]("provider") == GOOGLE_PROVIDER && fresh && uid.present? && id_info&.[]("sub") == uid
+    return prove_failed "Google couldn't confirm an account linked to AthleteAce. Try picking the linked Google account or use your password instead." unless ace
     return prove_failed "That account can't be connected right now." unless claimable?(ace)
 
     @handoff.prove! ace

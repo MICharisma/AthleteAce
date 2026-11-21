@@ -15,8 +15,8 @@ RSpec.describe "Rizz claim", type: :request do
   end
 
   # Runs the claim-only Google OmniAuth round trip with a mocked Google response.
-  def prove_with_google(uid: "google-uid-1", email: "tess@example.com", auth_time: Time.now.to_i, provider: "rizz_claim_google")
-    info = { auth_time: auth_time }.compact
+  def prove_with_google(uid: "google-uid-1", email: "tess@example.com", iat: Time.now.to_i, id_sub: uid, provider: "rizz_claim_google")
+    info = { sub: id_sub, iat: iat }.compact
     OmniAuth.config.mock_auth[:rizz_claim_google] = OmniAuth::AuthHash.new(provider: provider, uid: uid,
       info: { email: email, email_verified: true, name: "Tess" }, extra: { id_info: info })
     post "/auth/rizz/claim/google"
@@ -222,14 +222,13 @@ RSpec.describe "Rizz claim", type: :request do
     end
 
     context "with claim-only Google" do
-      it "starts Google with an account chooser and a forced fresh login that the request cannot override" do
+      it "starts Google with an account chooser that the request cannot override" do
         OmniAuth.config.test_mode = false
-        post "/auth/rizz/claim/google", params: { prompt: "none", max_age: "86400" }
+        post "/auth/rizz/claim/google", params: { prompt: "none" }
         query = Rack::Utils.parse_query(URI(response.location).query)
         expect(response.location).to start_with("https://accounts.google.com/")
-        expect(query).to include("prompt" => "select_account", "max_age" => "0", "access_type" => "online")
+        expect(query).to include("prompt" => "select_account", "access_type" => "online")
         expect(query["scope"].split).to include("openid", "email", "profile")
-        expect(JSON.parse(query["claims"])).to eq("id_token" => { "auth_time" => { "essential" => true } })
         expect(query["redirect_uri"]).to eq("http://www.example.com/auth/rizz/claim/google/callback")
       end
 
@@ -246,7 +245,7 @@ RSpec.describe "Rizz claim", type: :request do
         expect(response.location).to be_nil
       end
 
-      it "accepts a Google identity already linked to an Ace with a fresh auth_time" do
+      it "accepts a Google identity already linked to an Ace with a fresh iat and matching sub" do
         prove_with_google
         expect(response).to redirect_to(rizz_claim_confirm_path)
         expect(RizzClaimHandoff.last.verified_ace_id).to eq(ace.id)
@@ -264,12 +263,16 @@ RSpec.describe "Rizz claim", type: :request do
         expect(response).to redirect_to(rizz_claim_prove_path)
       end
 
-      it "rejects a stale, missing, or non-numeric auth_time" do
-        [ 10.minutes.ago.to_i, nil, "yesterday", 1.hour.from_now.to_i ].each do |auth_time|
-          prove_with_google(auth_time: auth_time)
+      it "rejects a stale, missing, non-numeric, or future iat, or a mismatched id_token sub" do
+        [ 10.minutes.ago.to_i, nil, "yesterday", 1.hour.from_now.to_i ].each do |iat|
+          prove_with_google(iat: iat)
           expect(response).to redirect_to(rizz_claim_prove_path)
           expect(RizzClaimHandoff.last.verified_ace_id).to be_nil
         end
+
+        prove_with_google(uid: "google-uid-1", id_sub: "other-google-uid")
+        expect(response).to redirect_to(rizz_claim_prove_path)
+        expect(RizzClaimHandoff.last.verified_ace_id).to be_nil
       end
 
       it "rejects a different provider's identity and a suspended Ace" do
@@ -290,7 +293,7 @@ RSpec.describe "Rizz claim", type: :request do
 
       it "refuses the claim callback without the browser cookie" do
         reset!
-        OmniAuth.config.mock_auth[:rizz_claim_google] = OmniAuth::AuthHash.new(provider: "rizz_claim_google", uid: "google-uid-1", extra: { id_info: { auth_time: Time.now.to_i } })
+        OmniAuth.config.mock_auth[:rizz_claim_google] = OmniAuth::AuthHash.new(provider: "rizz_claim_google", uid: "google-uid-1", extra: { id_info: { sub: "google-uid-1", iat: Time.now.to_i } })
         ace
         post "/auth/rizz/claim/google"
         follow_redirect!
