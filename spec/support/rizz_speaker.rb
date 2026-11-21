@@ -114,9 +114,9 @@ module RizzSpecHelpers
     "RIZZ_OIDC_CLIENT_ID" => RizzSpeaker::CLIENT_ID, "RIZZ_OIDC_CLIENT_SECRET" => RizzSpeaker::CLIENT_SECRET }.freeze
 
   def with_rizz_env(overrides = {})
-    saved = RIZZ_ENV.keys.to_h { [ it, ENV[it] ] }
-    ENV.update RIZZ_ENV.merge(overrides.transform_keys(&:to_s)).compact
-    (RIZZ_ENV.keys - RIZZ_ENV.merge(overrides.transform_keys(&:to_s)).compact.keys).each { ENV.delete it }
+    env = RIZZ_ENV.merge(overrides.transform_keys(&:to_s))
+    saved = (RIZZ_ENV.keys | env.keys).to_h { [ it, ENV[it] ] }
+    saved.each_key { |name| env[name].nil? ? ENV.delete(name) : ENV[name] = env[name] }
     yield
   ensure
     saved.each { |name, value| value ? ENV[name] = value : ENV.delete(name) }

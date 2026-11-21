@@ -206,12 +206,79 @@ RSpec.describe "Sign in with Rizz", type: :request do
     ActionController::Base.allow_forgery_protection = previous
   end
 
-  it "leaves password sign-in unaffected, even with a stale Rizz marker in the session" do
-    other = create(:ace, email: "direct@example.com", password: "password123")
-    post ace_session_path, params: { ace: { email: other.email, password: "password123" } }
-    get profile_path
-    expect(response).to have_http_status(:ok)
-    expect(request.env["warden"].user(:ace)).to eq(other)
-    expect(request.session["rizz_binding_id"]).to be_nil
+  context "with a stale Rizz marker left in the session" do
+    let(:old_ace) { create(:ace) }
+    let!(:old_binding) { AceRizzBinding.create!(ace: old_ace, rizz_sub: "old-sub", operation_id: "old-op", rizz_session_epoch: 1, connected_at: Time.current) }
+
+    # Opens a Rizz session for old_ace, drops the Warden user without resetting the session (so the Rizz marker
+    # survives), then disconnects that binding: the state a later sign-in must not be punished for.
+    def leave_stale_marker
+      speaker.issue_id_tokens_with(sub: "old-sub", epoch: 1)
+      sign_in_with_rizz
+      expect(request.session["rizz_binding_id"]).to eq(old_binding.id)
+      Warden.on_next_request { |proxy| proxy.logout(:ace) }
+      get new_ace_session_path
+      expect(request.env["warden"].user(:ace)).to be_nil
+      expect(request.session["rizz_binding_id"]).to eq(old_binding.id)
+      old_binding.update!(status: "disconnected", disconnected_at: Time.current)
+    end
+
+    it "leaves password sign-in unaffected" do
+      other = create(:ace, email: "direct@example.com", password: "password123")
+      leave_stale_marker
+      post ace_session_path, params: { ace: { email: other.email, password: "password123" } }
+      get profile_path
+      expect(response).to have_http_status(:ok)
+      expect(request.env["warden"].user(:ace)).to eq(other)
+      expect(request.session["rizz_binding_id"]).to be_nil
+      expect(request.session["rizz_session_epoch"]).to be_nil
+    end
+
+    it "leaves a fresh Sign in with Rizz unaffected and replaces the marker" do
+      leave_stale_marker
+      speaker.issue_id_tokens_with(epoch: 2)
+      sign_in_with_rizz
+      expect(response).to redirect_to("/strength")
+      get profile_path
+      expect(response).to have_http_status(:ok)
+      expect(request.env["warden"].user(:ace)).to eq(ace)
+      expect(request.session["rizz_binding_id"]).to eq(binding.id)
+      expect(request.session["rizz_session_epoch"]).to eq(2)
+    end
+
+    it "clears the marker on any non-fetch sign-in event, such as a bare Devise sign_in" do
+      leave_stale_marker
+      sign_in ace
+      get profile_path
+      expect(response).to have_http_status(:ok)
+      expect(request.env["warden"].user(:ace)).to eq(ace)
+      expect(request.session["rizz_binding_id"]).to be_nil
+    end
+  end
+
+  it "rotates the CSRF token when signing in with Rizz" do
+    previous = ActionController::Base.allow_forgery_protection
+    ActionController::Base.allow_forgery_protection = true
+    get new_ace_session_path
+    before_token = request.session["_csrf_token"]
+    expect(before_token).to be_present
+    token = Nokogiri::HTML(response.body).at_css("form[action='/auth/rizz'] input[name=authenticity_token]")["value"]
+    post rizz_auth_path, params: { authenticity_token: token }
+    expect(response.location).to start_with(RizzSpeaker::ISSUER)
+    callback_url = speaker.authorize(response.location)
+    get callback_url
+    expect(request.env["warden"].user(:ace)).to eq(ace)
+    expect(request.session["_csrf_token"]).not_to eq(before_token)
+  ensure
+    ActionController::Base.allow_forgery_protection = previous
+  end
+
+  it "stays hidden and 404s on the sign-in endpoints while configured but switched off" do
+    with_rizz_env("RIZZ_SIGN_IN_ENABLED" => "0") do
+      expect(RizzSignIn.configuration).to be_configured
+      expect(RizzSignIn).not_to be_enabled
+      post rizz_auth_path
+      expect(response).to have_http_status(:not_found)
+    end
   end
 end

@@ -7,7 +7,7 @@ RSpec.describe "Rizz claim", type: :request do
   let(:callback_uri) { "#{RizzSpeaker::ISSUER}/claims/op-1/return" }
 
   def start_claim(**overrides)
-    get rizz_claim_start_path, params: { handoff: speaker.claim_handoff(callback_uri: callback_uri, **overrides) }
+    post rizz_claim_start_path, params: { handoff: speaker.claim_handoff(callback_uri: callback_uri, **overrides) }
   end
 
   def prove_with_password(account = ace, password: "password123")
@@ -57,17 +57,18 @@ RSpec.describe "Rizz claim", type: :request do
       expect(cookie).not_to match(/domain=/i)
     end
 
-    it "accepts the handoff by POST from the Speaker" do
-      post rizz_claim_start_path, params: { handoff: speaker.claim_handoff(callback_uri: callback_uri) }
-      expect(response).to redirect_to(rizz_claim_prove_path)
+    it "is POST-only: a GET (even with a valid handoff) is not routed and stores nothing" do
+      get "/auth/rizz/claim/start", params: { handoff: speaker.claim_handoff(callback_uri: callback_uri) }
+      expect(response).to have_http_status(:not_found)
+      expect(RizzClaimHandoff.count).to eq(0)
     end
 
     it "refuses a replayed handoff jti" do
       jwt = speaker.claim_handoff(callback_uri: callback_uri, jti: "one-use")
-      get rizz_claim_start_path, params: { handoff: jwt }
+      post rizz_claim_start_path, params: { handoff: jwt }
       expect(response).to redirect_to(rizz_claim_prove_path)
       reset!
-      get rizz_claim_start_path, params: { handoff: jwt }
+      post rizz_claim_start_path, params: { handoff: jwt }
       expect(response).to redirect_to(new_ace_session_path)
       expect(RizzClaimHandoff.count).to eq(1)
     end
@@ -90,14 +91,14 @@ RSpec.describe "Rizz claim", type: :request do
         typ = overrides.delete(:typ)
         token = typ ? speaker.sign(speaker.base_claims({ "jti" => "j", "operation_id" => "op-1", "speaker_label" => "Marcus", "callback_uri" => callback_uri }), typ: typ) :
           speaker.claim_handoff(**{ callback_uri: callback_uri }.merge(overrides))
-        get rizz_claim_start_path, params: { handoff: token }
+        post rizz_claim_start_path, params: { handoff: token }
         expect(response).to redirect_to(new_ace_session_path)
         expect(RizzClaimHandoff.count).to eq(0)
       end
     end
 
     it "rejects a missing handoff" do
-      get rizz_claim_start_path
+      post rizz_claim_start_path
       expect(response).to redirect_to(new_ace_session_path)
     end
   end
@@ -168,10 +169,23 @@ RSpec.describe "Rizz claim", type: :request do
       ace.update!(suspended_at: Time.current)
       prove_with_password
       expect(response).to redirect_to(rizz_claim_prove_path)
+      expect(flash[:alert]).to eq("That email and password didn't match.")
       ace.update!(suspended_at: nil, confirmed_at: nil)
       prove_with_password
       expect(response).to redirect_to(rizz_claim_prove_path)
+      expect(flash[:alert]).to eq("That email and password didn't match.")
       expect(RizzClaimHandoff.last.verified_ace_id).to be_nil
+    end
+
+    it "gives a wrong password and a suspended or unconfirmed Ace the identical response" do
+      prove_with_password(password: "wrong")
+      wrong = [ response.status, response.location, flash[:alert] ]
+      [ { suspended_at: Time.current }, { confirmed_at: nil } ].each do |state|
+        ace.update!(suspended_at: nil, confirmed_at: Time.current)
+        ace.update!(state)
+        prove_with_password
+        expect([ response.status, response.location, flash[:alert] ]).to eq(wrong)
+      end
     end
 
     it "does not let confirmation be reached before proof" do
@@ -215,7 +229,21 @@ RSpec.describe "Rizz claim", type: :request do
         expect(response.location).to start_with("https://accounts.google.com/")
         expect(query).to include("prompt" => "select_account", "max_age" => "0", "access_type" => "online")
         expect(query["scope"].split).to include("openid", "email", "profile")
+        expect(JSON.parse(query["claims"])).to eq("id_token" => { "auth_time" => { "essential" => true } })
         expect(query["redirect_uri"]).to eq("http://www.example.com/auth/rizz/claim/google/callback")
+      end
+
+      it "does not intercept its paths while Sign in with Rizz is off or Google sign-in is not configured" do
+        OmniAuth.config.test_mode = false
+        with_rizz_env("RIZZ_SIGN_IN_ENABLED" => nil) do
+          post "/auth/rizz/claim/google"
+          expect(response).to have_http_status(:not_found)
+          expect(response.location).to be_nil
+        end
+        allow(Rails.application.config.x.google_oauth).to receive(:enabled).and_return(false)
+        post "/auth/rizz/claim/google"
+        expect(response).to have_http_status(:not_found)
+        expect(response.location).to be_nil
       end
 
       it "accepts a Google identity already linked to an Ace with a fresh auth_time" do
@@ -329,11 +357,27 @@ RSpec.describe "Rizz claim", type: :request do
       expect(RizzClaimReceipt.count).to eq(0)
     end
 
-    it "blocks an Ace that is already connected to a Rizz account before minting a receipt" do
+    it "lets ClaimExchange decide, so an Ace still bound to the same subject can re-claim" do
+      AceRizzBinding.create!(ace: ace, rizz_sub: "pairwise-sub-1", operation_id: "old-op", rizz_session_epoch: 4)
+      claim_and_confirm
+      expect(response).to have_http_status(:see_other)
+      expect(response.location).to start_with(callback_uri)
+      receipt = receipt_from_redirect
+      reset!
+      exchange(receipt: receipt, epoch: 5)
+      expect(response).to have_http_status(:ok)
+      expect(AceRizzBinding.where(ace: ace).count).to eq(1)
+      expect(AceRizzBinding.last).to have_attributes(rizz_sub: "pairwise-sub-1", operation_id: "op-1", status: "active", rizz_session_epoch: 5)
+    end
+
+    it "still mints a receipt for an Ace bound to a different subject, which the exchange then refuses with 409" do
       AceRizzBinding.create!(ace: ace, rizz_sub: "someone-else", operation_id: "old-op")
       claim_and_confirm
-      expect(response).to redirect_to(rizz_claim_prove_path)
-      expect(RizzClaimReceipt.count).to eq(0)
+      receipt = receipt_from_redirect
+      reset!
+      exchange(receipt: receipt)
+      expect(response).to have_http_status(:conflict)
+      expect(AceRizzBinding.where(ace: ace).pluck(:rizz_sub)).to eq([ "someone-else" ])
     end
 
     it "binds the Ace when the Speaker exchanges the receipt, idempotently" do
@@ -354,11 +398,30 @@ RSpec.describe "Rizz claim", type: :request do
       expect(AceRizzBinding.count).to eq(1)
     end
 
-    it "falls back to the email when the Ace has no handle" do
+    it "falls back to a masked email, never the raw address, when the Ace has no handle" do
       noname = create(:ace, :without_identity, email: "noname@example.com")
       receipt = RizzClaimReceipt.issue!(ace: noname, operation_id: "op-9")
       exchange(operation_id: "op-9", receipt: receipt)
-      expect(response.parsed_body["local_handle"]).to eq("noname@example.com")
+      expect(response.parsed_body["local_handle"]).to eq("n•••@example.com")
+      expect(response.body).not_to include("noname@example.com")
+    end
+
+    it "marks every exchange response uncacheable, including rejections" do
+      exchange(receipt: "made-up")
+      expect(response.headers["Cache-Control"]).to include("no-store")
+      exchange(receipt: "made-up", headers: {})
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.headers["Cache-Control"]).to include("no-store")
+    end
+
+    it "accepts a dedicated RIZZ_CLAIM_EXCHANGE_SECRET instead of the OIDC client secret when one is set" do
+      receipt = RizzClaimReceipt.issue!(ace: ace, operation_id: "op-1")
+      with_rizz_env("RIZZ_CLAIM_EXCHANGE_SECRET" => "dedicated-exchange-secret") do
+        exchange(receipt: receipt, headers: rizz_basic_auth)
+        expect(response).to have_http_status(:unauthorized)
+        exchange(receipt: receipt, headers: rizz_basic_auth(secret: "dedicated-exchange-secret"))
+        expect(response).to have_http_status(:ok)
+      end
     end
 
     it "requires the client credentials" do
@@ -437,12 +500,19 @@ RSpec.describe "Rizz claim", type: :request do
   end
 
   describe "when disabled" do
-    it "returns 404 for every claim endpoint" do
+    it "returns 404 for every claim endpoint, but keeps back-channel logout mounted" do
       with_rizz_env("RIZZ_SIGN_IN_ENABLED" => "0") do
-        get rizz_claim_start_path, params: { handoff: "x" }
+        post "/auth/rizz/claim/start", params: { handoff: "x" }
         expect(response).to have_http_status(:not_found)
         post "/auth/rizz/claim/exchange"
         expect(response).to have_http_status(:not_found)
+        post "/auth/rizz/backchannel_logout"
+        expect(response).to have_http_status(:bad_request)
+      end
+    end
+
+    it "returns 404 for back-channel logout only when Rizz is not configured at all" do
+      with_rizz_env("RIZZ_OIDC_CLIENT_SECRET" => nil) do
         post "/auth/rizz/backchannel_logout"
         expect(response).to have_http_status(:not_found)
       end

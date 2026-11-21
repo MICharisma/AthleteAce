@@ -17,13 +17,40 @@ RSpec.describe "Rizz back-channel logout", type: :request do
     expect(request.env["warden"].user(:ace)).to eq(ace)
   end
 
-  it "bumps the epoch, marks the binding disconnected, and returns 200" do
-    logout speaker.logout_token(epoch: 2)
+  it "adopts the Speaker's exact epoch (no local +1), marks the binding disconnected, and returns 200" do
+    logout speaker.logout_token(epoch: 3)
     expect(response).to have_http_status(:ok)
     expect(binding.reload).to have_attributes(status: "disconnected", rizz_session_epoch: 3)
     expect(binding.disconnected_at).to be_present
-    expect(RizzBackchannelLogoutEvent.last).to have_attributes(rizz_sub: "pairwise-sub-1", rizz_epoch: 2)
+    expect(RizzBackchannelLogoutEvent.last).to have_attributes(rizz_sub: "pairwise-sub-1", rizz_epoch: 3)
     expect(response.headers["Cache-Control"]).to include("no-store")
+  end
+
+  it "ignores a stale logout (epoch not ahead of the binding), recording its jti but changing nothing" do
+    [ 1, 2 ].each do |epoch|
+      logout speaker.logout_token(epoch: epoch)
+      expect(response).to have_http_status(:ok)
+      expect(binding.reload).to have_attributes(status: "active", rizz_session_epoch: 2, disconnected_at: nil)
+    end
+    expect(RizzBackchannelLogoutEvent.count).to eq(2)
+  end
+
+  it "does not disconnect a re-claimed binding when the logout that preceded the re-claim is redelivered late" do
+    logout speaker.logout_token(epoch: 3)
+    expect(binding.reload.status).to eq("disconnected")
+    # Fresh claim at the Speaker's current epoch 3 reactivates the binding.
+    receipt = RizzClaimReceipt.issue!(ace: ace, operation_id: "op-2")
+    post "/auth/rizz/claim/exchange", params: { operation_id: "op-2", receipt: receipt, rizz_sub: "pairwise-sub-1", rizz_session_epoch: 3 }.to_json,
+      headers: rizz_basic_auth.merge("Content-Type" => "application/json")
+    expect(response).to have_http_status(:ok)
+    expect(binding.reload).to have_attributes(status: "active", rizz_session_epoch: 3)
+
+    logout speaker.logout_token(epoch: 3) # a retry of the old logout under a new jti
+    expect(response).to have_http_status(:ok)
+    expect(binding.reload).to have_attributes(status: "active", rizz_session_epoch: 3, disconnected_at: nil)
+
+    logout speaker.logout_token(epoch: 4) # a genuinely newer logout still applies
+    expect(binding.reload).to have_attributes(status: "disconnected", rizz_session_epoch: 4)
   end
 
   it "jumps to the token's epoch when that is ahead" do
@@ -32,17 +59,18 @@ RSpec.describe "Rizz back-channel logout", type: :request do
   end
 
   it "applies a redelivered jti only once" do
-    token = speaker.logout_token(epoch: 2, jti: "same-jti")
+    token = speaker.logout_token(epoch: 3, jti: "same-jti")
     logout token
+    binding.reload.update!(status: "active", disconnected_at: nil)
     logout token
     expect(response).to have_http_status(:ok)
-    expect(binding.reload.rizz_session_epoch).to eq(3)
+    expect(binding.reload).to have_attributes(status: "active", rizz_session_epoch: 3)
     expect(RizzBackchannelLogoutEvent.count).to eq(1)
   end
 
   it "never lowers the epoch" do
     logout speaker.logout_token(epoch: 1)
-    expect(binding.reload.rizz_session_epoch).to eq(3)
+    expect(binding.reload).to have_attributes(status: "active", rizz_session_epoch: 2)
   end
 
   it "acknowledges a subject with no binding" do
@@ -67,6 +95,7 @@ RSpec.describe "Rizz back-channel logout", type: :request do
       typ = overrides.delete(:typ)
       logout speaker.logout_token(**{ typ: typ }.compact, **overrides)
       expect(response).to have_http_status(:bad_request)
+      expect(response.headers["Cache-Control"]).to include("no-store")
       expect(binding.reload).to have_attributes(status: "active", rizz_session_epoch: 2)
       expect(RizzBackchannelLogoutEvent.count).to eq(0)
     end
@@ -79,10 +108,54 @@ RSpec.describe "Rizz back-channel logout", type: :request do
     expect(response).to have_http_status(:bad_request)
   end
 
+  it "answers 503 with no-store when the issuer cannot be reached" do
+    allow(RizzSignIn::HttpClient).to receive(:get_json).and_raise(RizzSignIn::Unavailable)
+    RizzSignIn::JwksClient.reset!
+    logout speaker.logout_token(epoch: 3)
+    expect(response).to have_http_status(:service_unavailable)
+    expect(response.headers["Cache-Control"]).to include("no-store")
+    expect(binding.reload.status).to eq("active")
+  end
+
+  it "keeps accepting logouts, and ends Rizz-opened sessions, after RIZZ_SIGN_IN_ENABLED is turned off" do
+    sign_in_with_rizz
+    get profile_path
+    expect(response).to have_http_status(:ok)
+
+    with_rizz_env("RIZZ_SIGN_IN_ENABLED" => nil) do
+      expect(RizzSignIn.enabled?).to be(false)
+      expect(RizzSignIn.configuration.configured?).to be(true)
+      logout speaker.logout_token(epoch: 3)
+      expect(response).to have_http_status(:ok)
+      expect(binding.reload).to have_attributes(status: "disconnected", rizz_session_epoch: 3)
+    end
+  end
+
+  it "signs a still-active Rizz-opened session out on its next request once the feature is turned off" do
+    sign_in_with_rizz
+    get profile_path
+    expect(response).to have_http_status(:ok)
+
+    with_rizz_env("RIZZ_SIGN_IN_ENABLED" => nil) do
+      get profile_path
+      expect(response).to redirect_to(new_ace_session_path)
+      expect(request.env["warden"].user(:ace)).to be_nil
+      expect(request.session["rizz_binding_id"]).to be_nil
+    end
+  end
+
+  it "leaves a password session alone while the feature is off" do
+    post ace_session_path, params: { ace: { email: ace.email, password: "password123" } }
+    with_rizz_env("RIZZ_SIGN_IN_ENABLED" => nil) do
+      get profile_path
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   it "needs no session, cookie, or CSRF token" do
     previous = ActionController::Base.allow_forgery_protection
     ActionController::Base.allow_forgery_protection = true
-    logout speaker.logout_token(epoch: 2)
+    logout speaker.logout_token(epoch: 3)
     expect(response).to have_http_status(:ok)
   ensure
     ActionController::Base.allow_forgery_protection = previous

@@ -2,8 +2,15 @@ module RizzSignIn
   class Configuration
     PRODUCTION_ISSUER = "https://rizz.micharisma.com".freeze
 
+    # Sign in with Rizz and the claim endpoints are live only while the feature flag is on.
     def enabled?
-      ENV["RIZZ_SIGN_IN_ENABLED"] == "1" && issuer_uri.present? && client_id.present? && client_secret.present?
+      ENV["RIZZ_SIGN_IN_ENABLED"] == "1" && configured?
+    end
+
+    # Issuer and client credentials are present, whatever the feature flag says. Back-channel logout stays
+    # available in this state so turning the flag off still ends Rizz-opened sessions.
+    def configured?
+      issuer_uri.present? && client_id.present? && client_secret.present?
     end
 
     def issuer
@@ -16,6 +23,11 @@ module RizzSignIn
 
     def client_secret
       ENV["RIZZ_OIDC_CLIENT_SECRET"].presence
+    end
+
+    # The secret the Speaker presents when spending a claim receipt; defaults to the OIDC client secret.
+    def claim_exchange_secret
+      ENV["RIZZ_CLAIM_EXCHANGE_SECRET"].presence || client_secret
     end
 
     # True when url shares the issuer's scheme, host and port, and carries no credentials or fragment.

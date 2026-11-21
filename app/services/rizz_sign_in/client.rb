@@ -14,7 +14,7 @@ module RizzSignIn
       configuration = RizzSignIn.configuration
       response = HttpClient.post_form(JwksClient.discovery.fetch("token_endpoint"),
         { grant_type: "authorization_code", code: code, redirect_uri: redirect_uri, code_verifier: code_verifier },
-        basic_auth: [ configuration.client_id, configuration.client_secret ])
+        basic_auth: [ configuration.client_id, configuration.client_secret ].map { URI.encode_www_form_component(it) }) # RFC 6749 §2.3.1
       raise InvalidToken, "Rizz did not return an ID token" unless response["token_type"].to_s.casecmp?("bearer") && response["id_token"].is_a?(String)
 
       response["id_token"]

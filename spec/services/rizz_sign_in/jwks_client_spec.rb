@@ -29,6 +29,17 @@ RSpec.describe RizzSignIn::JwksClient do
     end
   end
 
+  it "lets only one of many concurrent unknown-kid lookups refresh" do
+    described_class.key_for("speaker-1")
+    before = speaker.fetches.size
+    allow(speaker).to receive(:jwks).and_wrap_original { |original| sleep 0.05; original.call }
+    travel 31.seconds do
+      threads = 8.times.map { Thread.new { described_class.key_for("attacker-kid") } }
+      expect(threads.map(&:value)).to all(be_nil)
+    end
+    expect(speaker.fetches.size - before).to eq(1)
+  end
+
   it "keeps serving cached keys when a refresh fails" do
     described_class.key_for("speaker-1")
     allow(RizzSignIn::HttpClient).to receive(:get_json).and_raise(RizzSignIn::Unavailable)

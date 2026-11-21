@@ -38,7 +38,13 @@ module RizzSignIn
       end
 
       def refresh_for_unknown_kid(state, kid)
-        return unless state.refreshed_at.nil? || state.refreshed_at < REFRESH_INTERVAL.ago
+        # Check and stamp together so concurrent requests for an unknown kid cannot all refresh.
+        due = synchronize do
+          next false unless state.refreshed_at.nil? || state.refreshed_at < REFRESH_INTERVAL.ago
+
+          state.refreshed_at = Time.current
+        end
+        return unless due
 
         refresh_keys(state)
         state.keys[kid]

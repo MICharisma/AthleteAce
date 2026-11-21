@@ -20,10 +20,11 @@ module RizzSignIn
       uri = URI(url)
       http_request["Accept"] = "application/json"
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 3, read_timeout: 5) { it.request(http_request) }
+      raise InvalidToken, "Rizz rejected the request with #{response.code}" if response.code.to_i.between?(400, 499)
       raise Unavailable, "Rizz returned #{response.code}" unless response.is_a?(Net::HTTPSuccess) && response.body.to_s.bytesize <= MAX_BYTES
 
-      JSON.parse(response.body)
-    rescue JSON::ParserError, SystemCallError, SocketError, Timeout::Error, OpenSSL::SSL::SSLError, IOError => error
+      JSON.parse(response.body).tap { raise Unavailable, "Rizz returned a non-object response" unless it.is_a?(Hash) }
+    rescue JSON::ParserError, SystemCallError, SocketError, Timeout::Error, OpenSSL::SSL::SSLError, IOError, Net::HTTPBadResponse, Net::ProtocolError => error
       raise Unavailable, error.class.name
     end
   end

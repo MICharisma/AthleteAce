@@ -14,4 +14,10 @@ module RizzSignIn
   def self.enabled?
     configuration.enabled?
   end
+
+  # "t•••@example.com": enough for a person to recognise their own address, not enough to disclose it.
+  def self.mask_email(email)
+    name, domain = email.to_s.split("@", 2)
+    "#{name.first}#{"•" * [ name.length - 1, 3 ].min}@#{domain}"
+  end
 end

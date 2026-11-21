@@ -42,7 +42,7 @@ module RizzSignIn
       key = JwksClient.key_for(header["kid"]) or invalid!
       configuration = RizzSignIn.configuration
       claims = JWT.decode(token, key, true, algorithms: [ "ES256" ], iss: configuration.issuer, verify_iss: true,
-        aud: configuration.client_id, verify_aud: true, verify_expiration: true, verify_iat: true,
+        aud: configuration.client_id, verify_aud: true, verify_expiration: true, verify_iat: { leeway: LEEWAY },
         required_claims: %w[exp iat], leeway: LEEWAY).first
       invalid! unless claims["exp"].is_a?(Integer) && claims["iat"].is_a?(Integer) && claims["exp"] - claims["iat"] <= MAX_LIFETIME
       claims

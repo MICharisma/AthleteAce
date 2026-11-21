@@ -41,7 +41,7 @@ class RizzAuth::ClaimsController < ApplicationController
   def verify_password
     ace = Ace.find_for_database_authentication(email: params[:email].to_s.strip.downcase) if params[:password].is_a?(String)
     return prove_failed "That email and password didn't match." unless ace&.valid_password?(params[:password])
-    return prove_failed "That account can't be connected right now." unless claimable?(ace)
+    return prove_failed "That email and password didn't match." unless claimable?(ace)
 
     @handoff.prove! ace
     redirect_to rizz_claim_confirm_path, status: :see_other
@@ -72,8 +72,6 @@ class RizzAuth::ClaimsController < ApplicationController
 
   def connect
     ace = @handoff.verified_ace
-    held = ace.active_rizz_binding
-    return prove_failed "This AthleteAce account is already connected to a Rizz account." if held && held.operation_id != @handoff.operation_id
     return claim_rejected unless RizzSignIn.configuration.issuer_origin?(@handoff.callback_uri) && @handoff.consume!
 
     receipt = RizzClaimReceipt.issue!(ace: ace, operation_id: @handoff.operation_id)
@@ -123,7 +121,6 @@ class RizzAuth::ClaimsController < ApplicationController
   end
 
   def masked_email(email)
-    name, domain = email.split("@", 2)
-    "#{name.first}#{"•" * [ name.length - 1, 3 ].min}@#{domain}"
+    RizzSignIn.mask_email(email)
   end
 end
