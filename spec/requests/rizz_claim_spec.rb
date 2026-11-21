@@ -157,7 +157,9 @@ RSpec.describe "Rizz claim", type: :request do
       page = Nokogiri::HTML(response.body)
       expect(page.at_css("dl").text).to include("@courtside_tess", "t•••@example.com", "Marcus T. (Rizz)")
       expect(response.body).not_to include("tess@example.com")
-      expect(page.at_css("form[action='#{rizz_claim_confirm_path}'] input[type=submit], form[action='#{rizz_claim_confirm_path}'] button").text).to include("Connect this account")
+      confirm_form = page.at_css("form[action='#{rizz_claim_confirm_path}']")
+      expect(confirm_form["data-turbo"]).to eq("false")
+      expect(confirm_form.at_css("input[type=submit], button").text).to include("Connect this account")
       expect(page.at_css("form[action='#{rizz_claim_cancel_path}']").text).to include("Cancel")
     end
 
