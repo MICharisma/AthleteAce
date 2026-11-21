@@ -1,0 +1,27 @@
+# Single-use, 60 second proof that a browser confirmed a local Ace for a claim
+# operation. Only the SHA-256 digest of the receipt is stored.
+class RizzClaimReceipt < ApplicationRecord
+  LIFETIME = 60.seconds
+
+  belongs_to :ace
+
+  validates :receipt_digest, :operation_id, :expires_at, presence: true
+
+  def self.issue!(ace:, operation_id:)
+    receipt = SecureRandom.urlsafe_base64(32)
+    create!(ace: ace, operation_id: operation_id, receipt_digest: RizzClaimHandoff.digest(receipt), expires_at: LIFETIME.from_now)
+    receipt
+  end
+
+  def self.find_by_receipt(receipt)
+    find_by(receipt_digest: RizzClaimHandoff.digest(receipt))
+  end
+
+  def usable?
+    consumed_at.nil? && expires_at.future?
+  end
+
+  def consume!
+    self.class.where(id: id, consumed_at: nil).where("expires_at > ?", Time.current).update_all(consumed_at: Time.current, updated_at: Time.current) == 1
+  end
+end

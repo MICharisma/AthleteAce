@@ -2,3 +2,4 @@ en:
   authentication:
     continue_with_google: "Continue with Google"
     google_label: "Continue with Google to %{site}"
+    sign_in_with_rizz: "Sign in with Rizz"

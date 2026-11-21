@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_19_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_20_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -29,6 +29,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_120001) do
     t.index ["ace_id"], name: "index_account_actions_on_ace_id"
     t.index ["actor_id", "request_key"], name: "index_account_actions_on_actor_id_and_request_key", unique: true
     t.index ["actor_id"], name: "index_account_actions_on_actor_id"
+  end
+
+  create_table "ace_rizz_bindings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "ace_id", null: false
+    t.string "rizz_sub", null: false
+    t.integer "rizz_session_epoch", default: 1, null: false
+    t.string "operation_id", null: false
+    t.string "status", default: "active", null: false
+    t.datetime "connected_at"
+    t.datetime "disconnected_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ace_id"], name: "index_ace_rizz_bindings_on_ace_id_active", unique: true, where: "((status)::text = 'active'::text)"
+    t.index ["operation_id"], name: "index_ace_rizz_bindings_on_operation_id", unique: true
+    t.index ["rizz_sub"], name: "index_ace_rizz_bindings_on_rizz_sub", unique: true
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'disconnected'::character varying]::text[])", name: "ace_rizz_bindings_status"
   end
 
   create_table "aces", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1100,6 +1116,47 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_120001) do
     t.check_constraint "value >= '-100'::integer AND value <= 500", name: "ratings_value_in_standard_scale"
   end
 
+  create_table "rizz_backchannel_logout_events", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "jti", null: false
+    t.string "rizz_sub", null: false
+    t.integer "rizz_epoch", null: false
+    t.datetime "processed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["jti"], name: "index_rizz_backchannel_logout_events_on_jti", unique: true
+    t.index ["rizz_sub"], name: "index_rizz_backchannel_logout_events_on_rizz_sub"
+  end
+
+  create_table "rizz_claim_handoffs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "handoff_jti", null: false
+    t.string "operation_id", null: false
+    t.string "speaker_label", null: false
+    t.string "callback_uri", null: false
+    t.string "browser_token_digest", null: false
+    t.uuid "verified_ace_id"
+    t.datetime "verified_at"
+    t.datetime "expires_at", null: false
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["handoff_jti"], name: "index_rizz_claim_handoffs_on_handoff_jti", unique: true
+    t.index ["operation_id"], name: "index_rizz_claim_handoffs_on_operation_id"
+    t.index ["verified_ace_id"], name: "index_rizz_claim_handoffs_on_verified_ace_id"
+  end
+
+  create_table "rizz_claim_receipts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "receipt_digest", null: false
+    t.uuid "ace_id", null: false
+    t.string "operation_id", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "consumed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ace_id"], name: "index_rizz_claim_receipts_on_ace_id"
+    t.index ["operation_id"], name: "index_rizz_claim_receipts_on_operation_id"
+    t.index ["receipt_digest"], name: "index_rizz_claim_receipts_on_receipt_digest", unique: true
+  end
+
   create_table "rizz_feed_cursors", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "purpose", null: false
     t.string "cursor"
@@ -1582,6 +1639,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_120001) do
 
   add_foreign_key "account_actions", "aces", column: "actor_id", on_delete: :nullify
   add_foreign_key "account_actions", "aces", on_delete: :nullify
+  add_foreign_key "ace_rizz_bindings", "aces", on_delete: :cascade
   add_foreign_key "achievements", "aces", column: "created_by_id", on_delete: :nullify
   add_foreign_key "activations", "campaigns"
   add_foreign_key "activations", "contracts"
@@ -1677,6 +1735,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_19_120001) do
   add_foreign_key "rating_revisions", "aces"
   add_foreign_key "ratings", "aces"
   add_foreign_key "ratings", "spectrums"
+  add_foreign_key "rizz_claim_handoffs", "aces", column: "verified_ace_id", on_delete: :nullify
+  add_foreign_key "rizz_claim_receipts", "aces", on_delete: :cascade
   add_foreign_key "rizz_names", "figures", on_delete: :cascade
   add_foreign_key "rizz_syncs", "figures"
   add_foreign_key "roster_entries", "players"

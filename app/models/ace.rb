@@ -52,6 +52,8 @@ class Ace < ApplicationRecord
     inverse_of: :entered_by, dependent: :nullify
   has_many :warnings, class_name: "PostingWarning"
   has_many :mutes
+  has_one :active_rizz_binding, -> { active }, class_name: "AceRizzBinding"
+  has_many :rizz_bindings, class_name: "AceRizzBinding", dependent: :destroy
   has_many :moderator_notes
   validates :time_zone, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }, allow_nil: true
 

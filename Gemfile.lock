@@ -554,6 +554,7 @@ DEPENDENCIES
   faker (~> 3.8)
   importmap-rails
   jbuilder
+  jwt (~> 3.3)
   kamal
   nokogiri (~> 1.19)
   omniauth-google-oauth2 (~> 1.2)
