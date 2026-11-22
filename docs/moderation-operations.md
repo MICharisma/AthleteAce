@@ -91,7 +91,7 @@ doppler run --project athleteace --config dev -- mise exec -- ruby -S bundle exe
 
 The task prints one JSON record per case and provider, followed by a `smoke_comparison` summary. A nonzero exit means a provider was unavailable, a call failed, or a result differed from its smoke label. A missing summary or zero completed evaluations does not establish a successful comparison.
 
-The examples are a smoke check, not a production accuracy estimate. Compare a larger, independently labeled set before choosing automatic-clearance thresholds. Sports-data questions include supplied candidates and an `insufficient_evidence` outcome. Evaluations do not update players, teams, seasons, or jersey-number histories.
+The examples are a smoke check, not a production accuracy estimate. Compare a larger, independently labeled set before choosing automatic-clearance thresholds. A [draft labeled shout-out set](moderation-test-set.md) of 304 cases runs with `CASES=spec/fixtures/shout_out_moderation_cases.json`. Sports-data questions include supplied candidates and an `insufficient_evidence` outcome. Evaluations do not update players, teams, seasons, or jersey-number histories.
 
 The [first live smoke results](decision-model-smoke-results.md) record the October 14 comparison, including its classification difference and measured token costs.
 
