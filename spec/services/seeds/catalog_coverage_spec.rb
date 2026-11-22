@@ -3,28 +3,31 @@ require "tmpdir"
 
 RSpec.describe "Expanded seasonal seed catalog", :seed_library do
   let(:root) { Rails.root.join("db/seeds/athlete_ace_data") }
-  let(:library) { root.join("yaml") }
   let(:capture) { JSON.parse(File.read(root.join("sources/coverage_2025.json"))) }
-  let(:registry) { MICharismaSeeders::SequenceRegistry.read(library.join("entity_sequences.yaml")) }
   # The 2025 coverage library: the pilot sample, 2025 coverage, participation
   # and play roster batches, with the catalog records they use, one manifest
   # per original file.
   BATCHES = %w[nba_hart_2022_2023.yaml nfl_sanders_2019.yaml nhl_leddy_2021_2022.yaml figures player_groups
     coverage_2025 participation play_roster_expansion].freeze
-  before(:context) { @rows = Seeds::BatchClosure.new.rows(*BATCHES) }
-  around do |example|
-    Dir.mktmpdir("catalog-coverage") do |directory|
-      @paths = Seeds::BatchClosure.write_files(@rows, directory)
-      example.run
-    end
+  # Import once for the group. It commits outside the per-example transactions,
+  # which still roll back each example's edits and replays.
+  before(:context) do
+    @directory = Dir.mktmpdir("catalog-coverage")
+    @paths = Seeds::BatchClosure.write_files(Seeds::BatchClosure.new.rows(*BATCHES), @directory)
+    registry = MICharismaSeeders::SequenceRegistry.read(Rails.root.join("db/seeds/athlete_ace_data/yaml/entity_sequences.yaml"))
+    @importer = Seeds::LibraryImporter.new(registry: registry)
+    @first_import = @importer.call(@paths)
+  end
+  after(:context) do
+    TestDatabase.truncate
+    FileUtils.remove_entry @directory
   end
   let(:paths) { @paths }
-  let(:importer) { Seeds::LibraryImporter.new(registry: registry) }
+  let(:importer) { @importer }
   let(:full_rosters) { { "NBA" => "NYK", "NFL" => "SF", "NHL" => "STL" } }
 
   it "imports full captured NBA and NHL player lists plus the other selected source listings" do
-    report = importer.call(paths)
-    expect(report[:conflicts]).to be_empty
+    expect(@first_import[:conflicts]).to be_empty
     expect(Team.count).to eq(114)
     { "NBA" => 30, "NFL" => 32, "NHL" => 32, "EPL" => 20 }.each do |abbreviation, count|
       league = League.find_by!(abbreviation: abbreviation)
@@ -54,7 +57,6 @@ RSpec.describe "Expanded seasonal seed catalog", :seed_library do
   end
 
   it "replays the expanded catalog in reverse file order without new records or conflicts" do
-    importer.call(paths)
     original = Seeds::LibraryImporter::MODELS.transform_values { |model| model.order(:id).pluck(:id, :entity_code) }
     report = importer.call(paths.reverse)
     expect(report[:created]).to be_empty
@@ -64,7 +66,6 @@ RSpec.describe "Expanded seasonal seed catalog", :seed_library do
   end
 
   it "seeds all club organizations and independently sourced roster observations" do
-    importer.call(paths)
     expect(Organization.joins(:organization_affiliations).distinct.count).to eq(114)
     expect(OrganizationAffiliation.count).to eq(114)
     expect(Team.all.all? { |team| team.current_organization.present? }).to be(true)
@@ -88,7 +89,6 @@ RSpec.describe "Expanded seasonal seed catalog", :seed_library do
   end
 
   it "imports sourced contracts, events, assignments, and actual game statistics without guessing missing dates" do
-    importer.call(paths)
     expect([ Contract.count, Transaction.count, TransactionPlayer.count, Stint.count, Contest.count, Contestant.count, Appearance.count ]).to eq([ 1, 2, 2, 1, 1, 2, 1 ])
     contract = Contract.sole
     expect(contract.organization.name).to eq("St. Louis Blues")
@@ -111,7 +111,6 @@ RSpec.describe "Expanded seasonal seed catalog", :seed_library do
   end
 
   it "preserves edited game facts and reports their differences during replay" do
-    importer.call(paths)
     appearance = Appearance.sole
     appearance.update! statistics: { "points" => 99 }
     report = importer.call(paths.reverse)
@@ -121,7 +120,6 @@ RSpec.describe "Expanded seasonal seed catalog", :seed_library do
   end
 
   it "restores a missing observation entry with a new id and repairs its code binding" do
-    importer.call(paths)
     entry = RosterEntry.first
     code, old_id = entry.entity_code, entry.id
     entry.destroy!
