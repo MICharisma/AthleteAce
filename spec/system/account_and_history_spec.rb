@@ -93,7 +93,8 @@ RSpec.describe "Account and history pages", type: :system do
     expect(page).to have_css(".round-choice", count: 2)
     expect(all(".round-choice").map { |choice| choice[:value] }).to match_array([team.id, rival.id])
     first(".round-choice").click
-    click_button "Next"
+    # Team Match advances on its own after an answer.
+    expect(page).to have_css(".round-game-progress", text: "2 / 2")
     expect(page).to have_css(".round-choice:not([disabled])", count: 2)
     expect(all(".round-choice").map { |choice| choice[:value] }).to match_array([team.id, rival.id])
   end
