@@ -4,6 +4,9 @@ This file provides guidance to coding agents working in this repository. `CLAUDE
 
 ## Development Commands
 
+### Ruby
+- Ruby is loaded through mise, which reads the version from `.ruby-version` and `mise.toml`. If the shell's `ruby` is missing or a different version, run commands through mise rather than concluding Ruby is unavailable: `mise exec -- ruby bin/rails …` and `mise exec -- ruby -S bundle exec …`.
+
 ### Database Operations
 - `rails db:seed` - Import the scoped YAML/JSON library under `db/seeds/athlete_ace_data/yaml/`
 - `rails db:reset` - Drop, create, migrate, and seed database
