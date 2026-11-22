@@ -1,3 +1,6 @@
+# Coverage is opt-in: COVERAGE=1 bundle exec rspec
+return unless ENV["COVERAGE"]
+
 require 'simplecov'
 
 SimpleCov.start 'rails' do

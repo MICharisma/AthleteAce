@@ -45,3 +45,6 @@ db/.DS_Store
 
 # SimpleCov output
 /coverage/
+
+# RSpec example status for --only-failures and --next-failure
+/spec/examples.txt

@@ -3,7 +3,7 @@ require "rails_helper"
 RSpec.describe "Concurrent credit operations" do
   self.use_transactional_tests = false
   before(:context) { raise "Concurrency fixtures require the test database" unless Rails.env.test? }
-  after(:context) { DatabaseCleaner.clean_with(:truncation) }
+  after(:context) { TestDatabase.truncate }
 
   def committed(&block)
     Thread.new { ActiveRecord::Base.connection_pool.with_connection { block.call } }.value

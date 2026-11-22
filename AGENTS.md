@@ -17,9 +17,11 @@ This app loads Ruby 4.0.7 through mise, pinned in `mise.toml`. A `ruby` already 
 - `rails db:migrate` - Run pending migrations
 
 ### Testing
-- `bundle exec rspec` - Run all tests
+- `bundle exec rspec` - Run the default suite, in random order (about 5 minutes)
 - `bundle exec rspec spec/models/player_spec.rb` - Run specific test file
-- `bundle exec rspec spec/features/quest_management_spec.rb` - Run feature tests
+- `bundle exec rspec --only-failures` or `--next-failure` - Rerun what failed last time
+- `bundle exec rspec --tag seed_library` - Run the examples that import the real seed library (several minutes). The default suite leaves them out; run them when the seed data or the importer changes
+- `COVERAGE=1 bundle exec rspec` - Write a SimpleCov report to `coverage/`
 
 ### Code Quality
 These commands are optional manual tools. Automated CI is deferred until launch preparation; see `README.md`.

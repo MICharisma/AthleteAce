@@ -2,7 +2,7 @@ require "rails_helper"
 require "tmpdir"
 require Rails.root.join("db/seeds/athlete_ace_data/scripts/build_championship_history").to_s
 
-RSpec.describe "Championship history seeds" do
+RSpec.describe "Championship history seeds", :seed_library do
   before(:context) do
     @root = Rails.root.join("db/seeds/athlete_ace_data")
     @rows = Seeds::BatchClosure.new.rows("championship_history")

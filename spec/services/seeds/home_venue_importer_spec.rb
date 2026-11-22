@@ -31,7 +31,7 @@ RSpec.describe Seeds::HomeVenueImporter do
     described_class.new(source: @source)
   end
 
-  it "imports complete geography, links all six leagues, shares buildings across sports, and replays unchanged" do
+  it "imports complete geography, links all six leagues, shares buildings across sports, and replays unchanged", :seed_library do
     library = data_root.join("yaml")
     registry = MICharismaSeeders::SequenceRegistry.read(library.join("entity_sequences.yaml"))
     catalog = Seeds::LibraryImporter.new(registry: registry)

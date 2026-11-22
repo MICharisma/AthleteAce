@@ -1,7 +1,7 @@
 require "rails_helper"
 require "tmpdir"
 
-RSpec.describe "Expanded seasonal seed catalog" do
+RSpec.describe "Expanded seasonal seed catalog", :seed_library do
   let(:root) { Rails.root.join("db/seeds/athlete_ace_data") }
   let(:library) { root.join("yaml") }
   let(:capture) { JSON.parse(File.read(root.join("sources/coverage_2025.json"))) }

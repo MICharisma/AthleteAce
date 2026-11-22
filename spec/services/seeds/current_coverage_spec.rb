@@ -44,7 +44,7 @@ RSpec.describe "2026 seed coverage" do
     expect(rows.none? { |row| row.type == "Appearance" }).to be(true)
   end
 
-  it "uses independent number periods and shares EPL club identities with the Champions League" do
+  it "uses independent number periods and shares EPL club identities with the Champions League", :seed_library do
     registry = MICharismaSeeders::SequenceRegistry.read(root.join("yaml/entity_sequences.yaml"))
     reader = MICharismaSeeders::Reader.new(registry: registry)
     rows = Dir.glob(root.join("yaml/{coverage_2026,catalog/**}/*.{yaml,yml}")).flat_map { |path| reader.read(path) }

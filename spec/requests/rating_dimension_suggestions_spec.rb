@@ -24,7 +24,9 @@ RSpec.describe "Rating dimension suggestions", type: :request do
       keys = input[:candidates].map { |candidate| candidate[:key] }
       expect(keys).to contain_exactly(skill.rating_dimension.key, familiarity.rating_dimension.key)
       expect(input[:preferences]).to eq([{ key: skill.rating_dimension.key, times_chosen: 1 }])
-      expect(input.to_json).not_to include(ace.email, "-84")
+      # Compare values, not JSON text: UUIDv7 keys can contain "-84".
+      values = ->(object) { object.is_a?(Hash) ? object.values.flat_map(&values) : object.is_a?(Array) ? object.flat_map(&values) : [ object ] }
+      expect(values.call(input)).not_to include(ace.email, -84)
       [hidden.rating_dimension.key, skill.rating_dimension.key, skill.rating_dimension.key]
     end
 

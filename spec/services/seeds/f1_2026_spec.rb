@@ -1,7 +1,7 @@
 require "rails_helper"
 require "tmpdir"
 
-RSpec.describe "Formula One 2026 seeds" do
+RSpec.describe "Formula One 2026 seeds", :seed_library do
   before(:context) do
     @rows = Seeds::BatchClosure.new.rows("f1_2026") # The batch plus the catalog records it references.
   end
