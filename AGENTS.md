@@ -4,6 +4,13 @@ This file provides guidance to coding agents working in this repository. `CLAUDE
 
 ## Development Commands
 
+### Ruby through mise
+This app loads Ruby 4.0.7 through mise, pinned in `mise.toml`. A `ruby` already on `PATH` is usually a different version, so check mise before reporting that Ruby is missing.
+
+- `mise install` installs the pinned Ruby if it isn't there yet.
+- Prefix Ruby commands with `mise exec --`: `mise exec -- ruby -S bundle install`, `mise exec -- ruby bin/rails db:migrate`, `mise exec -- ruby -S bundle exec rspec`.
+- Or activate mise once per shell with `eval "$(mise activate bash)"` (or `zsh`) and run the commands bare.
+
 ### Database Operations
 - `rails db:seed` - Import the scoped YAML/JSON library under `db/seeds/athlete_ace_data/yaml/`
 - `rails db:reset` - Drop, create, migrate, and seed database
