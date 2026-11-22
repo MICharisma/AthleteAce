@@ -247,6 +247,12 @@ The [championship-history batch](../db/seeds/athlete_ace_data/sources/championsh
 
 `yaml/coverage_2026/divisions.yaml` defines the current conference and division alignment for MLB, NBA, NFL, NHL, and MLS: 10 Conferences, 26 Divisions, and one active `Membership` per 2026 team (154). `Team#division` and Guess the Division read these memberships. `scripts/build_divisions_2026.rb` generates the manifest from the legacy `sports/*/USA/*/conferences.json` and `memberships.json` files. It matches each legacy team to exactly one 2026 capture team by name, with explicit renames for changed club names. San Diego FC, which joined after the legacy catalog, is added with its own source note. Run it with `--check` to verify the committed manifest. An uncoded Membership is adopted by its team, league, optional conference, optional division, and start date. Replay preserves its ID. Memberships also support a league alone, a conference without a division, or a division directly under a league. Apply the membership entity-code migration and `20261113010000` before importing. See [League memberships](league-memberships.md) for inference, history, and migration rules.
 
+## Team namings and tenancies
+
+`Nickname` holds one reusable team nickname, such as "Raiders", and is matched regardless of case. `TeamNaming` references a team and an optional nickname and records the territory, display name and abbreviation in force for an inclusive date range. `Tenancy` references a team and a stadium with a `home`, `temporary` or `shared` role. Ranges follow the stint rules in the [historical claims skill](../db/seeds/athlete_ace_data/skills/historical-claims/SKILL.md): bounds are optional, and an unknown bound stays empty. One team's namings, and its home tenancies, cannot overlap.
+
+An uncoded naming is adopted by its team and the naming in force on its start date. An uncoded tenancy is adopted the same way, within the same stadium and role. Replay preserves recorded values and reports differences. A Campaign's own recorded name and stadium still take precedence over both.
+
 ## Coverage and remaining launch work
 
 The [2026 capture and asset extension](seed-library-2026.md) adds seven current-season competition datasets, three NBA participant-history datasets, the complete NHL regular-season schedule, persistent number assignments, and a local visual asset pilot. The counts below describe the earlier pilot. Current coverage comes from `rails seeds:coverage` and `sources/coverage_2026/report.json`.

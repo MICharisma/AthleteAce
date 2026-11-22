@@ -26,7 +26,8 @@ module Seeds
       "TitleAward" => TitleAward, "Federation" => Federation,
       "Contestant" => Contestant, "Appearance" => Appearance,
       "PlayerGroup" => PlayerGroup, "PlayerGroupMembership" => PlayerGroupMembership,
-      "Membership" => Membership, "Position" => Position, "PositionAssignment" => PositionAssignment
+      "Membership" => Membership, "Position" => Position, "PositionAssignment" => PositionAssignment,
+      "Nickname" => Nickname, "TeamNaming" => TeamNaming, "Tenancy" => Tenancy
     }.freeze
     SCOPE_ASSOCIATIONS = {
       "State" => %w[country], "City" => %w[state], "Stadium" => %w[city],
@@ -46,7 +47,8 @@ module Seeds
       "ContestGame" => %w[contest game], "TitleAward" => %w[contest winner player],
       "TransactionPlayer" => %w[event player], "PlayerGroupMembership" => %w[player_group player],
       "Membership" => %w[team league conference division],
-      "Position" => %w[sport], "PositionAssignment" => %w[subject position]
+      "Position" => %w[sport], "PositionAssignment" => %w[subject position],
+      "TeamNaming" => %w[team], "Tenancy" => %w[team stadium]
     }.freeze
     POLYMORPHIC_TYPES = {
       [ "League", "jurisdiction" ] => %w[Country State City Federation],
@@ -395,6 +397,15 @@ module Seeds
       if model == JerseyNumberAssignment && desired["start_date"] && desired["player"] && desired["team"] && desired["number"]
         return model.where(player: desired["player"], team: desired["team"], number: desired["number"])
           .overlapping(desired["start_date"], desired["start_date"]).first
+      end
+      if model == Nickname && desired["text"]
+        return model.find_by("lower(text) = lower(?)", desired["text"].squish)
+      end
+      # A dated team record matches the one already in force on its start date.
+      if model < TeamDateRange && desired["team"]
+        scope = model.where(team: desired["team"])
+        scope = scope.where(stadium: desired["stadium"], role: desired["role"] || "home") if model == Tenancy
+        return desired["start_date"] ? scope.in_force_on(desired["start_date"]).first : scope.find_by(start_date: nil)
       end
       keys = {
         Year => %w[number], Season => %w[year league], Campaign => %w[team season], Activation => %w[player campaign],
