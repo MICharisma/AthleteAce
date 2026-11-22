@@ -36,4 +36,14 @@ RSpec.describe Seeds::TeamPaletteImporter do
     expect(described_class.new(root: @root).call[:skipped]).to eq([ "BKT-NBA-TEAM-NYK" ])
     expect(team.reload.primary_color).to be_nil
   end
+
+  it "enriches Premier League clubs from the palette-only file" do
+    team = create(:team, entity_code: "SOC-EPL-TEAM-LIV", abbreviation: "LIV")
+    path = @root.join("soccer/united_kingdom/Premier_League/team_palettes.json")
+    FileUtils.mkdir_p(path.dirname)
+    path.write(JSON.generate(teams: [ { abbreviation: "LIV", club: "Liverpool", primary_color: "#E31B23", secondary_color: "#FFFFFF" } ]))
+    expect(described_class.new(root: @root).call[:updated]).to eq([ "SOC-EPL-TEAM-LIV" ])
+    expect(team.reload.attributes.slice("primary_color", "secondary_color")).to eq(
+      "primary_color" => "#E31B23", "secondary_color" => "#FFFFFF")
+  end
 end
