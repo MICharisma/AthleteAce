@@ -5,7 +5,8 @@ module Seeds
     SOURCES = {
       "basketball/USA/NBA/teams.json" => "BKT-NBA",
       "football/USA/NFL/teams.json" => "FTB-NFL",
-      "hockey/USA/NHL/teams.json" => "HCK-NHL"
+      "hockey/USA/NHL/teams.json" => "HCK-NHL",
+      "soccer/united_kingdom/Premier_League/team_palettes.json" => "SOC-EPL"
     }.freeze
 
     def initialize(root: Rails.root.join("db/seeds/athlete_ace_data/sports"), resolver: LibraryImporter.new)
