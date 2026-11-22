@@ -47,7 +47,7 @@ class Contest < ApplicationRecord
   # The home entry's venue for that season, falling back to the team's.
   def home_venue
     campaign = home_entry&.campaign
-    campaign&.stadium || campaign&.team&.stadium
+    campaign&.home_stadium || campaign&.team&.stadium
   end
 
   # Where the contest was played: the recorded venue, else the home venue.

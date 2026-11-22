@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_21_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_22_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -885,6 +885,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_130000) do
     t.check_constraint "(duration_hours = ANY (ARRAY[24, 168, 720])) AND ends_at > starts_at", name: "valid_posting_mute_duration"
   end
 
+  create_table "nicknames", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "text", null: false
+    t.string "entity_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((text)::text)", name: "index_nicknames_on_lower_text", unique: true
+    t.index ["entity_code"], name: "index_nicknames_on_entity_code", unique: true
+  end
+
   create_table "organization_affiliations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.date "start_date"
     t.date "end_date"
@@ -1490,6 +1499,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_130000) do
     t.check_constraint "amount_cents >= 50 AND amount_cents <= 99999999 AND (status::text = ANY (ARRAY['pending'::character varying, 'paid'::character varying, 'expired'::character varying]::text[]))", name: "stripe_purchase_amount_and_status"
   end
 
+  create_table "team_namings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "team_id", null: false
+    t.uuid "nickname_id"
+    t.string "territory"
+    t.string "display_name"
+    t.string "abbreviation"
+    t.date "start_date"
+    t.date "end_date"
+    t.jsonb "source", default: {}, null: false
+    t.jsonb "details", default: {}, null: false
+    t.string "entity_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_team_namings_on_entity_code", unique: true
+    t.index ["nickname_id"], name: "index_team_namings_on_nickname_id"
+    t.index ["team_id"], name: "index_team_namings_on_team_id"
+    t.check_constraint "start_date IS NULL OR end_date IS NULL OR end_date >= start_date", name: "team_namings_have_ordered_dates"
+    t.exclusion_constraint "team_id WITH =, daterange(start_date, end_date, '[]'::text) WITH &&", using: :gist, name: "team_namings_do_not_overlap"
+  end
+
   create_table "teams", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "mascot"
     t.string "territory"
@@ -1513,6 +1542,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_130000) do
     t.index ["primary_logo_id"], name: "index_teams_on_primary_logo_id"
     t.index ["seed_version"], name: "index_teams_on_seed_version"
     t.index ["stadium_id"], name: "index_teams_on_stadium_id"
+  end
+
+  create_table "tenancies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "team_id", null: false
+    t.uuid "stadium_id", null: false
+    t.string "role", default: "home", null: false
+    t.date "start_date"
+    t.date "end_date"
+    t.jsonb "source", default: {}, null: false
+    t.jsonb "details", default: {}, null: false
+    t.string "entity_code"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_code"], name: "index_tenancies_on_entity_code", unique: true
+    t.index ["stadium_id"], name: "index_tenancies_on_stadium_id"
+    t.index ["team_id"], name: "index_tenancies_on_team_id"
+    t.check_constraint "role::text = ANY (ARRAY['home'::character varying, 'temporary'::character varying, 'shared'::character varying]::text[])", name: "tenancies_have_known_roles"
+    t.check_constraint "start_date IS NULL OR end_date IS NULL OR end_date >= start_date", name: "tenancies_have_ordered_dates"
+    t.exclusion_constraint "team_id WITH =, daterange(start_date, end_date, '[]'::text) WITH &&", where: "(role)::text = 'home'::text", using: :gist, name: "home_tenancies_do_not_overlap"
   end
 
   create_table "title_awards", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1784,9 +1832,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_21_130000) do
   add_foreign_key "stints", "transactions", column: "start_transaction_id"
   add_foreign_key "stripe_purchases", "aces"
   add_foreign_key "stripe_purchases", "shout_outs"
+  add_foreign_key "team_namings", "nicknames"
+  add_foreign_key "team_namings", "teams"
   add_foreign_key "teams", "leagues"
   add_foreign_key "teams", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "teams", "stadiums"
+  add_foreign_key "tenancies", "stadiums"
+  add_foreign_key "tenancies", "teams"
   add_foreign_key "title_awards", "contestants", column: ["contest_id", "winner_id"], primary_key: ["contest_id", "id"]
   add_foreign_key "title_awards", "contests"
   add_foreign_key "title_awards", "players"

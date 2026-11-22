@@ -182,27 +182,27 @@ module SeasonsHelper
   end
 
   def season_link_banks_section(season)
-    ordered_campaigns = season.campaigns.sort_by { |campaign| campaign.team.name }
-    ordered_teams = ordered_campaigns.map(&:team)
+    ordered_campaigns = season.campaigns.includes(:team).sort_by(&:name)
 
     tag.section class: "season-link-banks" do
-      season_team_bank(ordered_teams) +
+      season_team_bank(ordered_campaigns) +
       season_campaign_bank(ordered_campaigns) +
       render_collection(season.contests.competitions, title: "Competitions", parent: season, link_to_collection: true)
     end
   end
 
-  def season_team_bank(teams)
+  # Each team appears under the name it used that season.
+  def season_team_bank(campaigns)
     tag.div class: "season-link-bank" do
       tag.div(class: "season-link-bank-header") do
         tag.h2("Teams In This Season", class: "season-section-title") +
-        tag.p(pluralize(teams.size, "team"), class: "season-link-bank-count")
+        tag.p(pluralize(campaigns.size, "team"), class: "season-link-bank-count")
       end +
-      if teams.any?
+      if campaigns.any?
         tag.div(class: "season-link-bank-grid") do
-          teams.map do |team|
-            link_to(team, class: "season-team-link-card") do
-              display_name_with_lazy_logo(team, link: false)
+          campaigns.map do |campaign|
+            link_to(campaign.team, class: "season-team-link-card") do
+              display_name_with_lazy_logo(campaign.team, name: campaign.name, link: false)
             end
           end.join.html_safe
         end
@@ -222,7 +222,7 @@ module SeasonsHelper
         tag.div(class: "season-link-bank-grid") do
           campaigns.map do |campaign|
             link_to(campaign, class: "season-campaign-link-card") do
-              tag.span(campaign.team.name, class: "season-campaign-name") +
+              tag.span(campaign.name, class: "season-campaign-name") +
               tag.span("Campaign", class: "season-campaign-label")
             end
           end.join.html_safe
