@@ -17,3 +17,10 @@ RSpec.describe Season, type: :model do
     expect(season.name).to eq("2024 #{season.league.name}")
   end
 end
+
+RSpec.describe Season, "#status", type: :model do
+  it "treats an undated season from two or more years ago as completed" do
+    expect(build(:season, year: build(:year, number: 2003)).status).to eq("completed")
+    expect(build(:season, year: build(:year, number: Date.current.year)).status).to eq("in_progress")
+  end
+end

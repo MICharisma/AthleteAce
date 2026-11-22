@@ -97,8 +97,8 @@ module ActivationsHelper
           content << activation_info_item("Contract", link_to("Contract ##{activation.contract.id}", contract_path(activation.contract)))
         end
         content << activation_info_item("Player", link_to(activation.player.display_name, player_path(activation.player)))
-        content << activation_info_item("Team", link_to(activation.team.name, team_path(activation.team)))
-        content << activation_info_item("Campaign", link_to("#{activation.campaign.team.name} - #{activation.campaign.season.year}", campaign_path(activation.campaign)))
+        content << activation_info_item("Team", link_to(activation.campaign.name, team_path(activation.team)))
+        content << activation_info_item("Campaign", link_to("#{activation.campaign.name} - #{activation.campaign.season.year}", campaign_path(activation.campaign)))
         content << activation_info_item("Start Date", activation.start_date&.strftime("%B %d, %Y") || "Not specified")
         content << activation_info_item("End Date", activation.end_date&.strftime("%B %d, %Y") || "Not specified")
         safe_join(content)

@@ -30,6 +30,9 @@ class Team < ApplicationRecord
   has_many :contestants, through: :campaigns
   has_many :contests, through: :contestants
   has_many :activations, through: :campaigns
+  has_many :team_namings, dependent: :destroy
+  has_many :nicknames, -> { distinct }, through: :team_namings
+  has_many :tenancies, dependent: :destroy
 
   delegate :sport, to: :league
   delegate :city, :state, :country, to: :stadium, allow_nil: true
@@ -42,7 +45,18 @@ class Team < ApplicationRecord
     [ territory, mascot ].compact_blank.join(" ")
   end
   alias :full_name :name
-  
+
+  # The territory, mascot, abbreviation and stadium columns cache the current
+  # values. A name falls back to that cache, since it still identifies the
+  # franchise; a stadium does not, since today's venue would misstate history.
+  def name_on(date)
+    (date && team_namings.in_force_on(date).first&.name.presence) || name
+  end
+
+  def stadium_on(date)
+    tenancies.home.in_force_on(date).first&.stadium if date
+  end
+
   
   # Define which attributes can be searched via Ransack
   def self.ransackable_attributes(auth_object = nil)

@@ -48,6 +48,8 @@ class Season < ApplicationRecord
     return "upcoming" if start_date && start_date > Date.current
     return "in_playoffs" if playoffs? && playoff_start_date <= Date.current && (playoff_end_date.nil? || playoff_end_date >= Date.current)
     return "completed" if end_date && end_date < Date.current
+    # Without dates, a season that started two or more calendar years ago is over.
+    return "completed" if !start_date && !end_date && year && year.number < Date.current.year - 1
     "in_progress"
   end
 end

@@ -22,18 +22,17 @@ RSpec.describe "Championship history seeds" do
     end
   end
 
-  it "imports forty sourced titles and finalists, annual classifications, and replays without changes" do
+  it "imports fifty-five sourced titles and finalists, annual classifications, and replays without changes" do
     import_history do |path|
-      expect(TitleAward.count).to eq(40)
-      expect(Contestant.count).to eq(80)
+      expect(TitleAward.count).to eq(55)
+      expect(Contestant.count).to eq(110)
       expect(Campaign.count).to be >= 1232
       expect(Game.count).to eq(0)
       expect(Appearance.count).to eq(0)
       expect(Membership.count).to eq(0)
-      %w[NBA NFL NHL MLB].each do |league|
+      { "NBA" => 2001, "NFL" => 2016, "NHL" => 2016, "MLB" => 2016 }.each do |league, first_year|
         titles = TitleAward.joins(:contest).where(contests: { context: League.find_by!(abbreviation: league) })
-        expect(titles.count).to eq(10)
-        expect(titles.map { |award| award.contest.details.fetch("championship_year") }.sort).to eq((2016..2025).to_a)
+        expect(titles.map { |award| award.contest.details.fetch("championship_year") }.sort).to eq((first_year..2025).to_a)
         expect(titles.all? { |award| award.source.fetch("url").start_with?("https://") }).to be(true)
         expect(titles.all? { |award| award.winner.placing == 1 && award.contest.runner_up.placing == 2 }).to be(true)
       end
@@ -89,7 +88,7 @@ RSpec.describe "Championship history seeds" do
       path = File.join(source, "alignment_ranges.yml")
       original = YAML.safe_load(File.read(path))
       cases = [
-        [ ->(document) { document.fetch("ranges").first["through"] = 2014 }, /Invalid year range/ ],
+        [ ->(document) { range = document.fetch("ranges").first; range["through"] = range.fetch("from") - 1 }, /Invalid year range/ ],
         [ ->(document) { document.fetch("ranges") << document.fetch("ranges").first.dup }, /Overlapping/ ],
         [ ->(document) { document.fetch("ranges").shift }, /Incomplete/ ],
         [ ->(document) { document.fetch("ranges").first["division"] = "BKT-NBA-DIVISION-PACIFIC_DIVISION" }, /differs from capture/ ]

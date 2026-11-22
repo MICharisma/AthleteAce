@@ -27,10 +27,21 @@ class Campaign < ApplicationRecord
   validate :division_matches_season_context
   validate :preserve_contest_seasons, on: :update
 
+  # A value recorded on the campaign wins; otherwise the team's naming or home
+  # tenancy in force when the season started. Only the name falls back to the
+  # team's current value.
   def name
-    display_name.presence || [territory, mascot].compact_blank.join(" ").presence || team.name
+    display_name.presence || [territory, mascot].compact_blank.join(" ").presence || team.name_on(season&.start_date)
   end
   alias_method :full_name, :name
+
+  def home_stadium
+    stadium || team.stadium_on(season&.start_date)
+  end
+
+  def home_city
+    city || home_stadium&.city
+  end
   
   def self.ransackable_attributes auth_object = nil
     column_names
