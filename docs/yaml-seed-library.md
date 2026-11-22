@@ -253,6 +253,8 @@ The [championship-history batch](../db/seeds/athlete_ace_data/sources/championsh
 
 An uncoded naming is adopted by its team and the naming in force on its start date. An uncoded tenancy is adopted the same way, within the same stadium and role. Replay preserves recorded values and reports differences. A Campaign's own recorded name and stadium still take precedence over both.
 
+The library holds generated namings for NBA, NFL, NHL and MLB teams in `yaml/team_namings/` and open-ended current home tenancies in `yaml/tenancies/`; see their source READMEs for what the dates assert. Namings are dated from Season start dates, which `sources/season_dates/` supplies as first and last regular-season game dates. Because replay preserves existing values, `seeds:import` first fills start and end dates that existing seasons lack, through `Seeds::SeasonDateImporter`, and reports any recorded date that differs.
+
 ## Coverage and remaining launch work
 
 The [2026 capture and asset extension](seed-library-2026.md) adds seven current-season competition datasets, three NBA participant-history datasets, the complete NHL regular-season schedule, persistent number assignments, and a local visual asset pilot. The counts below describe the earlier pilot. Current coverage comes from `rails seeds:coverage` and `sources/coverage_2026/report.json`.

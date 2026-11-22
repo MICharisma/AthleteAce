@@ -92,9 +92,8 @@ module Seeds
       { records: records.length, codes: declared.length, files: paths.length }
     end
 
-    def call(paths)
+    def call(paths, records: read(paths))
       @report = { created: [], unchanged: [], conflicts: [], aliases_added: [] }
-      records = read(paths)
       validate_records!(records)
       ApplicationRecord.transaction do
         pending = records

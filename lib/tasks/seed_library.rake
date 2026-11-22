@@ -101,7 +101,13 @@ namespace :seeds do
     # again for players the library has just created.
     photos = Seeds::PlayerPhotoImporter.new(source: root.parent.join("sources/nba_player_photos.json"))
     puts({ player_photos: photos.call.transform_values(&:length) }.to_json)
-    report = Seeds::LibraryImporter.new(registry: registry).call(paths)
+    importer = Seeds::LibraryImporter.new(registry: registry)
+    records = importer.read(paths)
+    # Likewise fill season dates that existing seasons lack.
+    season_dates = Seeds::SeasonDateImporter.new(records: records).call
+    puts({ season_dates: season_dates.transform_values(&:length) }.to_json)
+    season_dates[:conflicts].each { |conflict| puts conflict.to_json }
+    report = importer.call(paths, records: records)
     puts report.transform_values(&:length).to_json
     report[:conflicts].each { |conflict| puts conflict.to_json }
     puts({ new_player_photos: photos.call.transform_values(&:length) }.to_json)
