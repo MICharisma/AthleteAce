@@ -1,7 +1,7 @@
 namespace :decisions do
-  desc "Compare Jev and OpenAI Luna on the bundled smoke cases without changing content"
+  desc "Compare Jev and OpenAI Luna on the bundled smoke cases, or the CASES file, without changing content"
   task compare: :environment do
-    cases = JSON.parse(Rails.root.join("spec/fixtures/decision_cases.json").read)
+    cases = JSON.parse(Rails.root.join(ENV.fetch("CASES", "spec/fixtures/decision_cases.json")).read)
     raise "The comparison has no cases." if cases.empty?
     results = cases.flat_map do |example|
       task = case example.fetch("purpose")
@@ -13,8 +13,8 @@ namespace :decisions do
         raise "Unknown comparison purpose"
       end
       DecisionModels::Compare.call(task: task, comparison_key: SecureRandom.uuid).map do |row|
-        result = { case: example.fetch("id"), provider: row.provider, status: row.status,
-          expected: example.fetch("expected"), choice: row.choice, input_tokens: row.input_tokens,
+        result = { case: example.fetch("id"), category: example["category"], provider: row.provider, status: row.status,
+          expected: example.fetch("expected"), choice: row.choice, confidence: row.answer&.dig("confidence"), input_tokens: row.input_tokens,
           estimated_usd: row.estimated_usd&.to_s("F"), latency_ms: row.latency_ms, error: row.error_code }
         puts result.to_json
         result
