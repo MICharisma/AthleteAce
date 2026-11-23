@@ -17,7 +17,10 @@ This app loads Ruby 4.0.7 through mise, pinned in `mise.toml`. A `ruby` already 
 - `rails db:migrate` - Run pending migrations
 
 ### Testing
-- `bundle exec rspec` - Run the default suite, in random order (about 5 minutes)
+Read `docs/testing.md` before writing or changing a spec. It covers which layer to test in, the bug-fix recipe, and the interaction specs that replace browser tests.
+
+- `npm install` - Install jsdom and esbuild for interaction specs (once per checkout)
+- `bundle exec rspec` - Run the default suite, in random order
 - `bundle exec rspec spec/models/player_spec.rb` - Run specific test file
 - `bundle exec rspec --only-failures` or `--next-failure` - Rerun what failed last time
 - `bundle exec rspec --tag seed_library` - Run the examples that import the real seed library (several minutes). The default suite leaves them out; run them when the seed data or the importer changes
@@ -116,7 +119,7 @@ Use descriptive suffixes: `dom_id(team, :quiz_link_for)` rather than `dom_id(tea
 - **PostgreSQL** database with separate schemas for cable/cache/queue
 - **Tailwind CSS 4.3** for styling
 - **Turbo/Stimulus** for JavaScript interactions
-- **RSpec** for testing with FactoryBot, Capybara, Shoulda Matchers
+- **RSpec** for testing with FactoryBot, rails-jsdom (interaction specs), Capybara with Selenium (layout only), Shoulda Matchers
 - **Pagy 43** for pagination (`Pagy::Method`, `@pagy.series_nav`, defaults in `Pagy::OPTIONS`)
 - **Ransack** for search functionality
 - **Devise** for authentication

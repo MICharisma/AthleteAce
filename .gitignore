@@ -48,3 +48,5 @@ db/.DS_Store
 
 # RSpec example status for --only-failures and --next-failure
 /spec/examples.txt
+
+/node_modules

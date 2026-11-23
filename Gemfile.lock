@@ -360,6 +360,13 @@ GEM
     rails-html-sanitizer (1.7.1)
       loofah (~> 2.25, >= 2.25.2)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
+    rails-jsdom (0.2.1)
+      actioncable (>= 8.1)
+      actionpack (>= 8.1)
+      importmap-rails (>= 2.0)
+      nokogiri (>= 1.15)
+      propshaft (>= 1.0)
+      turbo-rails (>= 2.0)
     railties (8.1.4)
       actionpack (= 8.1.4)
       activesupport (= 8.1.4)
@@ -570,6 +577,7 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 8.1.4)
   rails-controller-testing (~> 1.0)
+  rails-jsdom (~> 0.2.1)
   ransack (~> 5.0)
   rizz-auth!
   rizz-client!

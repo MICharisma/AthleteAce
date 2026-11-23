@@ -1,33 +1,8 @@
 require "rails_helper"
 
-RSpec.describe "Browse entity navigation", type: :system do
-  after { page.driver.browser.execute_cdp "Emulation.clearDeviceMetricsOverride" }
-
+RSpec.describe "Browse entity layout", type: :system do
   def viewport(width)
     page.driver.browser.execute_cdp "Emulation.setDeviceMetricsOverride", width: width, height: 900, deviceScaleFactor: 1, mobile: false
-  end
-
-  def expect_no_overflow
-    expect(page.evaluate_script("document.documentElement.scrollWidth <= innerWidth")).to be(true), "overflow on #{page.current_path}"
-  end
-
-  it "follows scoped links from a sport through a league to a team on a phone" do
-    league = create :league, name: "Pacific Basketball League", sport: create(:sport, name: "Basketball")
-    team = create :team, league: league, territory: "Oakland", mascot: "Herons"
-    create_list :player, 2, team: team
-    viewport 390
-    visit sport_path(league.sport, side: "play")
-    click_link league.name, exact: true
-    expect(page).to have_css("main h1", text: league.name.upcase, count: 1)
-    expect(page).to have_css('body[data-side="play"]')
-    expect_no_overflow
-    click_link "View all teams"
-    expect(page).to have_current_path(league_teams_path(league))
-    expect(page).to have_content(team.name)
-    click_link team.name, exact: true
-    expect(page).to have_css('body[data-side="play"]')
-    expect(page).to have_content(league.name)
-    expect_no_overflow
   end
 
   it "keeps entity records readable on phone and desktop in both themes" do
@@ -58,20 +33,17 @@ RSpec.describe "Browse entity navigation", type: :system do
         expect(page).to have_css("main h1", count: 1)
         %w[light dark].each do |theme|
           page.execute_script("document.documentElement.dataset.theme = arguments[0]", theme)
-          expect_no_overflow
+          expect_no_horizontal_overflow
           if page.has_css?(".related-record", wait: 0)
             background = theme == "dark" ? "rgba(27, 31, 38, 1)" : "rgba(236, 235, 230, 1)"
             expect(page.first(".related-record")).to match_style("background-color" => background)
-          end
-          if [ league, organization, season, contract ].include?(record)
-            page.save_screenshot Rails.root.join("tmp/screenshots/browse-#{record.model_name.singular}-#{width}-#{theme}.png")
           end
         end
       end
       [ organizations_path, organization_affiliations_path, campaigns_path, memberships_path, contracts_path, activations_path, seasons_path, contests_path, spectrums_path, achievements_path ].each do |path|
         visit path
         expect(page).to have_css("main h1", count: 1)
-        expect_no_overflow
+        expect_no_horizontal_overflow
       end
     end
   end

@@ -83,6 +83,7 @@ group :test do
   gem 'shoulda-matchers', '~> 8.0'
   gem 'rails-controller-testing', '~> 1.0'
   gem 'simplecov', '~> 1.3', require: false
+  gem 'rails-jsdom', '~> 0.2.1'
 end
 
 group :development do
