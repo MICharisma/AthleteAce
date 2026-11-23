@@ -34,6 +34,7 @@ class InterfaceOutline < Insta::Serializers::Base
 
   def outline(node, depth)
     return [] if SKIPPED.include?(node.name) || node["hidden"] || node["aria-hidden"] == "true"
+    return [] if node.name == "dialog" && !node.has_attribute?("open")
     # A label's text already names its field, so only fields inside it remain.
     return node.element_children.flat_map { |child| outline(child, depth) } if node.name == "label"
 

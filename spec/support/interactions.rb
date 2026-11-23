@@ -8,16 +8,21 @@ module InteractionExampleGroup
   include ActiveSupport::Testing::TimeHelpers
   include RailsJsdom::TestHelper
 
+  # An app without Action Cable configured has no pubsub to take over.
+  CABLE = ActionCable.server.config.cable.present?
+
   included do
     before do
       rails_jsdom_clock
-      rails_jsdom_take_over_pubsub
+      rails_jsdom_take_over_pubsub if CABLE
     end
 
     after do
       RailsJsdom.bridge.reset
-      rails_jsdom_close_cables
-      rails_jsdom_restore_pubsub
+      if CABLE
+        rails_jsdom_close_cables
+        rails_jsdom_restore_pubsub
+      end
     end
   end
 
