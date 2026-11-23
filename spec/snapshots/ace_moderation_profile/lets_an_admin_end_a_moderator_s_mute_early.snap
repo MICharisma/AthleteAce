@@ -1,0 +1,48 @@
+---
+source: Ace moderation profile lets an admin end a moderator's mute early
+expression: String
+---
+- header:
+  - text "Ace"
+  - heading "Jules Okafor" [level=1]
+  - text "Jules Okafor"
+  - text "@fair_catch"
+  - text "Joined November 02, 2026"
+- region "Posting moderation summary":
+  - text "Muted until Nov 9, 2026 at 15:00 UTC"
+  - text "0 warnings · 1 mute"
+  - text "0 submissions · 0 approved · 0 rejected · 0 in review · 0 hidden"
+  - text "0 reports received · 0 open"
+- group:
+  - summary "Warn"
+  - form:
+    - textbox "Warning reason" [multiline] [required]
+    - combobox "Related submission" = ""
+    - text "The ace can see this warning reason. It does not hide content."
+    - button "Record warning"
+- group:
+  - summary "End mute early"
+  - form:
+    - textbox "Reason for ending mute" [multiline] [required]
+    - text "The ace can see this reason. The original mute remains in history."
+    - button "End mute"
+- group:
+  - summary "Add moderator note"
+  - form:
+    - textbox "Internal note" [multiline] [required]
+    - text "Reviewers can read this note. It stays private from this ace, including if they are a reviewer."
+    - button "Save moderator note"
+- group:
+  - summary "Escalate to admin"
+  - text "Capture this case for an admin. Account permissions stay unchanged. Your reason stays private to reviewers who can view the case."
+  - form:
+    - textbox "Escalation reason" [multiline] [required]
+    - button "Escalate to admin"
+- nav "Ace moderation sections":
+  - link "Submissions" → /moderate/aces/:id?tab=submissions
+  - link "Reports" → /moderate/aces/:id?tab=reports
+  - link "Warnings and mutes" → /moderate/aces/:id?tab=actions
+  - link "Moderator notes" → /moderate/aces/:id?tab=notes
+- heading "Recent submissions" [level=2]
+- text "The 10 most recent funded submissions and proposals."
+- text "No submissions yet."

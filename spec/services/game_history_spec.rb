@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe GameHistory do
-  include ActiveSupport::Testing::TimeHelpers
   let(:ace) { create(:ace) }
   let(:team) { create(:team) }
   let(:player) { create(:player, team: team) }

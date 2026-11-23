@@ -84,6 +84,7 @@ group :test do
   gem 'rails-controller-testing', '~> 1.0'
   gem 'simplecov', '~> 1.3', require: false
   gem 'rails-jsdom', '~> 0.2.1'
+  gem 'insta', '~> 0.3.0', require: false
 end
 
 group :development do

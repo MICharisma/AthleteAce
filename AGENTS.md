@@ -119,7 +119,7 @@ Use descriptive suffixes: `dom_id(team, :quiz_link_for)` rather than `dom_id(tea
 - **PostgreSQL** database with separate schemas for cable/cache/queue
 - **Tailwind CSS 4.3** for styling
 - **Turbo/Stimulus** for JavaScript interactions
-- **RSpec** for testing with FactoryBot, rails-jsdom (interaction specs), Capybara with Selenium (layout only), Shoulda Matchers
+- **RSpec** for testing with FactoryBot, rails-jsdom (interaction specs), insta (interface snapshots), Capybara with Selenium (layout only), Shoulda Matchers
 - **Pagy 43** for pagination (`Pagy::Method`, `@pagy.series_nav`, defaults in `Pagy::OPTIONS`)
 - **Ransack** for search functionality
 - **Devise** for authentication

@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Quest approval attribution", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
 
   let(:author) { create :ace }
   let(:reviewer) { create :ace, moderator: true }

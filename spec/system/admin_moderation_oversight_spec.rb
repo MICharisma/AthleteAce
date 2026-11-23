@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Admin moderation oversight workflow", type: :system do
-  include ActiveSupport::Testing::TimeHelpers
   after { page.driver.browser.execute_cdp "Emulation.clearDeviceMetricsOverride" }
 
   it "shows recorded metrics in both themes and drills into the matching history on a phone" do

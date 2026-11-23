@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Team wall", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
 
   let(:ace) { create(:ace) }
   let(:team) { create(:team) }

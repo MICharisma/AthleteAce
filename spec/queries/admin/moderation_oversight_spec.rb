@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe Admin::ModerationOversight do
-  include ActiveSupport::Testing::TimeHelpers
   around { |example| travel_to(Time.utc(2026, 10, 25, 12)) { example.run } }
 
   let(:shared_id) { SecureRandom.uuid_v7 }

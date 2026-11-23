@@ -2,7 +2,6 @@ require "rails_helper"
 require "csv"
 
 RSpec.describe "Shout-out revenue", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
   let(:admin) { create(:ace, admin: true) }
 
   it "protects HTML and CSV from ordinary aces and moderators" do

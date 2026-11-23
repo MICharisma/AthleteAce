@@ -2,7 +2,6 @@ require "rails_helper"
 require "csv"
 
 RSpec.describe "Admin moderation oversight", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
   around { |example| travel_to(Time.utc(2026, 10, 25, 12)) { example.run } }
   let(:admin) { create :ace, :admin }
   let(:quest) { create :quest, name: "Learn the Northern backcourt" }

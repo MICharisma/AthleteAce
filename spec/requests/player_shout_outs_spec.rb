@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Player shout-outs", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
 
   let(:author) { create :ace }
   let(:reviewer) { create :ace, moderator: true }

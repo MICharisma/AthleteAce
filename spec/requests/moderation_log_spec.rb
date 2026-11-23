@@ -2,7 +2,6 @@ require "rails_helper"
 require "csv"
 
 RSpec.describe "Moderation decision log", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
   around { |example| travel_to(Time.utc(2026, 10, 22, 14)) { example.run } }
 
   let(:author) { create(:ace) }

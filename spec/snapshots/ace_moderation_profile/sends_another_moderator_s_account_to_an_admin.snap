@@ -1,0 +1,30 @@
+---
+source: Ace moderation profile sends another moderator's account to an admin
+expression: String
+---
+- header:
+  - text "Ace"
+  - heading "Theo Park" [level=1]
+  - text "Theo Park"
+  - text "@sixth_man"
+  - text "Joined November 02, 2026"
+- region "Posting moderation summary":
+  - text "Posting active"
+  - text "0 warnings · 0 mutes"
+  - text "0 submissions · 0 approved · 0 rejected · 0 in review · 0 hidden"
+  - text "0 reports received · 0 open"
+- text "Self-actions and actions against admins are unavailable. An admin must handle another moderator's account."
+- group:
+  - summary "Escalate to admin"
+  - text "Capture this case for an admin. Account permissions stay unchanged. Your reason stays private to reviewers who can view the case."
+  - form:
+    - textbox "Escalation reason" [multiline] [required]
+    - button "Escalate to admin"
+- nav "Ace moderation sections":
+  - link "Submissions" → /moderate/aces/:id?tab=submissions
+  - link "Reports" → /moderate/aces/:id?tab=reports
+  - link "Warnings and mutes" → /moderate/aces/:id?tab=actions
+  - link "Moderator notes" → /moderate/aces/:id?tab=notes
+- heading "Recent submissions" [level=2]
+- text "The 10 most recent funded submissions and proposals."
+- text "No submissions yet."

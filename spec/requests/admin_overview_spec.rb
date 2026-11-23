@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Admin overview", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
 
   it "requires an admin and shows private zero-state operational metrics" do
     get admin_path

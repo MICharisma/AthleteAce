@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Play learning" do
-  include ActiveSupport::Testing::TimeHelpers
 
   let(:ace) { create(:ace) }
   let(:league) { create(:league) }

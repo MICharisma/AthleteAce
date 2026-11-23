@@ -1,0 +1,53 @@
+---
+source: Ace moderation profile shows a moderator every action and empty state for
+  a new fan
+expression: String
+---
+- header:
+  - text "Ace"
+  - heading "Rosa Diaz" [level=1]
+  - text "Rosa Diaz"
+  - text "@bleacher_creature"
+  - text "Joined November 02, 2026"
+- region "Posting moderation summary":
+  - text "Posting active"
+  - text "0 warnings · 0 mutes"
+  - text "0 submissions · 0 approved · 0 rejected · 0 in review · 0 hidden"
+  - text "0 reports received · 0 open"
+- group:
+  - summary "Warn"
+  - form:
+    - textbox "Warning reason" [multiline] [required]
+    - combobox "Related submission" = ""
+    - text "The ace can see this warning reason. It does not hide content."
+    - button "Record warning"
+- group:
+  - summary "Mute from posting"
+  - text "They can still play and read. New shout-outs and proposals are blocked until the mute ends."
+  - form:
+    - combobox "Duration" = "7 days"
+    - textbox "Mute reason" [multiline] [required]
+    - textbox "Private note for moderators" [multiline]
+    - combobox "Hide their live shout-out that was reported" = ""
+    - text "Hiding returns the full bid as wallet credit. Mute and hide succeed together."
+    - button "Mute from posting"
+- group:
+  - summary "Add moderator note"
+  - form:
+    - textbox "Internal note" [multiline] [required]
+    - text "Reviewers can read this note. It stays private from this ace, including if they are a reviewer."
+    - button "Save moderator note"
+- group:
+  - summary "Escalate to admin"
+  - text "Capture this case for an admin. Account permissions stay unchanged. Your reason stays private to reviewers who can view the case."
+  - form:
+    - textbox "Escalation reason" [multiline] [required]
+    - button "Escalate to admin"
+- nav "Ace moderation sections":
+  - link "Submissions" → /moderate/aces/:id?tab=submissions
+  - link "Reports" → /moderate/aces/:id?tab=reports
+  - link "Warnings and mutes" → /moderate/aces/:id?tab=actions
+  - link "Moderator notes" → /moderate/aces/:id?tab=notes
+- heading "Recent submissions" [level=2]
+- text "The 10 most recent funded submissions and proposals."
+- text "No submissions yet."

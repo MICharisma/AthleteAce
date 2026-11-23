@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe RizzSignIn::JwksClient do
-  include ActiveSupport::Testing::TimeHelpers
   include_context "with a Rizz speaker"
 
   it "caches discovery and keys" do

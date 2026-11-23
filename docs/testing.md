@@ -17,6 +17,7 @@ Some quick rules for choosing:
 
 - If the page works with JavaScript off, a request spec can check it. Use `response.parsed_body` (a Nokogiri document for HTML) and assert on elements, not on raw substrings of `response.body`.
 - If you need to click something that a Stimulus controller or Turbo handles, write an interaction spec.
+- If a page shows different things by role, account, setting or state, record each permutation as an interface snapshot (see below) rather than scattering `include` and `not_to include` checks.
 - Write a system spec only when the assertion is about geometry or computed style. System specs live in `spec/system/<feature>_layout_spec.rb`, hold no behavior checks, and use the helpers in `spec/support/layout.rb`: `phone_viewport`, `expect_no_horizontal_overflow`, and `rect(selector)`.
 
 ## Fixing a bug
@@ -61,6 +62,31 @@ The gem has limits:
 - A JavaScript error, an unhandled rejection, or an unexpected `confirm` fails the step. Wrap an expected dialog in `accept_confirm { ... }`.
 - More than one element matching a locator raises. Scope with `within`, or pass `match: :first`.
 - Run `npm install` once per checkout. The gem needs Node 22.22+, 24.15+, or 26+.
+
+## Interface snapshots
+
+A page that changes with who is looking or what exists (role, own account or someone else's, settings, empty states, tabs) gets an interface snapshot for each permutation. The snapshot is an outline of what a visitor can read and do on the page. It lists headings, text, links (with record ids replaced by `:id`), buttons, form fields and their flags, and the regions that group them. It leaves out styling and markup, so restyling a page doesn't change its snapshots, but adding, removing or rewording anything a visitor sees does.
+
+```ruby
+it "withholds actions, reports and notes on a moderator's own profile" do
+  sign_in moderator
+  get ace_profile_path(moderator, tab: "reports")
+  expect(response.body).to match_snapshot("own_profile_reports", serializer: :interface)
+end
+```
+
+`spec/requests/ace_profile_interface_spec.rb` is the worked example. A few rules:
+
+- Write one example per permutation, named for who sees what. When one example records several snapshots (for example, a tab loop), name each one. Names must be unique within the file's `describe`, because they share one directory under `spec/snapshots/`.
+- Make the page deterministic. Freeze time with `travel_to`, and give records fixed, realistic names instead of factory sequences.
+- A snapshot records only the permutations you list. A rule that only shows up in a permutation you didn't list goes untested, so cover each role and state the page branches on.
+- Snapshot what the page shows. Keep behavior (what a click or a submission changes) in ordinary request or interaction examples.
+
+A snapshot that changes fails the example with a side-by-side diff and writes a `.snap.new` file beside it. A new snapshot fails until it is accepted.
+
+- `bin/insta review` steps through pending snapshots so you can accept or reject each one. `bin/insta accept` accepts them all, and `bin/insta status` lists what's pending. Use `bin/insta`, not `bundle exec insta`: the binstub points the CLI at `spec/snapshots`.
+- Read every diff before accepting it. Accept only the changes your work intended, and say in the commit message which snapshots changed and why. An unexpected change is a bug report.
+- `INSTA_FORCE_PASS=true bundle exec rspec <file>` writes pending snapshots without failing, which is useful for a first run.
 
 ## Running specs
 

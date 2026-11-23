@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Weekly shout-out leaderboard", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
   let(:author) { create(:ace) }
   let(:reviewer) { create(:ace, moderator: true) }
   let(:team) { create(:team, league: create(:mlb)) }

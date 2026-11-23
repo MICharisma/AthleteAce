@@ -1,0 +1,22 @@
+---
+source: Ace moderation profile withholds actions, reports and notes on a moderator's
+  own profile
+expression: String
+---
+- header:
+  - text "Ace"
+  - heading "Jules Okafor" [level=1]
+  - text "Jules Okafor"
+  - text "@fair_catch"
+  - text "Joined November 02, 2026 · Last sign-in November 02, 2026 15:00 UTC"
+- region "Posting moderation summary":
+  - text "Posting active"
+  - text "0 warnings · 0 mutes"
+  - text "0 submissions · 0 approved · 0 rejected · 0 in review · 0 hidden"
+- text "Self-actions and actions against admins are unavailable. An admin must handle another moderator's account."
+- nav "Ace moderation sections":
+  - link "Submissions" → /moderate/aces/:id?tab=submissions
+  - link "Reports" → /moderate/aces/:id?tab=reports
+  - link "Warnings and mutes" → /moderate/aces/:id?tab=actions
+  - link "Moderator notes" → /moderate/aces/:id?tab=notes
+- text "Internal moderator notes are unavailable on your own account."

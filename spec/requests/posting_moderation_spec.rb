@@ -1,7 +1,6 @@
 require "rails_helper"
 
 RSpec.describe "Warnings and posting mutes", type: :request do
-  include ActiveSupport::Testing::TimeHelpers
   let(:ace) { create(:ace) }
   let(:reviewer) { create(:ace, moderator: true) }
 
