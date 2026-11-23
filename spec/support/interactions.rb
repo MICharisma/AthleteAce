@@ -57,10 +57,31 @@ module InteractionMatchers
     private
 
     def meets?(actual, prefix)
-      actual.public_send("#{prefix}_#{@assertion}", *@arguments, **@options)
+      assertion = "#{prefix}_#{@assertion}"
+      if actual.respond_to?(assertion)
+        actual.public_send(assertion, *@arguments, **@options)
+      else
+        # Elements answer only text and selector assertions; scope the rest.
+        test = actual.instance_variable_get(:@test)
+        test.within(actual) { test.public_send(assertion, *@arguments, **@options) }
+      end
       true
     rescue Minitest::Assertion => failure
       @failure_message = @failure_message_when_negated = failure.message
+      false
+    end
+  end
+
+  # `have_select "League", selected: "MLB", options: [...]`, by option text.
+  # rails-jsdom's `have_field ..., with:` compares the select's value instead.
+  def have_select(locator, selected: nil, options: nil, with_options: nil)
+    RSpec::Matchers::BuiltIn::Satisfy.new("have select #{locator.inspect}") do |actual|
+      field = actual.find_field(locator, type: "select")
+      choices = field.evaluate_script("Array.from(this.options).map(option => [option.text.trim(), option.selected])")
+      (selected.nil? || choices.select(&:last).map(&:first) == Array(selected)) &&
+        (options.nil? || choices.map(&:first) == options) &&
+        (with_options.nil? || (with_options - choices.map(&:first)).empty?)
+    rescue RailsJsdom::Error
       false
     end
   end

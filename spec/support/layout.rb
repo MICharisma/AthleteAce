@@ -6,7 +6,19 @@ module LayoutHelpers
   end
 
   def expect_no_horizontal_overflow
-    expect(page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth")).to be(true)
+    expect(page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth")).to be(true), "#{page.current_path} scrolls sideways"
+  end
+
+  # Visits each page, in light and dark themes, and checks it fits the viewport.
+  def expect_pages_to_fit(*paths)
+    paths.each do |path|
+      visit path
+      expect(page).to have_current_path(path.split("?").first, ignore_query: true)
+      %w[light dark].each do |theme|
+        page.execute_script("document.documentElement.dataset.theme = arguments[0]", theme)
+        expect_no_horizontal_overflow
+      end
+    end
   end
 
   def rect(selector)

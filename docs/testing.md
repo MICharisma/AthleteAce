@@ -11,14 +11,20 @@ Use the lowest layer that can show the behavior. Each layer up is slower and bre
 | A model, query, or service: rules, scopes, calculations, imports | model or service | `spec/models`, `spec/services` | milliseconds |
 | A controller action: authorization, redirects, params, what the page or JSON contains | request | `spec/requests` | ~50 ms |
 | A Stimulus controller or Turbo behavior: clicks, frames, streams, live updates, timers | interaction (rails-jsdom) | `spec/interactions` | ~100–300 ms |
-| Layout: overflow, sizes, positions, breakpoints, anything needing real CSS | system (Chrome) | `spec/system/*_layout_spec.rb` | seconds |
+| Layout and gestures: overflow, sizes, positions, breakpoints, dragging, anything needing real CSS or a real pointer | system (Chrome) | `spec/system/` | seconds |
 
 Some quick rules for choosing:
 
 - If the page works with JavaScript off, a request spec can check it. Use `response.parsed_body` (a Nokogiri document for HTML) and assert on elements, not on raw substrings of `response.body`.
 - If you need to click something that a Stimulus controller or Turbo handles, write an interaction spec.
 - If a page shows different things by role, account, setting or state, record each permutation as an interface snapshot (see below) rather than scattering `include` and `not_to include` checks.
-- Write a system spec only when the assertion is about geometry or computed style. System specs live in `spec/system/<feature>_layout_spec.rb`, hold no behavior checks, and use the helpers in `spec/support/layout.rb`: `phone_viewport`, `expect_no_horizontal_overflow`, and `rect(selector)`.
+- Write a system spec only when the assertion needs a real browser: geometry, computed style, or pointer and touch gestures such as dragging. System specs live in `spec/system/<area>_layout_spec.rb` (gestures in `<feature>_gestures_spec.rb`) and hold no other behavior checks. They use the helpers in `spec/support/layout.rb`:
+  - `phone_viewport`
+  - `expect_pages_to_fit(*paths)`, which visits each page, confirms it rendered, and checks for sideways scrolling in light and dark themes
+  - `expect_no_horizontal_overflow`
+  - `rect(selector)`
+
+  To cover a new page on phones, add it to the matching area's `expect_pages_to_fit` list.
 
 ## Fixing a bug
 
@@ -58,6 +64,10 @@ The gem has limits:
 - There is no layout. Every element measures 0×0, so layout checks go in the feature's layout system spec.
 - `matchMedia` never matches, observers never fire, and scrolling does nothing.
 - CSS never applies, so text is the HTML source text: a heading styled uppercase still reads "Pacific Basketball League".
+- Only the `hidden` attribute, inline `display: none`, closed `<dialog>`s and similar markup hide an element. A Tailwind `hidden` class doesn't, so assert the class (`have_css(".rating-sign-in-link.hidden")`). In new code, toggle the `hidden` attribute instead.
+- An element styled for one screen size is still on the page. A link in both the desktop tab row and the mobile tab bar matches twice, so scope it with `within` or pass `match: :first`.
+- Images neither load nor fail. To exercise a fallback, fire the event yourself: `find("img", visible: :all).execute_script("this.dispatchEvent(new Event('error'))")`.
+- Browser-owned behavior doesn't happen: Escape doesn't close a `<dialog>`, closing one doesn't return focus, and clicking a heading doesn't blur a field. Call `close()` or `blur()` in the test and assert what the app does next.
 - Requests to other hosts fail. After the page loads, stub them with `stub_fetch`.
 - A JavaScript error, an unhandled rejection, or an unexpected `confirm` fails the step. Wrap an expected dialog in `accept_confirm { ... }`.
 - More than one element matching a locator raises. Scope with `within`, or pass `match: :first`.
