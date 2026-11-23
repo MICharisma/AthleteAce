@@ -1,0 +1,19 @@
+<% content_for :title, t("public_pages.faq.title") %>
+<% content_for :description, t("public_pages.faq.description") %>
+
+<%= tag.div class: "ace-public-page" do %>
+  <%= tag.h1 t("public_pages.faq.heading"), class: "page-title" %>
+  <%= tag.div class: "play-panel" do %>
+    <% t("public_pages.faq.questions").each_value do |item| %>
+      <%= tag.section(tag.h2(item.fetch(:question)) + tag.p(item.fetch(:answer))) %>
+    <% end %>
+    <%= tag.div class: "ace-public-links" do %>
+      <%= link_to t("public_pages.home.preview"), play_preview_path, class: "tool-button" %>
+      <%= link_to t("public_pages.home.browse"), browse_path, class: "tool-link" %>
+    <% end %>
+  <% end %>
+  <%= tag.footer class: "ace-public-links" do %>
+    <%= link_to t("public_pages.home.brand"), root_path, class: "tool-link" %>
+    <%= link_to t("public_pages.contact.link"), contact_path, class: "tool-link" %>
+  <% end %>
+<% end %>

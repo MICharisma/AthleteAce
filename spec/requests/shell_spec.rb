@@ -9,16 +9,18 @@ RSpec.describe "Application shell", type: :request do
     document.css('[aria-label="Switch sides"] a').map { |link| link["aria-label"] }
   end
 
-  it "lands visitors on Feed and keeps Play available as a preview" do
+  it "introduces Athlete Ace to signed-out visitors" do
     get root_path
-    expect(response).to redirect_to(feed_path)
-    follow_redirect!
+    expect(response).to have_http_status(:ok)
+    expect(document.at_css("h1").text).to eq("Get to know the players.")
+    expect(document.at_css("main a[href='#{feed_path}']").text).to eq("Read the feed")
+  end
+
+  it "keeps Feed and Play preview available without an account" do
+    get feed_path
     expect(document.at_css("body")["data-side"]).to eq("feed")
     expect(side_labels).to eq(%w[Play Feed])
     expect(response.body).to include("Preview", "Reading is open to everyone", "No shout-outs yet.")
-    get strength_path
-    get root_path
-    expect(response).to redirect_to(feed_path)
   end
 
   it "lands fans on Play and does not expose privileged sides through parameters" do

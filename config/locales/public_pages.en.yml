@@ -1,0 +1,34 @@
+en:
+  public_pages:
+    home:
+      title: Athlete Ace | Learn athlete names and explore sports
+      description: Learn athlete names with quick practice games, browse teams and players, and read what other fans are saying on Athlete Ace.
+      brand: Athlete Ace
+      heading: Get to know the players.
+      intro: Learn who plays for which team, practice the names you keep forgetting, and get more out of the next game you watch.
+      preview: Try one question
+      browse: Browse sports
+      practice_heading: Practice until the names stick
+      practice: Try a team match or explore the sports catalog. Sign in to save your progress and revisit players you missed.
+      feed_heading: See what fans are saying
+      feed: Read shout-outs and follow the conversation around players and teams.
+      read_feed: Read the feed
+    contact:
+      title: Contact | Athlete Ace
+      heading: Contact Athlete Ace
+      description: Email MICharisma with questions about Athlete Ace, your account, or the sports catalog.
+      link: Contact
+    faq:
+      title: Frequently asked questions | Athlete Ace
+      description: Find out what you can browse without an account, how practice works, and where to find fan shout-outs on Athlete Ace.
+      heading: Frequently asked questions
+      questions:
+        account:
+          question: Do I need an account?
+          answer: You can browse the sports catalog, read the feed, and try a preview question without signing in. Sign in to save your practice progress or follow players and teams.
+        practice:
+          question: What can I practice?
+          answer: Play games about athlete names and teams. Athlete Ace can bring back players you missed so you have another chance to remember them.
+        shout_outs:
+          question: Where can I find fan shout-outs?
+          answer: Open the feed to read public shout-outs, or browse to a player or team and see the posts about them.

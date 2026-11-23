@@ -1,5 +1,10 @@
 .ace-icon { @apply inline-block shrink-0 align-middle; }
 .app-main { @apply max-w-7xl py-8; }
+.ace-public-page { @apply mx-auto grid max-w-3xl gap-5; }
+.ace-public-page .play-panel { @apply grid gap-3; }
+.ace-public-page .play-panel section + section { @apply mt-3 border-t border-line pt-5; }
+.ace-public-page h2 { @apply text-xl font-semibold; }
+.ace-public-links { @apply mt-2 flex flex-wrap items-center gap-4; }
 .eyebrow { @apply font-mono text-xs uppercase tracking-widest font-semibold text-ink-3; }
 .page-title { @apply font-display text-6xl font-extrabold uppercase leading-none tracking-tight text-ink; }
 .browse-header { @apply flex flex-wrap items-end justify-between gap-5 mb-8 border-b border-line pb-6; }

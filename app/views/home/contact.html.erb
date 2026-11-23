@@ -1,0 +1,11 @@
+<% content_for :title, t("public_pages.contact.title") %>
+<% content_for :description, t("public_pages.contact.description") %>
+
+<%= tag.div class: "ace-public-page" do %>
+  <%= tag.header class: "play-panel" do %>
+    <%= tag.h1 t("public_pages.contact.heading"), class: "page-title" %>
+    <%= tag.p t("public_pages.contact.description") %>
+    <%= tag.p mail_to("mike@micharisma.com", subject: "Athlete Ace", class: "tool-link") %>
+  <% end %>
+  <%= tag.footer link_to(t("public_pages.faq.heading"), faq_path, class: "tool-link") %>
+<% end %>

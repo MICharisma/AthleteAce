@@ -2,6 +2,8 @@
 <html lang="en" data-theme="<%= current_theme %>">
   <head>
     <title><%= content_for(:title) || "Athlete Ace" %></title>
+    <%= tag.meta name: "description", content: content_for(:description) if content_for?(:description) %>
+    <%= tag.meta name: "robots", content: "noindex" if Rails.env.development? || ENV["RAILWAY_ENVIRONMENT_NAME"] == "staging" %>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">

@@ -1,0 +1,27 @@
+<% content_for :title, t("public_pages.home.title") %>
+<% content_for :description, t("public_pages.home.description") %>
+
+<%= tag.div class: "ace-public-page" do %>
+  <%= tag.header class: "play-panel" do %>
+    <%= tag.p t("public_pages.home.brand"), class: "eyebrow" %>
+    <%= tag.h1 t("public_pages.home.heading"), class: "page-title" %>
+    <%= tag.p t("public_pages.home.intro") %>
+    <%= tag.div class: "ace-public-links" do %>
+      <%= link_to t("public_pages.home.preview"), play_preview_path, class: "tool-button" %>
+      <%= link_to t("public_pages.home.browse"), browse_path, class: "tool-link" %>
+    <% end %>
+  <% end %>
+  <%= tag.section class: "play-panel" do %>
+    <%= tag.h2 t("public_pages.home.practice_heading") %>
+    <%= tag.p t("public_pages.home.practice") %>
+  <% end %>
+  <%= tag.section class: "play-panel" do %>
+    <%= tag.h2 t("public_pages.home.feed_heading") %>
+    <%= tag.p t("public_pages.home.feed") %>
+    <%= link_to t("public_pages.home.read_feed"), feed_path, class: "tool-link" %>
+  <% end %>
+  <%= tag.footer class: "ace-public-links" do %>
+    <%= link_to t("public_pages.faq.heading"), faq_path, class: "tool-link" %>
+    <%= link_to t("public_pages.contact.link"), contact_path, class: "tool-link" %>
+  <% end %>
+<% end %>

@@ -42,6 +42,10 @@ module ShellNavigation
     edit_profile_path
   end
 
+  def after_sign_out_path_for(_resource_or_scope)
+    feed_path
+  end
+
   def shell_landing_path
     return feed_path unless current_ace
     side = session[:side].presence_in(available_sides) || default_side

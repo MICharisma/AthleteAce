@@ -89,5 +89,7 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Root route
+  get "faq", to: "home#faq", as: :faq
+  get "contact", to: "home#contact", as: :contact
   root "home#index"
 end

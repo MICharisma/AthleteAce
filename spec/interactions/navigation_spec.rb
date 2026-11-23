@@ -10,8 +10,11 @@ RSpec.describe "Navigation" do
     expect(page).to have_css("dialog[open]")
   end
 
-  it "opens Feed for visitors and offers Play preview and sign-in" do
+  it "offers the Feed, Play preview, and sign-in from the visitor home page" do
     visit root_path
+    expect(page).to have_current_path(root_path)
+    expect(page).to have_link("Try one question", href: play_preview_path)
+    click_link "Read the feed"
     expect(page).to have_current_path(feed_path)
     within('[aria-label="Switch sides"]') do
       expect(page).to have_link("Play")

@@ -19,7 +19,7 @@ Open **Profile** in the account menu to view or edit your display name and initi
 
 ## Navigation and appearance
 
-The root opens Feed for visitors and Play for signed-in fans. Moderators and admins return to their last side in the current session. Their first visit opens Moderate or Admin. A saved return page takes precedence after sign-in.
+The home page introduces Athlete Ace to signed-out visitors and links to the practice preview, sports catalog, Feed, FAQ, and Contact. Signed-in fans open Play. Moderators and admins return to their last side in the current session. Their first visit opens Moderate or Admin. A saved return page takes precedence after sign-in.
 
 Switch sides in the dark top bar. Play has Home, Games, Quests, History, and Browse tabs. Moderate and Admin use a sidebar on desktop. On mobile, navigation within each side moves to the bottom of the screen. Shared player, team, place, quest, and catalog pages keep the side you arrived from. Browse replaces the old table dropdowns and retains their catalog links. [Entity overviews](docs/browse-entities.md) connect sports, places, seasons, organizations, and dated participation records through related-record sections and scoped directories.
 
