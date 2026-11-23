@@ -1,4 +1,18 @@
 namespace :shots do
+  desc "Issue a Shot upload token for an agent"
+  task :issue_token, [:label] => :environment do |_, args|
+    token, secret = ShotUploadToken.issue!(label: args.fetch(:label))
+    puts "Token ID: #{token.id}"
+    puts secret
+  end
+
+  desc "Revoke a Shot upload token by ID"
+  task :revoke_token, [:id] => :environment do |_, args|
+    token = ShotUploadToken.find(args.fetch(:id))
+    token.update!(revoked_at: Time.current) unless token.revoked_at?
+    puts "Revoked Shot upload token #{token.id}."
+  end
+
   desc "Upload unassigned sample portraits from the three fictional player folders"
   task import_samples: :environment do
     root = Pathname.new ENV.fetch("PORTRAIT_DIR")

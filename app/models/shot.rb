@@ -2,6 +2,7 @@ class Shot < ApplicationRecord
   IMAGE_TYPES = %w[image/jpeg image/png image/webp image/gif image/avif].freeze
 
   has_one_attached :image
+  belongs_to :shot_upload_token, optional: true
   has_many :captures, dependent: :destroy
   has_many :players, through: :captures
 

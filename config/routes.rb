@@ -35,6 +35,11 @@ Rails.application.routes.draw do
   resources :follows, only: [ :create, :destroy ]
   resources :player_groups
   get "browse", to: "browse#index", as: :browse
+  namespace :api do
+    namespace :v1 do
+      resources :shots, only: :create
+    end
+  end
   namespace :admin do
     get "content-catalog", to: "content_catalog#index", as: :content_catalog
     get "moderation-oversight", to: "moderation_oversight#index", as: :moderation_oversight

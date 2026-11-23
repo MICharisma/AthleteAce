@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_23_180000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -1294,12 +1294,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_180000) do
     t.index ["year_id"], name: "index_seasons_on_year_id"
   end
 
+  create_table "shot_upload_tokens", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "label", null: false
+    t.string "digest", null: false
+    t.datetime "revoked_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["digest"], name: "index_shot_upload_tokens_on_digest", unique: true
+  end
+
   create_table "shots", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.text "external_url"
     t.text "tags", default: [], null: false, array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.uuid "shot_upload_token_id"
+    t.string "upload_key"
+    t.string "upload_fingerprint"
     t.index ["external_url"], name: "index_shots_on_external_url", unique: true
+    t.index ["shot_upload_token_id", "upload_key"], name: "index_shots_on_shot_upload_token_id_and_upload_key", unique: true
     t.index ["tags"], name: "index_shots_on_tags", using: :gin
   end
 
@@ -1828,6 +1841,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_180000) do
   add_foreign_key "seasons", "leagues"
   add_foreign_key "seasons", "teams", column: "champion_id"
   add_foreign_key "seasons", "years"
+  add_foreign_key "shots", "shot_upload_tokens"
   add_foreign_key "shout_out_drafts", "aces"
   add_foreign_key "shout_out_reactions", "aces", on_delete: :cascade
   add_foreign_key "shout_out_reactions", "shout_outs"
