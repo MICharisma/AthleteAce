@@ -55,12 +55,12 @@ RSpec.describe "Game pages" do
 
   context "with JavaScript" do
     it "shows initials when a player's portrait fails to load and the portrait once it loads" do
-      teams.each { |team| team.players.update_all(photo_urls: [ "/missing-player-portrait.png" ]) }
+      teams.each { |team| team.players.each { |player| player.update!(photo_urls: [ "/missing-player-portrait.png" ]) } }
       visit strength_team_match_path(league_id: league.id)
       find(".subject-card .entity-avatar img", visible: :all).execute_script("this.dispatchEvent(new Event('error'))")
       expect(page).to have_css(".subject-card .entity-avatar[data-image-state=fallback] .entity-initials")
 
-      teams.each { |team| team.players.update_all(photo_urls: [ "/icon.png" ]) }
+      teams.each { |team| team.players.each { |player| player.update!(photo_urls: [ "/icon.png" ]) } }
       visit strength_team_match_path(league_id: league.id)
       find(".subject-card .entity-avatar img", visible: :all).execute_script("this.dispatchEvent(new Event('load'))")
       expect(page).to have_css(".subject-card .entity-avatar[data-image-state=loaded] .entity-portrait")

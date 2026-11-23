@@ -44,8 +44,8 @@ module PlayersHelper
 
   def player_photo_display player
     tag.div class: "player-photo-container" do
-      if player.photo_urls.present?
-        tag.img src: player.photo_urls.sample, alt: player.display_name, class: "player-photo"
+      if (url = player_portrait_url(player))
+        tag.img src: url, alt: player.display_name, class: "player-photo"
       else
         tag.div class: "player-photo-placeholder" do
           icon "shirt-sport", size: 48

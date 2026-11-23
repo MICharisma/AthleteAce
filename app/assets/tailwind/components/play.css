@@ -123,3 +123,15 @@
 @media (prefers-reduced-motion: reduce) {
   .game-button, .training-card, .game-container .choice-item, .answer-overlay { transition: none; transform: none; }
 }
+
+.shot-library {
+  @apply grid gap-4 grid-cols-2 md:grid-cols-4;
+
+  img { @apply w-full aspect-[4/5] object-contain; }
+}
+
+.shot-preview {
+  @apply max-w-72;
+
+  img { @apply w-full; }
+}

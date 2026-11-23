@@ -195,6 +195,7 @@ module Seeds
         end
       end
       record.attributes.each_key do |key|
+        next if model == Player && key == "photo_urls"
         foreign_type = model.reflect_on_all_associations(:belongs_to).any? { |association| association.polymorphic? && association.foreign_type == key }
         if PROTECTED_ATTRIBUTES.include?(key) || key.end_with?("_id") || foreign_type || !column_model(model, key).column_names.include?(key)
           raise Error, "#{record.location}: unsupported #{record.type} attribute #{key}; associations use references"
@@ -258,6 +259,12 @@ module Seeds
 
     def cast_attributes(model, attributes)
       attributes.to_h do |key, value|
+        if model == Player && key == "photo_urls"
+          unless value.nil? || (value.is_a?(Array) && value.all?(String))
+            raise Error, "Player.photo_urls requires an array of strings"
+          end
+          next [key, Array(value)]
+        end
         column = column_model(model, key).columns_hash.fetch(key)
         if column.array && !value.nil? && !value.is_a?(Array)
           raise Error, "#{model.name}.#{key} requires an array"

@@ -78,3 +78,19 @@ Once figure synchronization finishes, run
 The production job schedule polls name changes every five minutes and revalidates
 the cache at 4am each day. Figures awaiting identity review remain in Rizz's
 review workflow.
+
+
+### Player shots
+
+Admins can upload images from **Sports data → Shots**, filter by a descriptive
+tag, and tag players after upload. A Capture links a Shot to a Player.
+Each Capture has its own selection weight. Zero keeps the tag and skips
+the Shot in rotation. Uploaded images use the existing Active Storage volume.
+
+To load the 15 generated portraits into a development database, set
+`PORTRAIT_DIR` to the directory containing the three
+`fictional_<sport>_players` folders and run `mise exec -- bin/rails shots:import_samples`.
+The task uploads them as unassigned Shots tagged `sample`, `portrait`, and their
+sport. It reports how many files it added out of 15 and exits nonzero if the
+expected files are missing or an upload fails. A successful replay adds zero.
+Image recognition skips Shots tagged `sample`.

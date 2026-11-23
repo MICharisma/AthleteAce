@@ -43,6 +43,9 @@ Rails.application.routes.draw do
     resources :games, only: [ :index, :show ]
     resources :people, only: [ :index, :show, :update ]
     resources :catalog_records, path: "sports-data", only: [ :index, :new, :create, :edit, :update ]
+    resources :shots, only: [:index, :create, :edit, :update] do
+      resources :captures, only: [:create, :update, :destroy]
+    end
     resources :catalog_edits, only: [ :index, :show, :update ]
     scope "claims", constraints: { kind: /business|practice|statement/ } do
       get "/", to: "figure_claims#index", as: :figure_claims

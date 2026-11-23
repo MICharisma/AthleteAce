@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_23_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -291,6 +291,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.index ["stadium_id"], name: "index_campaigns_on_stadium_id"
     t.index ["team_id", "season_id"], name: "index_campaigns_on_team_id_and_season_id", unique: true
     t.index ["team_id"], name: "index_campaigns_on_team_id"
+  end
+
+  create_table "captures", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "shot_id", null: false
+    t.uuid "player_id", null: false
+    t.integer "weight", default: 1, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_id", "shot_id"], name: "index_captures_on_player_id_and_shot_id", unique: true
+    t.index ["shot_id"], name: "index_captures_on_shot_id"
+    t.check_constraint "weight >= 0", name: "capture_weight_nonnegative"
   end
 
   create_table "catalog_edits", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -954,7 +965,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.integer "draft_year"
     t.boolean "active"
     t.text "bio", default: [], array: true
-    t.text "photo_urls", default: [], array: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "seed_version", comment: "Version of the seed file that created or last updated this record"
@@ -1282,6 +1292,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
     t.index ["start_date"], name: "index_seasons_on_start_date"
     t.index ["year_id", "league_id"], name: "index_seasons_on_year_and_league", unique: true
     t.index ["year_id"], name: "index_seasons_on_year_id"
+  end
+
+  create_table "shots", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "external_url"
+    t.text "tags", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["external_url"], name: "index_shots_on_external_url", unique: true
+    t.index ["tags"], name: "index_shots_on_tags", using: :gin
   end
 
   create_table "shout_out_drafts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1721,6 +1740,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_22_130000) do
   add_foreign_key "campaigns", "seasons"
   add_foreign_key "campaigns", "stadiums"
   add_foreign_key "campaigns", "teams"
+  add_foreign_key "captures", "players"
+  add_foreign_key "captures", "shots"
   add_foreign_key "catalog_edits", "aces", column: "actor_id", on_delete: :nullify
   add_foreign_key "cities", "states"
   add_foreign_key "conferences", "leagues"

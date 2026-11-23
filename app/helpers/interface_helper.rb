@@ -50,7 +50,7 @@ module InterfaceHelper
 
   def player_portrait_url player
     portrait = player.figure.primary_portrait&.file
-    portrait&.attached? ? url_for(portrait) : player.photo_url
+    player.photo_url || (url_for(portrait) if portrait&.attached?)
   end
 
   def record_identity record

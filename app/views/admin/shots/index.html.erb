@@ -1,0 +1,27 @@
+<%= tag.div class: "moderation-page people-page" do %>
+  <%= browse_header(t(".title"), eyebrow: "Admin") { link_to(t(".sports_data"), admin_catalog_records_path, class: "tool-link") } %>
+  <%= form_with model: [:admin, @shot], class: "round-panel" do |form| %>
+    <%= tag.p @shot.errors.full_messages.to_sentence, role: "alert" if @shot.errors.any? %>
+    <%= form.label :image, t(".image") %>
+    <%= form.file_field :image, required: true, accept: Shot::IMAGE_TYPES.join(",") %>
+    <%= form.label :tags, t(".tags") %>
+    <%= form.text_field :tags, value: @shot.tags.join(", "), class: "account-input" %>
+    <%= form.submit t(".upload"), class: "tool-button" %>
+  <% end %>
+  <%= form_with url: admin_shots_path, method: :get, class: "people-filters" do |form| %>
+    <%= form.label :tag, t(".tag") %>
+    <%= form.search_field :tag, value: @tag, class: "account-input" %>
+    <%= form.check_box :unassigned, checked: params[:unassigned] == "1" %>
+    <%= form.label :unassigned, t(".unassigned") %>
+    <%= form.submit t(".filter"), class: "tool-button" %>
+  <% end %>
+  <%= tag.div class: "shot-library" do %>
+    <% @shots.each do |shot| %>
+      <%= link_to edit_admin_shot_path(shot), class: "round-panel" do %>
+        <%= image_tag shot.url, alt: t(".edit_shot"), loading: "lazy" %>
+        <%= tag.span shot.tags.join(", ") if shot.tags.any? %>
+      <% end %>
+    <% end %>
+  <% end %>
+  <%== @pagy.series_nav if @pagy.pages > 1 %>
+<% end %>

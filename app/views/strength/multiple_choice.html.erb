@@ -21,9 +21,9 @@
     <div class="p-6">
       <h2 class="text-xl font-semibold text-gray-800 mb-4">Who is this athlete?</h2>
       
-      <% if @correct_player.photo_urls.present? %>
+      <% if (url = player_portrait_url(@correct_player)) %>
         <div class="flex justify-center mb-6">
-          <img src="<%= @correct_player.photo_urls.first %>" alt="Athlete photo" class="h-64 w-64 object-cover rounded-lg shadow-md">
+          <img src="<%= url %>" alt="Athlete photo" class="h-64 w-64 object-cover rounded-lg shadow-md">
         </div>
       <% else %>
         <div class="flex justify-center mb-6 bg-gray-200 h-64 w-64 mx-auto rounded-lg flex items-center justify-center">

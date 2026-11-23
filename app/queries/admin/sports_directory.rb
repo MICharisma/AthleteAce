@@ -63,8 +63,8 @@ module Admin
         records = records.where(active: { "active" => true, "inactive" => false, "unknown" => nil }.fetch(status)) if status
         records = records.where(current_position: position) if position
         if photo
-          condition = "EXISTS (SELECT 1 FROM unnest(players.photo_urls) AS photo_url WHERE btrim(photo_url) <> '')"
-          records = records.where(photo == "present" ? condition : "NOT #{condition}")
+          players_with_captures = Capture.select(:player_id)
+          records = photo == "present" ? records.where(id: players_with_captures) : records.where.not(id: players_with_captures)
         end
         records.includes(team: :league).by_name
       else

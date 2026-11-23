@@ -21,7 +21,7 @@ module Admin
 
     def self.values(record)
       values = record.attributes
-      record.is_a?(Player) ? values.merge(Player::NAME_ATTRIBUTES.index_with { record.public_send(it) }) : values
+      record.is_a?(Player) ? values.merge(Player::NAME_ATTRIBUTES.index_with { record.public_send(it) }, "photo_urls" => record.photo_urls) : values
     end
 
     def self.catalog_changes(record, saved: false)
@@ -45,11 +45,13 @@ module Admin
           end
           raise Conflict, "This record changed while you were editing. Reload before saving." unless version == self.version(record)
           name = record.name
+          previous_urls = record.photo_urls if record.is_a?(Player) && submitted.key?("photo_urls")
           record.assign_attributes(submitted)
+          url_change = { "photo_urls" => [previous_urls, record.photo_urls] } if previous_urls && previous_urls != record.photo_urls
           raise ArgumentError, "Supply at least one part of the name." if (record.is_a?(Player) ? [ record.first_name, record.last_name ] : [ record.territory, record.mascot ]).all?(&:blank?)
-          return if catalog_changes(record).empty?
+          return if catalog_changes(record).empty? && !url_change
           record.save!
-          changes = catalog_changes(record, saved: true)
+          changes = catalog_changes(record, saved: true).merge(url_change || {})
           CatalogEdit.create!(actor: actor, actor_name: "#{actor.public_name} #{actor.handle}", record_type: record.class.name,
             record_id: record.id, entity_code: record.entity_code, record_name: name,
             before_values: changes.transform_values(&:first), after_values: changes.transform_values(&:last),

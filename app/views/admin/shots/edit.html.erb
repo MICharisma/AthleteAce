@@ -1,0 +1,39 @@
+<%= tag.div class: "moderation-page people-page" do %>
+  <%= browse_header(t(".title"), eyebrow: "Admin") { link_to(t(".library"), admin_shots_path, class: "tool-link") } %>
+  <%= tag.div(image_tag(@shot.url, alt: t(".image")), class: "shot-preview") %>
+  <%= form_with model: [:admin, @shot], class: "round-panel" do |form| %>
+    <%= tag.p @shot.errors.full_messages.to_sentence, role: "alert" if @shot.errors.any? %>
+    <%= form.label :tags, t(".tags") %>
+    <%= form.text_field :tags, value: @shot.tags.join(", "), class: "account-input" %>
+    <%= form.submit t(".save_tags"), class: "tool-button" %>
+  <% end %>
+  <%= tag.h2 t(".players"), class: "profile-section-title" %>
+  <%= tag.p t(".weight_hint"), class: "round-caption" %>
+  <% @captures.each do |capture| %>
+    <%= tag.div class: "round-panel" do %>
+      <%= link_to capture.player.display_name, player_path(capture.player) %>
+      <%= form_with model: [:admin, @shot, capture], namespace: capture.id do |form| %>
+        <%= form.label :weight, t(".weight") %>
+        <%= form.number_field :weight, min: 0, required: true, class: "account-input" %>
+        <%= form.submit t(".save_weight"), class: "tool-button" %>
+      <% end %>
+      <%= button_to t(".remove"), admin_shot_capture_path(@shot, capture), method: :delete, class: "tool-button" %>
+    <% end %>
+  <% end %>
+  <%= form_with url: edit_admin_shot_path(@shot), method: :get, class: "people-filters" do |form| %>
+    <%= form.label :q, t(".find_player") %>
+    <%= form.search_field :q, value: @query, class: "account-input" %>
+    <%= form.submit t(".search"), class: "tool-button" %>
+  <% end %>
+  <% if @players.any? %>
+    <%= form_with model: [:admin, @shot, Capture.new], class: "round-panel" do |form| %>
+      <%= form.label :player_id, t(".player") %>
+      <%= form.collection_select :player_id, @players, :id, ->(player) { "#{player.display_name} (#{player.entity_code})" }, {}, class: "account-input" %>
+      <%= form.label :weight, t(".weight") %>
+      <%= form.number_field :weight, min: 0, required: true, class: "account-input" %>
+      <%= form.submit t(".add_player"), class: "tool-button" %>
+    <% end %>
+  <% elsif @query.present? %>
+    <%= tag.p t(".no_players") %>
+  <% end %>
+<% end %>

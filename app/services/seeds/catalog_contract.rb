@@ -14,6 +14,10 @@ module Seeds
           next if LibraryImporter::PROTECTED_ATTRIBUTES.include?(column.name) || column.name.end_with?("_id") || polymorphic_columns.include?(column.name)
           [column.name, column_schema(model, column)]
         end.to_h
+        if model == Player
+          attributes["photo_urls"] = { "anyOf" => [{"type" => "array", "items" => {"type" => "string"}}, {"type" => "null"}] }
+          attributes = attributes.sort.to_h
+        end
         [name, { "attributes" => attributes, "references" => model.reflect_on_all_associations(:belongs_to).map { |association| association.name.to_s }.sort }]
       end
       { "namespace" => "MIC", "catalog" => "ALA", "entities" => entities }

@@ -1,0 +1,29 @@
+en:
+  admin:
+    shots:
+      index:
+        title: Shots
+        sports_data: Sports data
+        image: Image
+        tags: Tags (comma separated)
+        upload: Upload shot
+        tag: Filter by tag
+        unassigned: Without players
+        filter: Filter shots
+        edit_shot: Edit shot
+      edit:
+        title: Edit shot
+        library: Shots
+        image: Shot
+        tags: Tags (comma separated)
+        save_tags: Save tags
+        players: Tagged players
+        weight: Weight
+        weight_hint: Higher weights appear more often for that player. A weight of 0 keeps the player tagged and skips the shot in rotation.
+        save_weight: Save weight
+        remove: Remove tag
+        find_player: Find a player by name or entity code
+        search: Search
+        player: Player
+        add_player: Tag player
+        no_players: No matching untagged players.

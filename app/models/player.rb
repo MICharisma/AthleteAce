@@ -17,6 +17,10 @@ class Player < ApplicationRecord
   delegate :current_organization, to: :team, allow_nil: true
   
   has_many :player_group_memberships, dependent: :destroy
+  has_many :captures, dependent: :destroy
+  has_many :shots, through: :captures
+  after_save :save_photo_urls, if: -> { @pending_photo_urls }
+
   has_many :player_groups, through: :player_group_memberships
   # Career-summary positions; rosters and appearances carry observed ones.
   has_many :position_assignments, as: :subject, dependent: :destroy
@@ -61,7 +65,7 @@ class Player < ApplicationRecord
   end
   
   def self.ransackable_attributes(auth_object = nil)
-    ["active", "bio", "birth_city_id", "birth_country_id", "birthdate", "created_at", "current_position", "debut_year", "draft_year", "id", "league_name", "photo_urls", "position_name", "sport_name", "team_id", "team_name", "team_territory", "updated_at"]
+    ["active", "bio", "birth_city_id", "birth_country_id", "birthdate", "created_at", "current_position", "debut_year", "draft_year", "id", "league_name", "position_name", "sport_name", "team_id", "team_name", "team_territory", "updated_at"]
   end
   
   def self.ransackable_associations(auth_object = nil)
@@ -87,8 +91,29 @@ class Player < ApplicationRecord
     super || team&.sport
   end
   
-  def photo_url
-    photo_urls&.first
+  def photo_url(recognition: false)
+    candidates = captures.includes(shot: { image_attachment: :blob }).filter_map do |capture|
+      shot = capture.shot
+      next if capture.weight.zero? || (recognition && shot.tags.include?("sample"))
+
+      url = shot.url
+      [url, capture.weight] if url.present?
+    end
+    total_weight = candidates.sum(&:last)
+    return if total_weight.zero?
+
+    pick = rand(total_weight)
+    candidates.find { |_, weight| (pick -= weight).negative? }.first
+  end
+
+  # Existing catalog forms, exports, and seed manifests still exchange URL lists.
+  def photo_urls
+    @pending_photo_urls || shots.where.not(external_url: nil).order("captures.weight DESC", "shots.external_url").pluck(:external_url)
+  end
+
+  def photo_urls=(urls)
+    normalized = Array(urls).map(&:strip).compact_blank.uniq
+    @pending_photo_urls = normalized unless normalized == photo_urls
   end
   alias_method :logo_url, :photo_url
 
@@ -132,6 +157,19 @@ class Player < ApplicationRecord
   end
 
   private
+
+  def save_photo_urls
+    Player.unscoped.lock.find(id)
+    linked_urls = captures.joins(:shot).where.not(shots: { external_url: nil })
+    linked_urls.where.not(shots: { external_url: @pending_photo_urls }).delete_all
+    @pending_photo_urls.each_with_index do |url, index|
+      shot = Shot.create_or_find_by!(external_url: url)
+      captures.find_or_initialize_by(shot: shot).update!(weight: @pending_photo_urls.size - index)
+    end
+    @pending_photo_urls = nil
+    association(:captures).reset
+    association(:shots).reset
+  end
 
   def career_primary_position
     position_assignments.find_by(primary: true)&.position
