@@ -1,6 +1,6 @@
 # AthleteAce
 
-AthleteAce runs on Ruby 4.0.7, Rails 8.1.4, and PostgreSQL. Ruby is pinned in
+AthleteAce runs on Ruby 4.0.10, Rails 8.1.4.1, and PostgreSQL. Ruby is pinned in
 `.ruby-version` and `mise.toml`.
 
 See [Railway deployment](docs/railway.md) for staging configuration and the first-deploy checks.

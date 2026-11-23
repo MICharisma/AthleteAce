@@ -1,0 +1,19 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "SQL Injection",
+      "fingerprint": "b52e32a2a71f3c3819e477ac790bb8f4c18c9f92ef4d4e0813ab9f2dbff8b3c3",
+      "file": "app/models/player.rb",
+      "line": 77,
+      "note": "Player.named_in_code interpolates only the fixed column names short_name and sort_name; the code part is bound with ? placeholders."
+    },
+    {
+      "warning_type": "Redirect",
+      "fingerprint": "e4f9b31489cea59af1b029ccf3578c3abb2b8fd8b3e57f936eb6c6a3be21b0e1",
+      "file": "app/controllers/rizz_auth/creations_controller.rb",
+      "line": 52,
+      "note": "RizzClaimHandoff#return_url starts from callback_uri, which comes from Rizz's signed handoff claims and is accepted only when RizzSignIn.configuration.issuer_origin? confirms it is Rizz's own origin."
+    }
+  ],
+  "brakeman_version": "8.1.1"
+}

@@ -1,12 +1,15 @@
 class Admin::PlayerHistoriesController < ApplicationController
+  TABS = %w[stints contracts transactions rosters appearances numbers].freeze
+
   before_action :authenticate_ace!
   before_action :require_admin!
   before_action { response.headers["Cache-Control"] = "private, no-store" }
 
   def show
     @player = Player.includes(:team).find(params[:id])
-    @tab = params[:tab].presence || "stints"
-    return render plain: "Choose a player history tab.", status: :bad_request unless %w[stints contracts transactions rosters appearances numbers].include?(@tab)
+    # The tab names a partial, so take it from TABS rather than the request.
+    @tab = TABS.find { |tab| tab == (params[:tab].presence || "stints") }
+    return render plain: "Choose a player history tab.", status: :bad_request unless @tab
 
     @counts = { stints: @player.stints.count, contracts: @player.contracts.count, transactions: @player.transaction_players.count,
       rosters: @player.roster_entries.count, appearances: @player.appearances.count, numbers: @player.jersey_number_assignments.count }

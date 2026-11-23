@@ -1,3 +1,3 @@
 [tools]
 # Keep in sync with .ruby-version, which the Dockerfile also reads
-ruby = "4.0.7"
+ruby = "4.0.10"

@@ -5,7 +5,7 @@ This file provides guidance to coding agents working in this repository. `CLAUDE
 ## Development Commands
 
 ### Ruby through mise
-This app loads Ruby 4.0.7 through mise, pinned in `mise.toml`. A `ruby` already on `PATH` is usually a different version, so check mise before reporting that Ruby is missing.
+This app loads Ruby 4.0.10 through mise, pinned in `mise.toml`. A `ruby` already on `PATH` is usually a different version, so check mise before reporting that Ruby is missing.
 
 - `mise install` installs the pinned Ruby if it isn't there yet.
 - Prefix Ruby commands with `mise exec --`: `mise exec -- ruby -S bundle install`, `mise exec -- ruby bin/rails db:migrate`, `mise exec -- ruby -S bundle exec rspec`.
@@ -115,7 +115,7 @@ Choose appropriate parameter passing:
 Use descriptive suffixes: `dom_id(team, :quiz_link_for)` rather than `dom_id(team, :quiz_link)`
 
 ## Technology Stack
-- **Rails 8.1.4** with Ruby 4.0.7 (pinned in `.ruby-version` and `mise.toml`; keep them in sync)
+- **Rails 8.1.4.1** with Ruby 4.0.10 (pinned in `.ruby-version` and `mise.toml`; keep them in sync)
 - **PostgreSQL** database with separate schemas for cable/cache/queue
 - **Tailwind CSS 4.3** for styling
 - **Turbo/Stimulus** for JavaScript interactions

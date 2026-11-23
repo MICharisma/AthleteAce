@@ -8,7 +8,7 @@
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
-ARG RUBY_VERSION=4.0.7
+ARG RUBY_VERSION=4.0.10
 
 FROM scratch AS submodules
 ADD https://github.com/MICharisma/athlete_ace_data.git#773a23af2a964c8ab51eebce4e20523231fd6d35 /db/seeds/athlete_ace_data
