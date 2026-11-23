@@ -12,48 +12,68 @@ RSpec.describe "Shout-out payments and moderation" do
     @stripe_env.each { |key, value| value ? ENV[key] = value : ENV.delete(key) }
   end
 
-  it "reserves a custom credit bid, publishes after review, and restores the full bid when hidden" do
-    ace = create(:ace)
-    reviewer = create(:ace, moderator: true)
-    player = create(:player, first_name: "Jalen", last_name: "Brunson")
-    buy_credit(ace)
-    sign_in ace
-    visit player_path(player)
-    click_link "Write a shout-out draft"
-    fill_in "Your message", with: "That fourth quarter was unforgettable!"
-    click_button "Save draft"
-    expect(page).to have_content("Draft saved. Only you can see it.")
-    within('[aria-labelledby="submit-shout-out-title"]') do
-      fill_in "Your bid (USD)", with: "2.50"
-      select "Use credit", from: "Payment method"
-      click_button "Continue with bid"
+  context "with a credit balance" do
+    let(:ace) { create(:ace) }
+    let(:reviewer) { create(:ace, moderator: true) }
+    let(:player) { create(:player, first_name: "Jalen", last_name: "Brunson") }
+    let(:post) { ace.shout_outs.sole }
+
+    before { buy_credit(ace) }
+
+    def submit_with_credit
+      submit_credit(ace: ace, target: player, message: "That fourth quarter was unforgettable!", bid: 250)
     end
-    expect(page).to have_content("In review. Your bid is reserved.")
-    post = ace.shout_outs.sole
-    visit wallet_path
-    expect(page).to have_css(".wallet-available", text: "$7.50")
-    expect(page).to have_css(".wallet-reserved", text: "$2.50")
-    using_session(:reviewer) do
-      sign_in reviewer
-      visit moderation_item_path(type: "ShoutOut", id: post.id)
-      click_button "Approve"
-      expect(page).to have_css(".browse-header .eyebrow", text: /approved/i)
+
+    it "saves a draft from a player page and reserves a custom bid from credit" do
+      sign_in ace
+      visit player_path(player)
+      click_link "Write a shout-out draft"
+      fill_in "Your message", with: "That fourth quarter was unforgettable!"
+      click_button "Save draft"
+      expect(page).to have_content("Draft saved. Only you can see it.")
+      within('[aria-labelledby="submit-shout-out-title"]') do
+        fill_in "Your bid (USD)", with: "2.50"
+        select "Use credit", from: "Payment method"
+        click_button "Continue with bid"
+      end
+      expect(page).to have_content("In review. Your bid is reserved.")
+      visit wallet_path
+      expect(page).to have_css(".wallet-available", text: "$7.50")
+      expect(page).to have_css(".wallet-reserved", text: "$2.50")
     end
-    using_session(:visitor) do
-      visit feed_path
-      expect(page).to have_css(".shout-out-card", text: post.message)
-      expect(page).not_to have_content("in review")
+
+    it "publishes the post to the feed once a reviewer approves it" do
+      submit_with_credit
+      using_session(:reviewer) do
+        sign_in reviewer
+        visit moderation_item_path(type: "ShoutOut", id: post.id)
+        click_button "Approve"
+        expect(page).to have_css(".browse-header .eyebrow", text: /approved/i)
+      end
+      using_session(:visitor) do
+        visit feed_path
+        expect(page).to have_css(".shout-out-card", text: post.message)
+        expect(page).to have_no_content("in review")
+      end
     end
-    using_session(:reviewer) do
-      fill_in "Reason or note", with: "Not about the target"
-      click_button "Hide"
-      expect(page).to have_css(".browse-header .eyebrow", text: /hidden/i)
+
+    it "returns the full bid to credit when a reviewer hides the post" do
+      submit_with_credit
+      review_post(post, action: "approve", reviewer: reviewer)
+      using_session(:reviewer) do
+        sign_in reviewer
+        visit moderation_item_path(type: "ShoutOut", id: post.id)
+        fill_in "Reason or note", with: "Not about the target"
+        click_button "Hide"
+        expect(page).to have_css(".browse-header .eyebrow", text: /hidden/i)
+      end
+      sign_in ace # Devise signs in on the next request, so wait until the reviewer is done.
+      visit wallet_path
+      expect(page).to have_css(".wallet-available", text: "$10.00")
+      expect(page).to have_css(".wallet-reserved", text: "$0.00")
+      visit shout_out_path(post)
+      expect(page).to have_content("full bid has been returned to your credit wallet")
     end
-    visit wallet_path
-    expect(page).to have_css(".wallet-available", text: "$10.00")
-    expect(page).to have_css(".wallet-reserved", text: "$0.00")
-    visit shout_out_path(post)
-    expect(page).to have_content("full bid has been returned to your credit wallet")
   end
 
   it "keeps a direct Stripe payment unfunded until confirmed and reserves its whole amount" do

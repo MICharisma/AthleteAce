@@ -1,35 +1,49 @@
 require "rails_helper"
 
 RSpec.describe "Following from entity pages" do
-  it "updates buttons in place and uses a followed team for a Quick round" do
-    ace = create(:ace)
-    team = create(:team, territory: "New York", mascot: "Knicks", abbreviation: "NYK")
-    rival = create(:team, league: team.league)
-    player = create(:player, team: team, first_name: "Jalen", last_name: "Brunson")
-    create(:player, team: rival)
+  let(:ace) { create(:ace) }
+  let(:team) { create(:team, territory: "New York", mascot: "Knicks", abbreviation: "NYK") }
+  let!(:player) { create(:player, team: team, first_name: "Jalen", last_name: "Brunson") }
+
+  before do
+    create(:player, team: create(:team, league: team.league))
     sign_in ace
+  end
+
+  it "follows a team without leaving its page" do
     visit team_path(team)
     within("#follow_team_#{team.id}") do
       click_button "Follow"
       expect(page).to have_button("Following")
     end
     expect(page).to have_current_path(team_path(team))
+    expect(ace.follows.where(followable: team)).to exist
+  end
+
+  it "toggles following a player in place" do
     visit player_path(player)
     within("#follow_player_#{player.id}") do
       click_button "Follow"
       expect(page).to have_button("Following")
       click_button "Following"
       expect(page).to have_button("Follow")
-      click_button "Follow"
-      expect(page).to have_button("Following")
     end
+    expect(ace.follows.where(followable: player)).to be_empty
+  end
+
+  it "lists follows on the profile and unfollows from there" do
+    ace.follows.create!(followable: team)
+    follow = ace.follows.create!(followable: player)
     visit profile_path
     expect(page).to have_css("#profile-following-title", text: /Following/i)
-    expect(page).to have_content(player.name)
     expect(page).to have_content(team.name)
-    within("#follow_#{ace.follows.find_by!(followable: player).id}") { click_button "Following" }
-    expect(page).not_to have_link(player.name)
+    within("#follow_#{follow.id}") { click_button "Following" }
+    expect(page).to have_no_link(player.name)
     expect(ace.follows.where(followable: player)).to be_empty
+  end
+
+  it "builds a Quick round from a followed team" do
+    ace.follows.create!(followable: team)
     visit strength_path
     within("main") { click_button "Quick round" }
     expect(page).to have_css(".round-game-progress", text: "1 / 1")

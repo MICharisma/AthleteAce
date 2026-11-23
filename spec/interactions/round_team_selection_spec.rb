@@ -12,32 +12,34 @@ RSpec.describe "Round team selection" do
     sign_in ace
   end
 
-  it "keeps selected teams across searches and plays only the Knicks and Nets" do
+  it "keeps a selected team checked across searches" do
     visit new_game_round_path(league_id: league.id)
     fill_in "Search teams", with: "Knicks"
     click_button "Search"
     expect(page).to have_field("round_team_#{knicks.id}")
-    expect(page).not_to have_field("round_team_#{nets.id}")
+    expect(page).to have_no_field("round_team_#{nets.id}")
     check "round_team_#{knicks.id}"
     expect(page).to have_content("1 team selected")
     expect(page).to have_content("1 player available")
     fill_in "Search teams", with: "Nets"
     click_button "Search"
-    expect(page).to have_checked_field("round_team_#{knicks.id}")
     check "round_team_#{nets.id}"
     expect(page).to have_content("2 teams selected")
     expect(page).to have_content("2 players available")
     expect(page).to have_checked_field("round_team_#{knicks.id}")
-    expect(page).to have_checked_field("round_team_#{nets.id}")
+  end
+
+  it "asks only about the selected teams, with only them as choices" do
+    visit new_game_round_path(league_id: league.id, team_ids: [ knicks.id, nets.id ])
     click_button "Start round"
-    expect(page).to have_css(".round-game-progress", text: "1 / 2")
     round = ace.game_rounds.last
-    expect(round.scope.fetch("team_ids")).to match_array([ knicks.id, nets.id ])
-    expect(round.questions.map { |question| question.fetch("target_id") }.uniq).to match_array([ knicks.id, nets.id ])
-    expect(round.questions.flat_map { |question| question.fetch("choices").map { |choice| choice.fetch("id") } }.uniq).to match_array([ knicks.id, nets.id ])
-    visit new_game_round_path(round.scope)
-    expect(page).to have_checked_field("round_team_#{knicks.id}")
-    expect(page).to have_checked_field("round_team_#{nets.id}")
+    expect(round.scope.fetch("team_ids")).to contain_exactly(knicks.id, nets.id)
+    expect(round.questions.map { |question| question.fetch("target_id") }.uniq).to contain_exactly(knicks.id, nets.id)
+    expect(round.questions.flat_map { |question| question.fetch("choices").map { |choice| choice.fetch("id") } }.uniq).to contain_exactly(knicks.id, nets.id)
+  end
+
+  it "unchecks one team or clears all of them" do
+    visit new_game_round_path(league_id: league.id, team_ids: [ knicks.id, nets.id ])
     uncheck "round_team_#{knicks.id}"
     expect(page).to have_content("1 team selected")
     expect(page).to have_checked_field("round_team_#{nets.id}")

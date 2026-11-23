@@ -47,36 +47,51 @@ RSpec.describe "Navigation" do
     expect(page).to have_css('html[data-theme="system"]')
   end
 
-  it "keeps five Play tabs and an accessible account sheet with saved themes and sign-out" do
-    ace = create(:ace, email: "tess.moreno@example.test")
-    sign_in ace
-    visit root_path
-    expect(page).to have_current_path(strength_path)
-    within('[aria-label="Play navigation mobile"]') do
-      expect(all("a").map(&:text)).to eq(%w[Home Games Quests History Browse])
+  context "for a signed-in fan" do
+    let(:ace) { create(:ace, email: "tess.moreno@example.test") }
+
+    before { sign_in ace }
+
+    it "lands on Play with five tabs" do
+      visit root_path
+      expect(page).to have_current_path(strength_path)
+      within('[aria-label="Play navigation mobile"]') { expect(all("a").map(&:text)).to eq(%w[Home Games Quests History Browse]) }
     end
-    open_menu
-    expect(page).to have_css("dialog[open]", text: ace.handle)
-    # The browser closes a modal dialog on Escape; the app returns focus.
-    execute_script("document.querySelector('dialog[open]').close()")
-    expect(page).not_to have_css("dialog[open]")
-    expect(page.evaluate_script("document.activeElement.getAttribute('aria-label')")).to eq("Account menu")
-    open_menu
-    within("dialog[open]") do
-      expect(page).to have_link("My ratings")
-      expect(page).to have_link("Settings")
-      expect(page).to have_link("Begin Quest")
-      click_button "Dark"
+
+    it "opens an account sheet that returns focus to its button when closed" do
+      visit strength_path
+      open_menu
+      expect(page).to have_css("dialog[open]", text: ace.handle)
+      within("dialog[open]") do
+        expect(page).to have_link("My ratings")
+        expect(page).to have_link("Settings")
+        expect(page).to have_link("Begin Quest")
+      end
+      # The browser closes a modal dialog on Escape; the app returns focus.
+      execute_script("document.querySelector('dialog[open]').close()")
+      expect(page).to have_no_css("dialog[open]")
+      expect(evaluate_script("document.activeElement.getAttribute('aria-label')")).to eq("Account menu")
     end
-    expect(page).to have_css('html[data-theme="dark"]')
-    expect(ace.reload.theme).to eq("dark")
-    within('[aria-label="Play navigation mobile"]') { click_link "Browse" }
-    expect(page).to have_css('html[data-theme="dark"]')
-    open_menu
-    within("dialog[open]") { click_button "Sign Out" }
-    expect(page).to have_link("Sign In")
-    expect(page).to have_current_path(feed_path)
-    expect(page).to have_css('html[data-theme="system"]')
+
+    it "saves a chosen theme to the account and keeps it across pages" do
+      visit strength_path
+      open_menu
+      within("dialog[open]") { click_button "Dark" }
+      expect(page).to have_css('html[data-theme="dark"]')
+      expect(ace.reload.theme).to eq("dark")
+      within('[aria-label="Play navigation mobile"]') { click_link "Browse" }
+      expect(page).to have_css('html[data-theme="dark"]')
+    end
+
+    it "signs out to Feed with the system theme" do
+      ace.update!(theme: "dark")
+      visit strength_path
+      open_menu
+      within("dialog[open]") { click_button "Sign Out" }
+      expect(page).to have_link("Sign In")
+      expect(page).to have_current_path(feed_path)
+      expect(page).to have_css('html[data-theme="system"]')
+    end
   end
 
   it "keeps the moderation side on shared pages and exposes its queue and log" do

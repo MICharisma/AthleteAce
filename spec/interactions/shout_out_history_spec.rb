@@ -1,22 +1,28 @@
 require "rails_helper"
 
 RSpec.describe "Shout-out history" do
+  let(:ace) { create(:ace) }
+  let(:player) { create(:player, first_name: "Jalen", last_name: "Brunson", team: create(:team)) }
+  let(:rejected) { submit_credit(ace: ace, target: player, message: "An unforgettable fourth quarter", bid: 250) }
+  let(:live) { submit_credit(ace: ace, target: player, message: "A live celebration", bid: 100) }
 
-  it "filters and copies a rejected submission into an editable unfunded draft" do
-    ace = create(:ace)
-    player = create(:player, first_name: "Jalen", last_name: "Brunson", team: create(:team))
+  before do
     buy_credit(ace)
-    rejected = submit_credit(ace: ace, target: player, message: "An unforgettable fourth quarter", bid: 250)
     review_post(rejected, action: "reject")
-    live = submit_credit(ace: ace, target: player, message: "A live celebration", bid: 100)
     review_post(live, action: "approve")
     sign_in ace
+  end
+
+  it "filters to rejected submissions and shows their refunded bids" do
     visit shout_outs_path
     within('[aria-label="Filter your shout-outs"]') { click_link "Rejected (1)" }
     expect(page).to have_css("article", text: rejected.message)
-    expect(page).not_to have_css("article", text: live.message)
+    expect(page).to have_no_css("article", text: live.message)
     expect(page).to have_css('[data-bid-total="refunded"]', text: "$2.50")
-    click_link "Details"
+  end
+
+  it "copies a rejected submission into a new unfunded draft and leaves the original alone" do
+    visit shout_out_path(rejected)
     click_button "Copy to new draft"
     expect(page).to have_field("Your message", with: rejected.message)
     expect(page).to have_content("The original submission and its credit are unchanged.")
@@ -26,6 +32,9 @@ RSpec.describe "Shout-out history" do
     expect(rejected.reload.message).to eq("An unforgettable fourth quarter")
     expect(ace.shout_outs.count).to eq(2)
     expect(CreditAccount.for(ace).reserved_cents).to eq(0)
+  end
+
+  it "totals only live bids as spent" do
     visit shout_outs_path
     expect(page).to have_css('[data-bid-total="spent"]', text: "$1.00")
   end

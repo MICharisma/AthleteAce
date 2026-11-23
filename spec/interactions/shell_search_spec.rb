@@ -7,29 +7,51 @@ RSpec.describe "Shell search palette" do
     expect(page).to have_css(".shell-search-dialog[open]")
   end
 
-  it "opens from the keyboard, finds a nickname, follows a result and retains clearable recent searches" do
-    player = create(:player, first_name: "Jalen", last_name: "Brunson", nicknames: [ "Big Body" ])
-    visit feed_path
-    send_keys [ :control, "k" ]
-    expect(page).to have_css(".shell-search-dialog[open]")
-    expect(page.evaluate_script("document.activeElement.id")).to eq("shell-search-query")
-    fill_in "shell-search-query", with: "Big Body"
-    expect(page).to have_css(".search-result", text: "Jalen Brunson")
-    find("#shell-search-query").send_keys(:arrow_down)
-    expect(page).to have_css('.search-result[aria-selected="true"]', text: "Jalen Brunson")
-    find("#shell-search-query").send_keys(:enter)
-    expect(page).to have_current_path(player_path(player, side: "feed"))
-    expect(page).to have_css('body[data-side="feed"]')
-    open_search
-    within(".search-recents") { expect(page).to have_button("Big Body") }
-    click_button "Big Body"
-    expect(page).to have_css(".search-result", text: "Jalen Brunson")
-    find("#shell-search-query").send_keys(:escape)
-    expect(page).not_to have_css(".shell-search-dialog[open]")
-    open_search
-    fill_in "shell-search-query", with: ""
-    click_button "Clear recent searches"
-    expect(page).not_to have_button("Big Body")
+  context "with a player known by a nickname" do
+    let!(:player) { create(:player, first_name: "Jalen", last_name: "Brunson", nicknames: [ "Big Body" ]) }
+
+    def search_and_follow
+      visit feed_path
+      open_search
+      fill_in "shell-search-query", with: "Big Body"
+      find("#shell-search-query").send_keys(:arrow_down, :enter)
+      expect(page).to have_current_path(player_path(player, side: "feed"))
+    end
+
+    it "opens from the keyboard with the query focused" do
+      visit feed_path
+      send_keys [ :control, "k" ]
+      expect(page).to have_css(".shell-search-dialog[open]")
+      expect(evaluate_script("document.activeElement.id")).to eq("shell-search-query")
+    end
+
+    it "finds a player by nickname and opens the selected result on the current side" do
+      visit feed_path
+      open_search
+      fill_in "shell-search-query", with: "Big Body"
+      expect(page).to have_css(".search-result", text: "Jalen Brunson")
+      find("#shell-search-query").send_keys(:arrow_down)
+      expect(page).to have_css('.search-result[aria-selected="true"]', text: "Jalen Brunson")
+      find("#shell-search-query").send_keys(:enter)
+      expect(page).to have_current_path(player_path(player, side: "feed"))
+      expect(page).to have_css('body[data-side="feed"]')
+    end
+
+    it "reruns a recent search and closes with Escape" do
+      search_and_follow
+      open_search
+      within(".search-recents") { click_button "Big Body" }
+      expect(page).to have_css(".search-result", text: "Jalen Brunson")
+      find("#shell-search-query").send_keys(:escape)
+      expect(page).to have_no_css(".shell-search-dialog[open]")
+    end
+
+    it "clears recent searches" do
+      search_and_follow
+      open_search
+      click_button "Clear recent searches"
+      expect(page).to have_no_button("Big Body")
+    end
   end
 
   it "wraps arrow selection and follows a result for visitors and fans" do

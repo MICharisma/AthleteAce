@@ -67,6 +67,8 @@ The gem has limits:
 - Only the `hidden` attribute, inline `display: none`, closed `<dialog>`s and similar markup hide an element. A Tailwind `hidden` class doesn't, so assert the class (`have_css(".rating-sign-in-link.hidden")`). In new code, toggle the `hidden` attribute instead.
 - An element styled for one screen size is still on the page. A link in both the desktop tab row and the mobile tab bar matches twice, so scope it with `within` or pass `match: :first`.
 - Images neither load nor fail. To exercise a fallback, fire the event yourself: `find("img", visible: :all).execute_script("this.dispatchEvent(new Event('error'))")`.
+- `sign_in` applies to the next request in any session. With `using_session`, sign each user in inside their own block, after the other sessions are done making requests.
+- A record the page must list has to exist before the `visit`. A lazy `let` that the example never mentions creates nothing, so use `let!` or touch it in `before`.
 - Browser-owned behavior doesn't happen: Escape doesn't close a `<dialog>`, closing one doesn't return focus, and clicking a heading doesn't blur a field. Call `close()` or `blur()` in the test and assert what the app does next.
 - Requests to other hosts fail. After the page loads, stub them with `stub_fetch`.
 - A JavaScript error, an unhandled rejection, or an unexpected `confirm` fails the step. Wrap an expected dialog in `accept_confirm { ... }`.

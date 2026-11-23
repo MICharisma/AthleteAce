@@ -1,38 +1,54 @@
 require "rails_helper"
 
 RSpec.describe "Group practice from Play home" do
-  it "shows current progress and completes remaining practice from the home card" do
-    ace = create(:ace)
-    team = create(:team)
-    rival = create(:team, league: team.league)
-    jalen = create(:player, first_name: "Jalen", last_name: "Brunson", team: team)
-    josh = create(:player, first_name: "Josh", last_name: "Hart", team: rival, active: false)
-    group = PlayerGroup.create!(name: "Knicks names", players: [ jalen, josh ])
+  let(:ace) { create(:ace) }
+  let(:team) { create(:team) }
+  let(:group) do
+    PlayerGroup.create!(name: "Knicks names", players: [
+      create(:player, first_name: "Jalen", last_name: "Brunson", team: team),
+      create(:player, first_name: "Josh", last_name: "Hart", team: create(:team, league: team.league), active: false)
+    ])
+  end
+
+  # Plays a round on the group: the first name right, the second skipped.
+  def play_round(correct: [ true, false ])
     round = GameRoundSetup.new(game_type: "name_ciphers", player_group_id: group.id).start!(ace)
-    round.answer!(at: 0, choice_id: round.question.fetch("target_id"))
-    round.advance!(at: 0)
-    round.answer!(at: 1, choice_id: nil)
-    round.advance!(at: 1)
+    correct.each_with_index do |right, position|
+      round.answer!(at: position, choice_id: right ? round.questions[position].fetch("target_id") : nil)
+      round.advance!(at: position)
+    end
+  end
+
+  before do
+    play_round
     sign_in ace
+  end
+
+  it "shows a group's progress on Play home" do
     visit strength_path
     expect(page).to have_css(".play-groups .group-practice-card", count: 1)
     within(".play-groups") do
       expect(page).to have_content("1 of 2")
       expect(page).to have_link("Practice misses")
     end
+  end
+
+  it "starts practice on the remaining names from the home card" do
+    visit strength_path
     within(".play-groups") { click_link "Practice remaining 1" }
     expect(page).to have_select("Members to practice", selected: "Not yet answered correctly")
     click_button "Start round"
     expect(page).to have_css(".round-game-progress", text: "1 / 1")
-    current = ace.game_rounds.last
-    find(".round-choice[value='#{current.question.fetch('target_id')}']").click
-    expect(page).to have_css(".round-feedback", text: /Correct/i)
-    click_button "Round summary"
+  end
+
+  it "offers the whole group once every name is answered correctly" do
+    remaining = Player.find(ace.game_rounds.last.questions.second.fetch("subject_id"))
+    create(:game_attempt, ace: ace, subject_entity: remaining, is_correct: true)
     visit strength_path
     within(".play-groups") do
       expect(page).to have_content("2 of 2")
       expect(page).to have_link("Practice group")
-      expect(page).not_to have_link("Practice misses")
+      expect(page).to have_no_link("Practice misses")
       click_link "All groups"
     end
     expect(page).to have_css(".group-practice-card", count: 1)

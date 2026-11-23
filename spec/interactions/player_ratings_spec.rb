@@ -84,10 +84,28 @@ RSpec.describe "Player profiles and rating controls" do
     expect(page).to have_css(".precision-control button[aria-pressed=true]", text: "Fine")
   end
 
-  it "snaps pointer input to the chosen increments and offers a working retry after a failed save" do
+  def set_slider(value)
+    execute_script(<<~JS)
+      const slider = document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input');
+      slider.value = #{value};
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+      slider.dispatchEvent(new Event('change', { bubbles: true }));
+    JS
+  end
+
+  it "snaps pointer input to coarse increments by default and to whole numbers with Fine" do
     visit player_path(player)
-    # Exercise a dropped request without changing the persisted data.
-    page.execute_script <<~JS
+    set_slider 26.5
+    expect_saved familiarity, "+30", "Aces average +30 · 1 rating"
+    click_button "Fine"
+    set_slider 26.5
+    expect_saved familiarity, "+27", "Aces average +27 · 1 rating"
+  end
+
+  it "keeps the value after a failed save and saves it on retry" do
+    visit player_path(player)
+    # Drop the next save without changing the persisted data.
+    execute_script(<<~JS)
       const originalFetch = window.fetch;
       window.fetch = (...args) => {
         if (args[1]?.method === 'POST') {
@@ -96,26 +114,14 @@ RSpec.describe "Player profiles and rating controls" do
         }
         return originalFetch(...args);
       };
-      const slider = document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input');
-      slider.value = 26.5;
-      slider.dispatchEvent(new Event('input', { bubbles: true }));
-      slider.dispatchEvent(new Event('change', { bubbles: true }));
     JS
+    set_slider 26.5
     row = row_for familiarity
     expect(row).to have_css(".slider-value", text: "+30")
     expect(row).to have_content("Couldn’t save your rating.")
     expect(ace.ratings.active.count).to eq(0)
     within(row) { click_button "Retry" }
     expect_saved familiarity, "+30", "Aces average +30 · 1 rating"
-
-    click_button "Fine"
-    page.execute_script <<~JS
-      const slider = document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input');
-      slider.value = 26.5;
-      slider.dispatchEvent(new Event('input', { bubbles: true }));
-      slider.dispatchEvent(new Event('change', { bubbles: true }));
-    JS
-    expect_saved familiarity, "+27", "Aces average +27 · 1 rating"
   end
 
   it "reuses the shared controls when the browse spectrum picker changes traits" do

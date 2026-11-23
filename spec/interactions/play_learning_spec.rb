@@ -7,37 +7,53 @@ RSpec.describe "Play learning" do
   let!(:player) { create(:player, team: team, first_name: "Jalen", last_name: "Brunson") }
   let!(:other_player) { create(:player, team: rival, first_name: "Nic", last_name: "Claxton") }
 
-  it "plays Multiple Choice with saved feedback, pause, results and automatic roster completion" do
-    quest = create(:quest, name: "New York names")
-    quest.add_achievement(create(:achievement, name: "Learn the Knicks roster", target: team))
-    ace.adopt_quest(quest)
-    sign_in ace
-    visit new_game_round_path(game_type: "multiple_choice", league_id: team.league_id)
-    expect(page).to have_select("Question topic", selected: "Current team")
-    expect(page).to have_content("2 players available")
-    click_button "Start round"
-    expect(page).to have_css(".round-game-progress", text: "1 / 2")
-    round = ace.game_rounds.last
-    round.length.times do |position|
-      expect(page).to have_css(".round-game-progress", text: "#{position + 1} / 2")
-      find(".round-choice[value='#{round.questions[position]['target_id']}']").click
-      expect(page).to have_css(".round-feedback", text: /Correct/i)
-      if position.zero?
-        click_button "Pause round"
-        expect(page).to have_button("Resume round")
-        page.refresh
-        click_button "Resume round"
-        expect(page).to have_css(".round-feedback", text: /Correct/i)
-      end
-      click_button(position == round.length - 1 ? "Round summary" : "Next")
+  context "with a quest on the Knicks roster" do
+    let(:quest) { create(:quest, name: "New York names") }
+    let(:round) { ace.game_rounds.last }
+
+    before do
+      quest.add_achievement(create(:achievement, name: "Learn the Knicks roster", target: team))
+      ace.adopt_quest(quest)
+      sign_in ace
     end
-    expect(page).to have_content("2 / 2")
-    expect(page).to have_content("Names newly known")
-    visit quest_path(quest)
-    expect(page).to have_content("Done")
-    expect(ace.goals.sole.reload.status).to eq("completed")
-    visit strength_path
-    expect(page).to have_content(/Names known/i)
+
+    def answer(position)
+      find(".round-choice[value='#{round.questions[position]['target_id']}']").click
+    end
+
+    it "asks Multiple Choice questions about current teams" do
+      visit new_game_round_path(game_type: "multiple_choice", league_id: team.league_id)
+      expect(page).to have_select("Question topic", selected: "Current team")
+      expect(page).to have_content("2 players available")
+      click_button "Start round"
+      expect(page).to have_css(".round-game-progress", text: "1 / 2")
+    end
+
+    it "keeps answer feedback through a pause and a refresh" do
+      visit new_game_round_path(game_type: "multiple_choice", league_id: team.league_id)
+      click_button "Start round"
+      answer 0
+      click_button "Pause round"
+      refresh
+      click_button "Resume round"
+      expect(page).to have_css(".round-feedback", text: /Correct/i)
+    end
+
+    it "completes the quest when the round covers the whole roster" do
+      visit new_game_round_path(game_type: "multiple_choice", league_id: team.league_id)
+      click_button "Start round"
+      answer 0
+      click_button "Next"
+      answer 1
+      click_button "Round summary"
+      expect(page).to have_content("2 / 2")
+      expect(page).to have_content("Names newly known")
+      visit quest_path(quest)
+      expect(page).to have_content("Done")
+      expect(ace.goals.sole.reload.status).to eq("completed")
+      visit strength_path
+      expect(page).to have_content(/Names known/i)
+    end
   end
 
   it "plays a due review with the original question and records it under Phased Repetition" do
