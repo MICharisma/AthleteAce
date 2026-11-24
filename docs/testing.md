@@ -100,6 +100,13 @@ A snapshot that changes fails the example with a side-by-side diff and writes a 
 - Read every diff before accepting it. Accept only the changes your work intended, and say in the commit message which snapshots changed and why. An unexpected change is a bug report.
 - `INSTA_FORCE_PASS=true bundle exec rspec <file>` writes pending snapshots without failing, which is useful for a first run.
 
+## Inventories
+
+Two specs list everything of a kind and fail when something new isn't listed, so each addition gets a decision:
+
+- **Routes.** `spec/requests/route_access_spec.rb` puts every route under its audience: everyone, signed in, reviewer, admin, credential, or Rizz. It requests each route as the role just outside the audience and the role just inside it. When you add a route, add it under the audience that should reach it. If a route answers differently from its listed audience, find out why before you move it.
+- **Models.** `spec/services/ugc_reset_service_spec.rb` places every model by what `rails ugc:full_reseed` does to it: reseeded catalog (`CORE_MODELS`), backed-up UGC (`UGC_MODELS`), or kept as it is (`KEPT`). It also lists the kept models that can point at catalog rows, which a reset leaves dangling. When you add a model, place it. A kept model that references catalog data belongs in that list until the reset handles it.
+
 ## Running specs
 
 - `bundle exec rspec path/to/file_spec.rb` while working, then the related directory.
