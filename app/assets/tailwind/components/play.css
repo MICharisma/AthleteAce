@@ -44,6 +44,13 @@
 .flash-notice, .flash-alert { @apply p-4 mb-4 border rounded-tool text-sm font-semibold; }
 .flash-notice { @apply bg-ok-tint text-ok-ink border-ok; }
 .flash-alert { @apply bg-bad-tint text-bad-ink border-bad; }
+.team-filters {
+  @apply mb-4;
+
+  summary { @apply mb-3; }
+  summary::-webkit-details-marker { display: none; }
+  &[open] summary { @apply bg-surface-2; }
+}
 .search-form { @apply bg-surface border border-line rounded-card p-5 mb-6; }
 .search-form-title { @apply font-display text-2xl font-bold text-ink; }
 .search-form .form-field-label { @apply block text-xs font-semibold text-ink-2 mb-2; }

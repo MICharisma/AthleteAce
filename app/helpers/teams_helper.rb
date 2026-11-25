@@ -81,9 +81,6 @@ module TeamsHelper
       tag.div class: "search-form-container" do
         content = []
 
-        # Search form title
-        content << tag.h3("Filter Teams", class: "search-form-title mb-4")
-
         # Basic search fields
         content << tag.div(class: "basic-filters grid grid-cols-1 md:grid-cols-3 gap-4 mb-6") do
           basic_fields = []
@@ -109,68 +106,58 @@ module TeamsHelper
           safe_join basic_fields
         end
 
-        # Advanced filters section (collapsible)
-        content << tag.div(class: "advanced-filters-container", data: { controller: "collapse" }) do
-          toggle = tag.button(type: "button", class: "advanced-filters-toggle tool-button", aria: { expanded: false },
-                         data: { action: "click->collapse#toggle" }) do
-            tag.span("Advanced Filters", class: "mr-2") +
-            icon("chevron-down", size: 18, data: { collapse_target: "icon" })
-          end
+        content << tag.div(class: "advanced-filters-content") do
+          adv_fields = []
 
-          adv_content = tag.div(class: "advanced-filters-content hidden", data: { collapse_target: "content" }) do
-            adv_fields = []
+          # Only add filters if filter_options are available
+          if defined?(@filter_options) && @filter_options.present?
+            adv_grid = tag.div(class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4") do
+              grid_fields = []
 
-            # Only add filters if filter_options are available
-            if defined?(@filter_options) && @filter_options.present?
-              adv_grid = tag.div(class: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4") do
-                grid_fields = []
-
-                # Sport filter
-                if @filter_options[:sports].present?
-                  sports = @filter_options[:sports].map { |s| [s.name, s.id] }
-                  grid_fields << auto_submit_select(f, :league_sport_id_eq, sports, "Sport")
-                end
-
-                # League filter
-                if @filter_options[:leagues].present?
-                  leagues = @filter_options[:leagues].map { |l| [l.name, l.id] }
-                  grid_fields << auto_submit_select(f, :league_id_eq, leagues, "League")
-                end
-                # Conference filter
-                if @filter_options[:conferences].present?
-                  conferences = @filter_options[:conferences].map { |c| [c.name, c.id] }
-                  grid_fields << auto_submit_select(f, :conference_id_eq, conferences, "Conference")
-                end
-                # Division filter
-                if @filter_options[:divisions].present?
-                  divisions = @filter_options[:divisions].map { |d| [d.name, d.id] }
-                  grid_fields << auto_submit_select(f, :division_id_eq, divisions, "Division")
-                end
-                # State filter
-                if @filter_options[:states].present?
-                  states = @filter_options[:states].map { |s| [s.name, s.id] }
-                  grid_fields << auto_submit_select(f, :stadium_city_state_id_eq, states, "State")
-                end
-                # City filter
-                if @filter_options[:cities].present?
-                  cities = @filter_options[:cities].map { |c| [c.name, c.id] }
-                  grid_fields << auto_submit_select(f, :stadium_city_id_eq, cities, "City")
-                end
-                # Stadium filter
-                if @filter_options[:stadiums].present?
-                  stadiums = @filter_options[:stadiums].map { |s| [s.name, s.id] }
-                  grid_fields << auto_submit_select(f, :stadium_id_eq, stadiums, "Stadium")
-                end
-
-                safe_join grid_fields
+              # Sport filter
+              if @filter_options[:sports].present?
+                sports = @filter_options[:sports].map { |s| [s.name, s.id] }
+                grid_fields << auto_submit_select(f, :league_sport_id_eq, sports, "Sport")
               end
-              adv_fields << adv_grid
-            else
-              adv_fields << tag.div("No advanced filter options available", class: "text-gray-500 italic")
+
+              # League filter
+              if @filter_options[:leagues].present?
+                leagues = @filter_options[:leagues].map { |l| [l.name, l.id] }
+                grid_fields << auto_submit_select(f, :league_id_eq, leagues, "League")
+              end
+              # Conference filter
+              if @filter_options[:conferences].present?
+                conferences = @filter_options[:conferences].map { |c| [c.name, c.id] }
+                grid_fields << auto_submit_select(f, :conference_id_eq, conferences, "Conference")
+              end
+              # Division filter
+              if @filter_options[:divisions].present?
+                divisions = @filter_options[:divisions].map { |d| [d.name, d.id] }
+                grid_fields << auto_submit_select(f, :division_id_eq, divisions, "Division")
+              end
+              # State filter
+              if @filter_options[:states].present?
+                states = @filter_options[:states].map { |s| [s.name, s.id] }
+                grid_fields << auto_submit_select(f, :stadium_city_state_id_eq, states, "State")
+              end
+              # City filter
+              if @filter_options[:cities].present?
+                cities = @filter_options[:cities].map { |c| [c.name, c.id] }
+                grid_fields << auto_submit_select(f, :stadium_city_id_eq, cities, "City")
+              end
+              # Stadium filter
+              if @filter_options[:stadiums].present?
+                stadiums = @filter_options[:stadiums].map { |s| [s.name, s.id] }
+                grid_fields << auto_submit_select(f, :stadium_id_eq, stadiums, "Stadium")
+              end
+
+              safe_join grid_fields
             end
-            safe_join adv_fields
+            adv_fields << adv_grid
+          else
+            adv_fields << tag.div("No advanced filter options available", class: "text-gray-500 italic")
           end
-          toggle + adv_content
+          safe_join adv_fields
         end
 
         # Form actions

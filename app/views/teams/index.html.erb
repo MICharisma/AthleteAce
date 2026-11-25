@@ -7,7 +7,11 @@
   <% end %>
 <% end %>
 
-<%= team_search_form(@q) %>
+<%= tag.details class: "team-filters", open: @q.conditions.any? do %>
+  <%= tag.summary icon("adjustments-horizontal", size: 20), class: "tool-button",
+        aria: { label: t(".filter_teams") }, title: t(".filter_teams") %>
+  <%= team_search_form(@q) %>
+<% end %>
 
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
   <div class="mb-4 sm:mb-0">
