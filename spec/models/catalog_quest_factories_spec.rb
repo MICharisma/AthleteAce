@@ -62,6 +62,29 @@ RSpec.describe "Catalog quest factories" do
     expect(quest.required_achievements.sole.target.players).to contain_exactly(born_there)
   end
 
+  it "uses one required team achievement and roster snapshot per Florida home team" do
+    country = create(:country, name: "United States", abbreviation: "US")
+    florida = create(:state, name: "Florida", country: country)
+    tampa = create(:city, name: "Tampa", state: florida)
+    tampa_bay = create(:team, territory: "Tampa Bay", mascot: "Rays", stadium: create(:stadium, city: tampa))
+    miami = create(:team, territory: "Miami", mascot: "Marlins",
+      stadium: create(:stadium, city: create(:city, name: "Miami", state: florida)))
+    outside_team = create(:team, stadium: create(:stadium))
+    tampa_player = create(:player, team: tampa_bay)
+    miami_player = create(:player, team: miami)
+    create(:player, team: outside_team, birth_city: tampa)
+
+    goal = create(:florida_home_teams_goal)
+    highlights = goal.quest.highlights.ordered.includes(:achievement)
+    entries = goal.goal_achievements.includes(:achievement).index_by { |entry| entry.achievement.target_id }
+
+    expect(highlights.map(&:required?)).to eq([true, true])
+    expect(highlights.map { |highlight| highlight.achievement.target }).to eq([miami, tampa_bay])
+    expect(entries.fetch(miami.id).required_player_ids).to eq([miami_player.id])
+    expect(entries.fetch(tampa_bay.id).required_player_ids).to eq([tampa_player.id])
+    expect(entries.fetch(tampa_bay.id).practice_scope).to include("team_id" => tampa_bay.id)
+  end
+
   it "reports an empty cohort without creating an empty quest" do
     expect { create(:florida_born_quest, player_scope: Player.none) }
       .to raise_error(ArgumentError, /No catalog players match Sunshine State Birthdays/)

@@ -44,6 +44,18 @@ module QuestFactoryCohorts
     players.joins(team: { stadium: { city: :state } }).where(states: { name: names })
   end
 
+  def florida_home_teams
+    Team.joins(stadium: { city: :state }).where(states: { name: "Florida", country: Country.where(abbreviation: "US") })
+  end
+
+  def add_team_achievements(quest, teams)
+    teams.sort_by { |team| [team.name.downcase, team.id] }.each.with_index(1) do |team, position|
+      achievement = FactoryBot.create(:achievement, name: "Learn the #{team.name}",
+        description: "Answer every player on the recorded team roster correctly.", target: team)
+      FactoryBot.create(:highlight, quest: quest, achievement: achievement, position: position, required: true)
+    end
+  end
+
   def roster_entries(league)
     RosterEntry.joins(roster: { campaign: { season: :league } }).where(leagues: { abbreviation: league })
   end
@@ -88,8 +100,6 @@ FactoryBot.define do
       ->(players, _) { players.where("EXTRACT(MONTH FROM players.birthdate) = 1 AND EXTRACT(DAY FROM players.birthdate) = 1") }],
     midyear_birthdays: ["June, July, and August", "Learn the players born in June, July, or August.",
       ->(players, _) { players.where("EXTRACT(MONTH FROM players.birthdate) BETWEEN 6 AND 8") }],
-    florida_home_teams: ["Florida Home Fields", "Learn the players on teams whose recorded home venue is in Florida.",
-      ->(players, _) { cohorts.home_state(players, "Florida") }],
     texas_nfl_teams: ["Texas Sundays", "Learn the players on NFL teams with a home venue in Texas.",
       ->(players, _) { cohorts.home_state(cohorts.in_league(players, "NFL"), "Texas") }],
     california_mlb_teams: ["California Diamonds", "Learn the players on MLB teams with a home venue in California.",
@@ -120,6 +130,33 @@ FactoryBot.define do
     nba_players_without_current_team: ["NBA Roll Call Without a Current Team", "Learn players with an NBA roster entry and no current team recorded.",
       ->(players, _) { players.where(team_id: nil, id: cohorts.roster_entries("NBA").select(:player_id)) }]
   }
+
+  factory :florida_home_teams_quest, parent: :quest do
+    name { "Florida Home Fields" }
+    description { "Learn the roster of each team whose recorded home venue is in Florida." }
+
+    transient do
+      as_of { Date.current }
+    end
+
+    to_create do |quest, evaluator|
+      teams = cohorts.florida_home_teams.to_a
+      raise ArgumentError, "No catalog teams match #{quest.name} on #{evaluator.as_of}" if teams.empty?
+
+      Quest.transaction(requires_new: true) do
+        quest.save!
+        cohorts.add_team_achievements(quest, teams)
+      end
+    end
+  end
+
+  factory :florida_home_teams_goal, parent: :goal do
+    transient do
+      as_of { Date.current }
+    end
+
+    quest { association :florida_home_teams_quest, as_of: as_of }
+  end
 
   variants.each do |key, (title, copy, filter)|
     quest_factory = :"#{key}_quest"
