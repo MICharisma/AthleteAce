@@ -14,7 +14,7 @@
   <% end %>
   <%= render "quests/progress", goal: goal %>
   <h3><%= entry.achievement.name %></h3>
-  <p><%= entry.progress %> of <%= entry.required_player_ids.size %> players answered correctly since adoption.</p>
+  <p><%= entry.roster_progress %> of <%= entry.target_player_count %> players answered correctly since adoption.</p>
   <p class="round-caption">Current progress for your adopted roster. Your saved round score stays recorded above.</p>
   <% if entry.completed_at %><p class="round-caption">Achievement complete.</p><% end %>
   <% if goal.status == "completed" %>

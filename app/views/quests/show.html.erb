@@ -1,60 +1,88 @@
 <% content_for :title, @quest.name %>
 <%= moderation_notice(@quest) %>
 <% goal = quest_goal(@quest) %>
+<% goal_entries = goal ? goal.goal_achievements.index_by(&:achievement_id) : {} %>
 <% highlights = @quest.highlights.visible_to(current_ace).where(achievement: Achievement.visible_to(current_ace)).ordered.includes(achievement: :target).to_a %>
+<% required, optional = highlights.partition(&:required?) %>
 <div class="quest-detail" id="<%= dom_id @quest %>">
   <%= link_to "← All quests", quests_path, class: "tool-link" %>
   <% if @random_mode %>
     <section id="quest_discovery" class="play-panel play-section-heading"><div><h2>Quest Discovery</h2><p>Explore this quest or find another one.</p></div><%= link_to "Next Quest", random_quests_path, class: "tool-button" %></section>
   <% end %>
   <header class="browse-header">
-    <div><p class="eyebrow">Quest · <%= pluralize(highlights.size, "achievement") %></p><h1 class="page-title"><%= @quest.name %></h1><p class="round-intro"><%= @quest.description %></p></div>
-    <div class="quest-card-meta"><%= quest_participants_badge @quest %><p><%= pluralize(highlights.count(&:required?), "achievement") %> required</p></div>
+    <div>
+      <p class="eyebrow">Quest · <%= pluralize(highlights.size, "achievement") %></p>
+      <h1 class="page-title"><%= @quest.name %></h1>
+      <p class="round-intro"><%= @quest.description %></p>
+    </div>
+    <%= tag.div class: "quest-header-actions" do %>
+      <% if @quest.approved? %>
+        <%= tag.dl class: "quest-activity", aria: { label: t(".activity") } do %>
+          <% quest_activity(@quest).each do |label, count| %>
+            <%= tag.div do %>
+              <%= tag.dt t(".#{label}") %>
+              <%= tag.dd number_with_delimiter(count) %>
+            <% end %>
+          <% end %>
+        <% end %>
+      <% end %>
+      <% if ace_signed_in? %>
+        <%= begin_quest_button @quest, class: "quest-cta" %>
+      <% else %>
+        <%= link_to "Sign in to begin", new_ace_session_path, class: "game-button quest-cta" %>
+      <% end %>
+    <% end %>
   </header>
   <%= render "aces/attribution", ace: @quest.created_by %>
   <%= link_to "Edit quest", edit_quest_path(@quest), class: "tool-link" if can_manage?(@quest) %>
-  <% if @quest.approved? %>
-    <p class="round-caption quest-approval">
-      <% if (approved_at = @quest.approved_at) %>
-        Approved <%= tag.time l(approved_at.utc.to_date, format: :long), datetime: approved_at.utc.iso8601 %> · UTC
-      <% else %>
-        Approval date not recorded.
-      <% end %>
-    </p>
-  <% end %>
-  <section class="quest-goal-panel" aria-labelledby="quest-goal-title">
-    <div><p class="eyebrow">Your goal</p><h2 id="quest-goal-title"><%= goal ? "Keep your eyes on the roster." : "Make this your next quest." %></h2><p><%= goal ? "Adopted #{l(goal.created_at.to_date, format: :long)}" : "Choose this quest and keep your progress close." %></p></div>
-    <% if goal %>
-      <p class="round-caption">Answer every player in each saved roster correctly at least once. Rosters reflect recorded catalog coverage when you adopt the quest; coverage may be partial.</p>
-      <%= render "quests/progress", goal: goal %>
-      <% if (next_achievement = goal.next_achievement) %>
-        <%= link_to "Play next: #{next_achievement.name}", quest_practice_path(next_achievement), class: "game-button" %>
-      <% end %>
-    <% end %>
-    <div class="page-actions">
-      <% if ace_signed_in? %><%= begin_quest_button @quest %><% else %><%= link_to "Sign in to begin", new_ace_session_path, class: "game-button" %><% end %>
-    </div>
-  </section>
-  <div class="play-section-heading"><h2>Achievements in this Quest</h2><%= link_to "Add Achievement", new_quest_highlight_path(@quest), class: "tool-button" if ace_signed_in? %></div>
   <% if highlights.empty? %>
-    <div class="play-panel play-empty"><h3>No achievements added yet.</h3><p>This quest is waiting for its first challenge.</p></div>
+    <div class="play-panel play-empty"><h2>No achievements added yet.</h2></div>
   <% end %>
-  <% [[true, "Required Achievements"], [false, "Optional Achievements"]].each do |required, heading| %>
-    <% entries = highlights.select { |highlight| highlight.required? == required } %>
-    <% if entries.any? %>
-      <section class="quest-achievements"><h3 class="eyebrow"><%= heading %></h3><ol>
-        <% entries.each_with_index do |highlight, index| %>
+  <% [[required, "Required achievements"], [optional, "Optional achievements"]].each do |entries, heading| %>
+    <% next if entries.empty? %>
+    <%= tag.section class: "quest-achievements", aria: { label: heading } do %>
+      <%= tag.h2 heading, class: "eyebrow" if optional.any? %>
+      <%= tag.ul do %>
+        <% entries.each do |highlight| %>
           <% achievement = highlight.achievement %>
-          <% earned = goal&.goal_achievements&.find_by(achievement: achievement) %>
-          <li class="quest-achievement"><span class="quest-achievement-number"><%= format("%02d", index + 1) %></span><div class="quest-achievement-copy"><%= moderation_notice(highlight) %><h4><%= link_to achievement.name, achievement_path(achievement) %></h4><p><%= achievement.description %></p>
-              <% if earned&.completed_at %><p class="round-caption">Done <%= l earned.completed_at.in_time_zone(current_ace.play_time_zone).to_date, format: :long %></p>
-              <% elsif achievement.practice_scope %><p class="round-caption"><%= earned&.progress || 0 %> of <%= earned ? earned.required_player_ids.size : "the recorded" %> players answered correctly</p><% end %><span class="entity-chip"><%= icon_for_resource achievement.target_type.underscore, size: 16 %><%= achievement.target ? link_to_name(achievement.target) : "Target unavailable" %></span></div>
-            <div class="page-actions"><% if (practice_path = quest_practice_path(achievement)) %><%= link_to "Practice", practice_path, class: "tool-button", aria: { label: "Practice #{achievement.name}" } %><% end %>
-              <% if can_manage?(@quest) %><%= link_to "Edit", edit_quest_highlight_path(@quest, highlight), class: "tool-link" %><%= button_to "Remove", quest_highlight_path(@quest, highlight), method: :delete, class: "tool-link", data: { turbo_confirm: "Remove this achievement from the quest?" } %><% end %>
-            </div>
-          </li>
+          <% earned = goal_entries[achievement.id] %>
+          <% player_count = earned&.target_player_count || achievement.fixed_roster_requirement || achievement.roster_snapshot&.fetch(:ids)&.size %>
+          <%= tag.li class: "quest-achievement" do %>
+            <%= tag.div class: "quest-achievement-copy" do %>
+              <%= moderation_notice(highlight) %>
+              <%= tag.h3 link_to(achievement.name, achievement_path(achievement)) %>
+              <%= tag.p achievement.description if achievement.description.present? %>
+              <%= tag.div class: "quest-achievement-meta" do %>
+                <%= tag.span class: "entity-chip" do %>
+                  <%= icon_for_resource achievement.target_type.underscore, size: 16 %>
+                  <%= achievement.target ? link_to_name(achievement.target) : "Target unavailable" %>
+                <% end %>
+                <% if achievement.target_type == "Team" %>
+                  <% level = (earned ? earned.roster_level : achievement.roster_level) || "mastery" %>
+                  <%= tag.span t("achievements.roster_levels.#{level}"), class: "quest-roster-level", data: { roster_level: level } %>
+                <% end %>
+              <% end %>
+            <% end %>
+            <%= tag.div class: "quest-achievement-side" do %>
+              <%= tag.div class: "page-actions" do %>
+                <% if (practice_path = quest_practice_path(achievement, goal: goal)) %>
+                  <%= link_to "Practice", practice_path, class: "tool-button", aria: { label: "Practice #{achievement.name}" } %>
+                <% end %>
+                <% if can_manage?(@quest) %>
+                  <%= link_to "Edit", edit_quest_highlight_path(@quest, highlight), class: "tool-link" %>
+                  <%= button_to "Remove", quest_highlight_path(@quest, highlight), method: :delete, class: "tool-link", data: { turbo_confirm: "Remove this achievement from the quest?" } %>
+                <% end %>
+              <% end %>
+              <% if player_count %>
+                <% known = earned&.roster_progress || 0 %>
+                <%= tag.span "#{known}/#{player_count}", class: "quest-roster-progress",
+                      data: { complete: earned&.completed_at.present? },
+                      aria: { label: t(".progress", known: known, required: player_count) } %>
+              <% end %>
+            <% end %>
+          <% end %>
         <% end %>
-      </ol></section>
+      <% end %>
     <% end %>
   <% end %>
 </div>

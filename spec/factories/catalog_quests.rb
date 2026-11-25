@@ -1,4 +1,8 @@
 module QuestFactoryCohorts
+  FLORIDA_ROSTER_LEVELS = {
+    "NBA" => "mastery", "MLB" => "fluency", "NHL" => "fluency", "NFL" => "conversational", "MLS" => "introductory"
+  }.freeze
+
   module_function
 
   def in_league(players, abbreviation)
@@ -45,13 +49,17 @@ module QuestFactoryCohorts
   end
 
   def florida_home_teams
-    Team.joins(stadium: { city: :state }).where(states: { name: "Florida", country: Country.where(abbreviation: "US") })
+    Team.joins(stadium: { city: :state }).where(states: { name: "Florida", country: Country.where(abbreviation: "US") }).includes(:league)
   end
 
-  def add_team_achievements(quest, teams)
+  def florida_home_roster_level(team)
+    FLORIDA_ROSTER_LEVELS.fetch(team.league.abbreviation, "mastery")
+  end
+
+  def add_florida_home_achievements(quest, teams)
     teams.sort_by { |team| [team.name.downcase, team.id] }.each.with_index(1) do |team, position|
       achievement = FactoryBot.create(:achievement, name: "Learn the #{team.name}",
-        description: "Answer every player on the recorded team roster correctly.", target: team)
+        roster_level: florida_home_roster_level(team), target: team)
       FactoryBot.create(:highlight, quest: quest, achievement: achievement, position: position, required: true)
     end
   end
@@ -145,7 +153,7 @@ FactoryBot.define do
 
       Quest.transaction(requires_new: true) do
         quest.save!
-        cohorts.add_team_achievements(quest, teams)
+        cohorts.add_florida_home_achievements(quest, teams)
       end
     end
   end

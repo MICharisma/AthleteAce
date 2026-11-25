@@ -1,10 +1,15 @@
 class Achievement < ApplicationRecord
   include Moderatable
+  ROSTER_LEVELS = { "mastery" => nil, "fluency" => 15, "conversational" => 8, "introductory" => 3 }.freeze
   TARGET_TYPES = %w[Player Team Division Conference League Sport City State Country Federation PlayerGroup].freeze
 
   has_many :goal_achievements, dependent: :destroy
   PRACTICE_SCOPES = { "PlayerGroup" => :player_group_id, "Team" => :team_id, "Division" => :division_id, "Conference" => :conference_id,
     "League" => :league_id, "Sport" => :sport_id, "City" => :city_id, "State" => :state_id }.freeze
+
+  def fixed_roster_requirement
+    ROSTER_LEVELS[roster_level]
+  end
 
   def practice_scope
     return { player_id: target_id, include_inactive: true } if target_type == "Player"
@@ -33,6 +38,9 @@ class Achievement < ApplicationRecord
   # Presence is checked below, after the type check, so a bogus type is never constantized
   belongs_to :target, polymorphic: true, optional: true
 
+  normalizes :roster_level, with: ->(value) { value.presence }
+  validates :roster_level, inclusion: { in: ROSTER_LEVELS.keys }, allow_nil: true
+  validates :roster_level, absence: true, unless: -> { target_type == "Team" }
   validates :name, presence: true
   validates :target_type, inclusion: { in: TARGET_TYPES }
   validates :target, presence: { message: :required }, if: -> { TARGET_TYPES.include?(target_type) }

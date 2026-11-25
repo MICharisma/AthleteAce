@@ -203,6 +203,7 @@ class UgcRestoreService
       description: achievement_data["description"],
       target: target,
       details: achievement_data["details"],
+      roster_level: achievement_data["roster_level"],
       created_at: achievement_data["created_at"],
       updated_at: achievement_data["updated_at"]
     )

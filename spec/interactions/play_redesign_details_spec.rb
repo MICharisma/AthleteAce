@@ -22,7 +22,7 @@ RSpec.describe "Play detail pages" do
     messages.each { |message| expect(page).to have_content(message) }
   end
 
-  it "shows approval attribution and recorded versus current quest progress" do
+  it "shows quest activity and recorded versus current quest progress" do
     ace = create :ace
     team = create :team
     players = [ [ "Jordan", "Reyes" ], [ "María", "Calderón" ] ].map do |first_name, last_name|
@@ -30,6 +30,7 @@ RSpec.describe "Play detail pages" do
     end
     group = PlayerGroup.create! name: "Harbor backcourt", players: players
     quest = create :quest, name: "Know the Harbor backcourt"
+    travel 5.days
     achievement = create :achievement, target: team, name: "Learn the team's players"
     create :highlight, quest: quest, achievement: achievement
     goal = create :goal, ace: ace, quest: quest
@@ -40,7 +41,14 @@ RSpec.describe "Play detail pages" do
     end
     sign_in ace
     visit quest_path(quest)
-    expect(page).to have_css(".quest-approval time")
+    within(".quest-activity") do
+      expect(page).to have_content("Days alive 5")
+      expect(page).to have_content("Begun 1")
+      expect(page).to have_content("Completed 1")
+    end
+    expect(page).to have_css(".quest-roster-progress", text: "2/2")
+    expect(page).to have_no_link("Add Achievement")
+    expect(page).to have_link("Continue Quest")
     visit summary_game_round_path(round)
     expect(page).to have_css(".round-learning-progress", text: quest.name)
     expect(page).to have_css('[data-quest-progress-point="before"]', text: "0% · 0 of 1")

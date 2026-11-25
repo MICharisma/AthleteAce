@@ -38,6 +38,17 @@
       <%= form.label :target_id %>
       <%= form.select :target_id, [], {}, class: "block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", data: { dynamic_select_target: "targetIdSelect" } %>
     </div>
+
+    <%= form.hidden_field :roster_level, value: "", id: nil %>
+    <%= tag.div class: "achievement-roster-level", hidden: achievement.target_type != "Team",
+          data: { dynamic_select_target: "rosterLevel" } do %>
+      <%= form.label :roster_level, t(".roster_level") %>
+      <% levels = Achievement::ROSTER_LEVELS.map do |key, count|
+        label = t("achievements.roster_levels.#{key}")
+        [ count ? "#{label} (#{count})" : label, key ]
+      end %>
+      <%= form.select :roster_level, levels, { selected: achievement.roster_level || "mastery" }, disabled: achievement.target_type != "Team" %>
+    <% end %>
   </div>
 
   <div class="inline">

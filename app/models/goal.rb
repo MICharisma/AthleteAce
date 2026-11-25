@@ -13,6 +13,8 @@ class Goal < ApplicationRecord
 
       goal_achievements.create_or_find_by!(achievement: highlight.achievement) do |entry|
         entry.required_player_ids = snapshot.fetch(:ids)
+        entry.roster_level = highlight.achievement.roster_level
+        entry.required_player_count = highlight.achievement.fixed_roster_requirement
         entry.practice_scope = snapshot.fetch(:scope)
       end
     end
@@ -31,7 +33,7 @@ class Goal < ApplicationRecord
 
         matched = true
         entry.player_ids |= [ attempt.subject_entity_id ]
-        entry.completed_at ||= attempt.created_at if entry.progress == entry.required_player_ids.size
+        entry.completed_at ||= attempt.created_at if entry.progress >= entry.target_player_count
         entry.save!
       end
       if matched

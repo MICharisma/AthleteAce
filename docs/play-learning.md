@@ -87,13 +87,13 @@ Set your time zone in **Edit profile**. Daily streaks, today's players, and hist
 
 ## Quest completion
 
-Quest detail shows **Approved** with the UTC date of its latest recorded approval for the current moderation revision. Recorded trusted approvals also supply a date. An approved quest without that history says **Approval date not recorded**. Pending or otherwise non-approved revisions do not display an old approval date.
+The quest activity graphic shows days since first approval and how many people have begun and completed the quest. For older quests with no recorded approval, the count starts on the creation date.
 
-Adopting a quest saves the recorded player roster for each supported achievement. Answer every player in that saved roster correctly at least once after adoption to complete the achievement. Repeated answers for one player do not advance roster coverage. A later wrong answer does not remove earned quest progress. Required achievements determine quest completion; optional achievements do not block it.
+Adopting a quest saves the recorded player roster for each supported achievement. After adoption, answer distinct players from that roster correctly to complete the achievement. Team achievements can use four roster levels. Mastery requires the full recorded roster, fluency requires 15 players, conversational requires 8, and introductory requires 3. Repeated answers for one player do not advance roster coverage. A later wrong answer does not remove earned quest progress. Required achievements determine quest completion; optional achievements do not block it.
 
 A player target requires that player. A player-group target snapshots every explicit member, including inactive players, without inferring a season. Team, division, conference, league, sport, city, and state targets use their recorded player scope, including inactive players. When current assignments are empty, the snapshot uses the first playable recorded season, checking up to ten recent seasons. Country and federation targets remain manual. Empty rosters do not complete automatically.
 
-The required player IDs and saved practice filters stay fixed after adoption. An adopted group achievement's practice link uses its saved member IDs, even after an admin changes the group. The link is scoped to the signed-in account that adopted the quest. Catalog additions do not change an existing goal's denominator. The UI identifies this as recorded coverage because source lists can be partial. Completion does not certify knowledge of players missing from the catalog. Achievement progress shows completed dates and the next unfinished practice link.
+The roster level, player count, player IDs, and practice filters stay fixed after adoption. An adopted group achievement's practice link uses its saved member IDs, even after an admin changes the group. The link is scoped to the signed-in account that adopted the quest. Catalog additions do not change an existing goal's denominator. Catalog source lists can be partial. Each roster achievement shows players known over players needed.
 
 Existing goals prepare missing roster snapshots on their next correct saved answer. Their roster snapshot therefore reflects that upgrade-time catalog, rather than their original adoption date. Existing answers are not replayed into the new per-achievement coverage.
 

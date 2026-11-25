@@ -1,0 +1,16 @@
+en:
+  quests:
+    show:
+      activity: "Quest activity"
+      days_alive: "Days alive"
+      begun: "Begun"
+      completed: "Completed"
+      progress: "%{known} of %{required} players known"
+  achievements:
+    roster_levels:
+      mastery: "Roster mastery"
+      fluency: "Roster fluency"
+      conversational: "Roster conversational"
+      introductory: "Roster introductory"
+    form:
+      roster_level: "Roster level"

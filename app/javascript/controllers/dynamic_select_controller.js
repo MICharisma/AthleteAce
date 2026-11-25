@@ -1,12 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["targetType", "targetIdSelect"]
+  static targets = ["targetType", "targetIdSelect", "rosterLevel"]
   static values = {
     selectedId: String
   }
 
   connect() {
+    this.updateRosterLevel()
     // Load options when the controller connects, if a target_type is selected
     if (this.targetTypeTarget.value) {
       this.loadOptionsForType(this.targetTypeTarget.value);
@@ -14,9 +15,16 @@ export default class extends Controller {
   }
 
   updateTargetOptions(event) {
+    this.updateRosterLevel()
     const type = event.target.value;
     if (!type) return;
     this.loadOptionsForType(type);
+  }
+
+  updateRosterLevel() {
+    const disabled = this.targetTypeTarget.value !== "Team"
+    this.rosterLevelTarget.hidden = disabled
+    this.rosterLevelTarget.querySelector("select").disabled = disabled
   }
 
   loadOptionsForType(type) {

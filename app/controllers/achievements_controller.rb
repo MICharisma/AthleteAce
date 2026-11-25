@@ -91,6 +91,6 @@ class AchievementsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def achievement_params
-      params.require(:achievement).permit(:name, :description, :target_id, :target_type)
+      params.require(:achievement).permit(:name, :description, :target_id, :target_type, :roster_level)
     end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_26_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_26_120100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -97,6 +97,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_120000) do
     t.integer "lock_version", default: 0, null: false
     t.uuid "created_by_id"
     t.uuid "target_id", null: false
+    t.string "roster_level"
     t.index ["created_by_id"], name: "index_achievements_on_created_by_id"
     t.index ["moderation_status", "created_at"], name: "index_achievements_on_moderation_status_and_created_at"
     t.index ["seed_version"], name: "index_achievements_on_seed_version"
@@ -697,6 +698,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_120000) do
     t.datetime "updated_at", null: false
     t.uuid "achievement_id", null: false
     t.uuid "goal_id", null: false
+    t.string "roster_level"
+    t.integer "required_player_count"
     t.index ["achievement_id"], name: "index_goal_achievements_on_achievement_id"
     t.index ["goal_id", "achievement_id"], name: "index_goal_achievements_on_goal_id_and_achievement_id", unique: true
     t.index ["goal_id"], name: "index_goal_achievements_on_goal_id"

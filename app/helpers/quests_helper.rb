@@ -6,6 +6,16 @@ module QuestsHelper
     current_ace.goals.find_by quest: quest
   end
 
+  def quest_activity quest
+    first_approval = quest.moderation_decisions.where(action: "approved", to_status: "approved").minimum(:created_at)
+    begun, completed = quest.goals.pick(
+      Arel.sql("COUNT(DISTINCT ace_id)"),
+      Arel.sql("COUNT(DISTINCT ace_id) FILTER (WHERE status = 'completed')")
+    )
+
+    { days_alive: (Date.current - (first_approval || quest.created_at).in_time_zone.to_date).to_i, begun: begun, completed: completed }
+  end
+
   def quest_progress goal
     required = goal.quest.highlights.approved.with_approved_achievement.count(&:required?)
     completed = [goal.progress, required].min
