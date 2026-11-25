@@ -45,8 +45,8 @@ module RatingsHelper
     dom_id record, "rating_spectrum_#{spectrum.id}"
   end
 
-  def signed_rating value
-    value.nil? ? "Not rated" : "#{value.positive? ? '+' : ''}#{number_with_delimiter(value.round)}"
+  def formatted_rating value
+    value.nil? ? "Not rated" : number_with_delimiter(value.round)
   end
 
   def rating_slider_container record, spectrums
@@ -54,26 +54,15 @@ module RatingsHelper
 
     tag.div class: "rating-container" do
       tag.div id: dom_id(record, :rating_slider_group), class: "rating-slider-group-container", data: {
-        controller: "rating-slider", rating_slider_precision_value: "coarse",
+        controller: "rating-slider",
         action: "dimension-suggestions:select->rating-slider#openDimension",
         rating_spectrum_url: polymorphic_path([record, :ratings], action: :for_spectrums)
       } do
-        controls = tag.div class: "rating-toolbar" do
-          tag.span("You · Aces average", class: "rating-legend-heading") +
-            tag.div(class: "precision-control", role: "group", aria: { label: "Rating precision" }) do
-              safe_join %w[Coarse Fine].map { |label|
-                tag.button label, type: "button", aria: { pressed: label == "Coarse" },
-                  data: { rating_slider_target: "precisionButton", action: "rating-slider#changePrecision", precision: label.downcase }
-              }
-            end
-        end
-        sign_in = unless ace_signed_in?
-          tag.p(class: "rating-sign-in") { link_to("Sign in", new_ace_session_path) + " to add your rating." }
+        rows = tag.div id: rating_rows_id(record) do
+          render "ratings/slider_rows", record: record, spectrums: spectrums
         end
         picker = render("ratings/dimension_picker", record: record) if current_ace
-        safe_join [controls, sign_in, picker, tag.div(id: rating_rows_id(record)) {
-          render "ratings/slider_rows", record: record, spectrums: spectrums
-        }].compact
+        safe_join [rows, picker]
       end
     end
   end

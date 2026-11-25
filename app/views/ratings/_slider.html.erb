@@ -9,18 +9,23 @@
 <%= tag.div id: row_id, class: "rating-slider-instance", style: "--rating-position: #{dimension.position(your_rating&.value || 0) * 100}%", data: { spectrum_id: spectrum.id, rated: your_rating.present?, dimension: dimension.to_h.to_json } do %>
   <%= tag.div class: "slider-header" do %>
     <%= tag.label spectrum.name, for: "#{row_id}_input", class: "slider-label" %>
-    <%= tag.span signed_rating(your_rating&.value), class: "slider-value", data: { rating_slider_target: "value" } %>
+    <%= tag.div class: "slider-score" do %>
+      <% if ace_signed_in? && !your_rating %>
+        <%= tag.button "Rate neutral", type: "button", class: "rate-neutral", data: { action: "rating-slider#rateNeutral" } %>
+      <% end %>
+      <%= tag.span formatted_rating(your_rating&.value), class: "slider-value" %>
+    <% end %>
   <% end %>
   <%= tag.div class: "slider-track" do %>
     <% if average %>
       <%= tag.div class: "average-track", aria: { hidden: true } do %>
-        <%= tag.span "", class: "average-marker", style: "left: #{(average - dimension.minimum) * 100 / (dimension.maximum - dimension.minimum)}%", title: "Aces average #{signed_rating average}" %>
+        <%= tag.span "", class: "average-marker", style: "left: #{(average - dimension.minimum) * 100 / (dimension.maximum - dimension.minimum)}%", title: "Aces average #{formatted_rating average}" %>
       <% end %>
     <% end %>
-    <%# An integer track keeps existing off-grid ratings exact; Stimulus applies the selected increments to new input. %>
     <%= tag.input type: "range", id: "#{row_id}_input", min: dimension.minimum, max: dimension.maximum, step: 1,
       value: your_rating&.value || 0, disabled: !ace_signed_in?, class: "rating-slider-input",
-      aria: { describedby: ["#{row_id}_summary", ("#{row_id}_precision_hint" if ace_signed_in?)].compact.join(" ") }, data: {
+      title: t(".endpoints", low: spectrum.low_label, high: spectrum.high_label),
+      aria: { describedby: "#{row_id}_summary", keyshortcuts: "Shift+ArrowLeft Shift+ArrowRight Shift+ArrowUp Shift+ArrowDown" }, data: {
         rating_slider_target: "slider", rating_slider_spectrum_id_param: spectrum.id,
         rating_slider_url: polymorphic_path([record, :ratings]),
         action: "input->rating-slider#updateValue change->rating-slider#submitRating keydown->rating-slider#adjustWithKeyboard pointerdown->rating-slider#startDrag lostpointercapture->rating-slider#cancelDrag"
@@ -38,22 +43,17 @@
         data: { action: "rating-slider#promptSignIn" } %>
     <% end %>
   <% end %>
-  <% if ace_signed_in? %>
-    <%= tag.div class: "rating-adjustment-help" do %>
-      <%= tag.span "Drag down for finer adjustments", id: "#{row_id}_precision_hint", class: "precision-hint" %>
-      <%= tag.span "", class: "drag-precision", role: "status", aria: { live: "polite" } %>
-      <% unless your_rating %>
-        <%= tag.button "Rate neutral", type: "button", class: "rate-neutral", data: { action: "rating-slider#rateNeutral" } %>
-      <% end %>
-    <% end %>
-  <% end %>
-  <%= tag.div class: "slider-endpoints" do %>
-    <%= tag.span spectrum.low_label %>
-    <%= tag.span spectrum.high_label %>
-  <% end %>
   <%= tag.div id: "#{row_id}_summary", class: "rating-summary" do %>
-    <%= tag.span "", class: "average-key", aria: { hidden: true } %>
-    <%= tag.span average ? "Aces average #{signed_rating average} · #{pluralize count, 'rating'}" : "No ratings yet" %>
+    <% if average %>
+      <%= tag.span class: "rating-average" do %>
+        <%= tag.span "", class: "average-key", aria: { hidden: true } %>
+        <%= tag.span "Aces average" %>
+        <%= tag.strong formatted_rating(average) %>
+      <% end %>
+      <%= tag.span pluralize(count, "rating"), class: "rating-count" %>
+    <% else %>
+      <%= tag.span "No ratings yet" %>
+    <% end %>
   <% end %>
   <%= tag.div id: "#{row_id}_status", class: "slider-status", role: "status", aria: { live: "polite" } do %>
     <%= tag.span saved ? "Saved" : "", class: "status-indicator", data: { rating_slider_target: "status" } %>

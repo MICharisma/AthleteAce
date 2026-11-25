@@ -54,8 +54,8 @@
 
   <%= tag.section class: "profile-section profile-ratings", aria: { labelledby: "player-ratings-title" } do %>
     <%= tag.h2 "Player Ratings", id: "player-ratings-title", class: "profile-section-title" %>
-    <% if @spectrums.any? %>
-      <%= rating_slider_container @player, @spectrums %>
+    <% if default_spectrums.any? %>
+      <%= rating_slider_container @player, selected_spectrums %>
       <%= link_to "Missing a trait? Propose a spectrum", new_spectrum_path, class: "tool-link" if current_ace %>
     <% else %>
       <%= tag.p "No rating spectrums have been created yet.", class: "profile-empty" %>

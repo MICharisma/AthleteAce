@@ -51,6 +51,6 @@
 <% else %>
   <section class="round-panel">
     <h2 class="profile-section-title">How aces rate <%= @team.name %></h2>
-    <%= rating_slider_container @team, Spectrum.visible_to(current_ace).order(:name) %>
+    <%= rating_slider_container @team, selected_spectrums %>
   </section>
 <% end %>

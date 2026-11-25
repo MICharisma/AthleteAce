@@ -1,5 +1,6 @@
 <% dimensions = RatingDimensions.new(ace: current_ace, rated: record) %>
-<%= tag.div class: "dimension-picker", data: { controller: "dimension-suggestions", dimension_suggestions_url_value: polymorphic_path([record, :ratings], action: :suggest_dimensions) } do %>
+<%= tag.details class: "dimension-picker", data: { controller: "dimension-suggestions", dimension_suggestions_url_value: polymorphic_path([record, :ratings], action: :suggest_dimensions) } do %>
+  <%= tag.summary t(".suggestions") %>
   <%= tag.div class: "dimension-suggestions", data: { dimension_suggestions_target: "suggestions" } do %>
     <% dimensions.defaults.each do |spectrum| %>
       <%= tag.button spectrum.name, type: "button", data: { dimension_key: spectrum.rating_dimension.key, action: "dimension-suggestions#choose" } %>

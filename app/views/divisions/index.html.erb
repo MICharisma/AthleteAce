@@ -3,8 +3,6 @@
 
 <%= division_sort_links %>
 
-<%= render_floating_spectrum_picker %>
-
 <div id="divisions">
   <% @divisions.each do |division| %>
     <%= tag.div id: dom_id(division), class: "index-record" do %>

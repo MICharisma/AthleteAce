@@ -40,3 +40,14 @@ adding the database range constraint. This approved fresh start does not convert
 old values and cannot be rolled back. Account, catalog and Spectrum records stay.
 Run the app migrations before serving the new code. New revisions snapshot the
 version 2 definition. Ascent's separate mountain voting range is unaffected.
+
+## Rating dimensions and controls
+
+Open Rating dimensions at the top right of the page to choose which sliders
+appear on browse and detail pages. Turn on Multiple to show more than one
+dimension. The selection follows you through the current browser session.
+
+Start dragging from the slider handle and move down for finer adjustments.
+On the keyboard, hold Shift while pressing an arrow key for single-point changes.
+The diamond on the track marks the Aces average. The count includes active
+ratings on that dimension.

@@ -2,6 +2,7 @@
 Rails.application.routes.draw do
   # Base ratings resources
   resources :ratings
+  resource :spectrum_preference, only: :update
   resources :spectrums do
     resources :ratings, only: [:index]
   end

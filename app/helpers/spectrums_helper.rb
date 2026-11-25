@@ -1,71 +1,52 @@
 module SpectrumsHelper
-  # Get the current selected spectrum IDs based on params, session, or default to Familiarity.
-  # @param params [ActionController::Parameters] The request parameters
-  # @return [Array<String>] The IDs of the current selected spectrums
-  def selected_spectrum_ids
-    ids_from_params = params[:spectrum_ids].is_a?(Array) ? params[:spectrum_ids].map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) } : []
-    ids_from_session = session[:selected_spectrum_ids].is_a?(Array) ? session[:selected_spectrum_ids].map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) } : []
-
-    selected_ids = ids_from_params.presence || ids_from_session.presence
-
-    if selected_ids.present?
-      # Ensure selected IDs are valid spectrum IDs
-      Spectrum.visible_to(current_ace).where(id: selected_ids).pluck(:id)
-    else
-      # Default to Familiarity spectrum or first available spectrum
-      familiarity = Spectrum.visible_to(current_ace).find_by(name: 'Familiarity')
-      default_id = familiarity&.id || Spectrum.visible_to(current_ace).first&.id
-      default_id ? [default_id] : []
-    end
+  def set_selected_spectrum_ids(ids)
+    session[:selected_spectrum_ids] = default_spectrums.map(&:id) & Array(ids)
   end
 
-  # Set the current selected spectrum IDs in the session.
-  # @param spectrum_ids [Array<String>] The IDs to set as current selected spectrums
-  def set_selected_spectrum_ids(spectrum_ids)
-    session[:selected_spectrum_ids] = Array(spectrum_ids).map(&:to_s).select { |id| id.match?(ApplicationRecord::UUID_FORMAT) }
+  def set_current_spectrum_id(id)
+    set_selected_spectrum_ids [id]
   end
 
-  # Select a single spectrum, e.g. from a ?spectrum_id= link
-  def set_current_spectrum_id(spectrum_id)
-    set_selected_spectrum_ids([spectrum_id])
-  end
-
-  # Get the current selected spectrum objects.
-  # @return [ActiveRecord::Relation<Spectrum>] The current selected spectrums
   def selected_spectrums
-    ids = selected_spectrum_ids
-    result = Spectrum.visible_to(current_ace).where(id: ids).order(:name)
-    
-    # If no spectrums are selected, return the first available spectrum for debugging
-    if result.empty? && Spectrum.visible_to(current_ace).exists?
-      Rails.logger.debug "[SpectrumsHelper] No spectrums selected, returning first spectrum"
-      Spectrum.visible_to(current_ace).limit(1)
-    else
-      result
+    @selected_spectrums ||= begin
+      requested = params[:spectrum_ids]
+      available = default_spectrums
+      if requested.is_a?(Array) && (matches = available.select { |spectrum| requested.include?(spectrum.id) }).any?
+        matches
+      elsif session[:selected_spectrum_ids].is_a?(Array)
+        available.select { |spectrum| session[:selected_spectrum_ids].include?(spectrum.id) }
+      else
+        [available.find { |spectrum| spectrum.name == "Familiarity" } || available.first].compact
+      end
     end
   end
 
-  # Get a collection of all spectrums for display in the picker.
-  # @param limit [Integer] Maximum number of spectrums to return (currently unused but kept for consistency)
-  # @return [ActiveRecord::Relation] Collection of spectrums
-  def default_spectrums(limit = nil)
-    spectrums = Spectrum.visible_to(current_ace).all.order(:name)
-    limit.present? ? spectrums.limit(limit) : spectrums
+  def default_spectrums
+    @default_spectrums ||= Spectrum.visible_to(current_ace).order(:name).to_a
   end
 
-  def render_floating_spectrum_picker highlight_color: nil
-    selected_ids = selected_spectrum_ids
-    tag.div id: "spectrum-picker", class: "spectrum-picker", data: { controller: "spectrum-picker" } do
-      form_with url: url_for, method: :get, data: { spectrum_picker_target: "form" } do |form|
-        toggle = tag.button type: "button", class: "spectrum-picker-toggle", aria: { expanded: false, controls: "spectrum-picker-panel" },
-          data: { spectrum_picker_target: "toggleButton", action: "spectrum-picker#toggleExpand" } do
-          tag.span(selected_spectrums.map(&:name).join(", "), data: { spectrum_picker_target: "selectedSummary" }) +
-            icon("chevron-down", size: 18, data: { spectrum_picker_target: "toggleIcon" })
+  def render_floating_spectrum_picker
+    return if default_spectrums.empty?
+
+    selected_ids = selected_spectrums.map(&:id)
+    tag.div class: "spectrum-picker-bar" do
+      tag.div id: "spectrum-picker", class: "spectrum-picker", data: {
+        controller: "spectrum-picker", action: "keydown.esc->spectrum-picker#close",
+        spectrum_picker_url_value: spectrum_preference_path
+      } do
+        toggle = tag.button type: "button", class: "spectrum-picker-toggle tool-button", aria: {
+          expanded: false, controls: "spectrum-picker-panel"
+        }, data: { spectrum_picker_target: "toggleButton", action: "spectrum-picker#toggleExpand" } do
+          tag.span(t("ratings.picker.label"), class: "spectrum-picker-label") +
+            tag.span(selected_spectrums.map(&:name).join(", "), data: { spectrum_picker_target: "selectedSummary" }) +
+            icon("chevron-down", size: 16, data: { spectrum_picker_target: "toggleIcon" })
         end
-        panel = tag.div id: "spectrum-picker-panel", class: "spectrum-picker-panel hidden", data: { spectrum_picker_target: "pickerPanel" } do
+        panel = tag.div id: "spectrum-picker-panel", class: "spectrum-picker-panel", hidden: true,
+          data: { spectrum_picker_target: "pickerPanel" } do
           multiple = tag.label class: "spectrum-multiple" do
-            check_box_tag(:multiple_spectrums, "1", selected_ids.size > 1,
-              data: { spectrum_picker_target: "multiSelectToggle", action: "change->spectrum-picker#handleMultiSelectToggle" }) + "Multiple"
+            check_box_tag(:multiple_spectrums, "1", session[:multiple_spectrums] || selected_ids.size > 1,
+              data: { spectrum_picker_target: "multiSelectToggle", action: "change->spectrum-picker#handleMultiSelectToggle" }) +
+              t("ratings.picker.multiple")
           end
           buttons = tag.div class: "spectrum-buttons" do
             safe_join default_spectrums.map { |spectrum|
@@ -75,8 +56,7 @@ module SpectrumsHelper
           end
           safe_join [multiple, buttons, tag.p("", role: "status", data: { spectrum_picker_target: "status" })]
         end
-        inputs = selected_ids.map { |id| form.hidden_field :spectrum_ids, value: id, name: "spectrum_ids[]", id: nil }
-        safe_join [toggle, panel, *inputs]
+        toggle + panel
       end
     end
   end

@@ -42,6 +42,7 @@
       <aside class="shell-sidebar"><p class="eyebrow"><%= current_side == "mod" ? "Moderate" : "Admin" %></p><%= render "layouts/side_links", location: "sidebar" %></aside>
     <% end %>
     <main id="main-content" tabindex="-1" class="app-main min-w-0 px-4">
+      <%= render_floating_spectrum_picker %>
       <% if notice %>
         <div class="flash-notice" role="alert">
           <span class="block sm:inline"><%= notice %></span>

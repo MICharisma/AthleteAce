@@ -1,0 +1,9 @@
+en:
+  ratings:
+    picker:
+      label: "Rating dimensions"
+      multiple: "Multiple"
+    dimension_picker:
+      suggestions: "Dimension suggestions"
+    slider:
+      endpoints: "%{low} to %{high}"

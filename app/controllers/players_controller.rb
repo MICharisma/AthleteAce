@@ -31,8 +31,6 @@ class PlayersController < ApplicationController
       @players = base_query.joins(:figure).merge(Figure.order(:first_name)).order(:id)
     end
     
-    @spectrums = Spectrum.visible_to(current_ace)
-    
     set_current_spectrum_id params[:spectrum_id] if params[:spectrum_id].present?
     
     load_filter_options
@@ -44,7 +42,6 @@ class PlayersController < ApplicationController
   def show
     load_current_filters
     @filtered_breadcrumb = build_filtered_breadcrumb @player, @current_filters
-    @spectrums = Spectrum.visible_to(current_ace).order :name
     @seasons = Season.where(id: @player.campaigns.select(:season_id)).includes(:year, :league).recent
     @weekly_shout_out_count = ShoutOutLeaderboard.new.posts.where(target: @player).count
     seed = session[:shout_out_feed_seed] ||= SecureRandom.hex(16)

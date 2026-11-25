@@ -114,8 +114,8 @@ RSpec.describe "Shared rating rows", type: :request do
     get player_path(player)
 
     expect(document.at_css(".rating-slider-input")["value"]).to eq("43")
-    expect(document.at_css(".slider-value").text).to eq("+43")
-    expect(document.at_css(".rating-summary").text).to include("Aces average +30 · 2 ratings")
+    expect(document.at_css(".slider-value").text).to eq("43")
+    expect(document.at_css(".rating-summary").text.squish).to eq("Aces average 30 2 ratings")
     expect(document.at_css(".average-marker")["style"].delete_prefix("left: ").to_f).to be_within(0.0001).of(21.6667)
     definition = JSON.parse(document.at_css(".rating-slider-instance")["data-dimension"])
     expect(definition).to include("minimum" => Rating::SCALE.minimum, "maximum" => Rating::SCALE.maximum,
@@ -146,7 +146,9 @@ RSpec.describe "Shared rating rows", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.media_type).to eq("text/vnd.turbo-stream.html")
     expect(document.at_css("turbo-stream")["target"]).to eq("rating_spectrum_#{spectrum.id}_player_#{player.id}")
-    expect(response.body).to include("+50", "Aces average +40 · 2 ratings", "Saved")
+    expect(document.at_css(".slider-value").text).to eq("50")
+    expect(document.at_css(".rating-summary").text.squish).to eq("Aces average 40 2 ratings")
+    expect(document.at_css(".status-indicator").text).to eq("Saved")
     expect(original.reload).to be_archived
   end
 
@@ -156,7 +158,9 @@ RSpec.describe "Shared rating rows", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(document.at_css("turbo-stream")["target"]).to eq("rating_rows_player_#{player.id}")
-    expect(response.body).to include("Aces average +20 · 1 rating", "disabled", "Not rated")
+    expect(document.at_css(".rating-summary").text.squish).to eq("Aces average 20 1 rating")
+    expect(document.at_css(".rating-slider-input")).to have_attribute("disabled")
+    expect(document.at_css(".slider-value").text).to eq("Not rated")
 
     get for_spectrums_player_ratings_path(player), params: { spectrum_ids: spectrum.id.to_s }, as: :json
     expect(response.parsed_body).to eq("ratings" => {})

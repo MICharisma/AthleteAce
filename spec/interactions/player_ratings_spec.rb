@@ -32,12 +32,12 @@ RSpec.describe "Player profiles and rating controls" do
     expect(input["max"]).to eq("500")
     expect(input["step"]).to eq("1")
     expect(input.value).to eq("0")
-    expect(page).to have_content("Your Rating (-100 to +500)")
+    expect(page).to have_content("Your Rating (-100 to 500)")
 
     visit spectrum_path(familiarity)
     expect(page).to have_content("Neutral: 0")
     expect(page).to have_content("-100")
-    expect(page).to have_content("+500")
+    expect(page).to have_content("500")
   end
 
   it "explains the sign-in requirement when a visitor clicks or uses the keyboard on a slider" do
@@ -51,37 +51,35 @@ RSpec.describe "Player profiles and rating controls" do
     expect(row).to have_content("You need to sign in to rate.")
     expect(row).to have_css(".rating-sign-in-link:not(.hidden)[href='#{new_ace_session_path}']")
     expect(row).to have_css(".slider-value", text: "Not rated")
-    expect(row).to have_content("Aces average +80 · 1 rating")
+    expect(row).to have_content("Aces average 80 1 rating")
     expect(row.find("input")).to be_disabled
     expect(row.find("input").value).to eq("0")
     expect(player.ratings.count).to eq(1)
 
+    find(".spectrum-picker-toggle").click
+    within(".spectrum-picker-panel") { click_button "Skill" }
     row_for(skill).find("button[aria-label='Sign in to rate Skill']").send_keys :enter
     expect(row_for(skill)).to have_content("You need to sign in to rate.")
     within(row_for(skill)) { click_link "Sign in" }
     expect(page).to have_current_path(new_ace_session_path)
   end
 
-  it "preserves existing exact values and saves keyboard changes with coarse and fine precision" do
+  it "preserves existing exact values and saves keyboard changes with arrow keys and Shift" do
     original = create(:rating, ace: ace, rated: player, spectrum: familiarity, value: 43)
     create(:rating, rated: player, spectrum: familiarity, value: 17)
     visit player_path(player)
 
-    click_button "Fine"
     expect(row_for(familiarity).find("input").value).to eq("43")
     expect(ace.ratings.count).to eq(1)
     expect(row_for(familiarity)).not_to have_content("Saved")
-    click_button "Coarse"
     row_for(familiarity).find("input").send_keys :arrow_right
-    expect_saved familiarity, "+53", "Aces average +35 · 2 ratings"
+    expect_saved familiarity, "53", "Aces average 35 2 ratings"
     expect(original.reload).to be_archived
     expect(page).to have_css("#rating_spectrum_#{familiarity.id}_player_#{player.id} input:focus")
 
-    click_button "Fine"
-    row_for(familiarity).find("input").send_keys :arrow_left
-    expect_saved familiarity, "+52", "Aces average +35 · 2 ratings"
+    row_for(familiarity).find("input").send_keys [:shift, :arrow_left]
+    expect_saved familiarity, "52", "Aces average 35 2 ratings"
     expect(ace.rating_for(player, familiarity).value).to eq(52)
-    expect(page).to have_css(".precision-control button[aria-pressed=true]", text: "Fine")
   end
 
   def set_slider(value)
@@ -93,13 +91,10 @@ RSpec.describe "Player profiles and rating controls" do
     JS
   end
 
-  it "snaps pointer input to coarse increments by default and to whole numbers with Fine" do
+  it "snaps direct pointer input to coarse increments" do
     visit player_path(player)
     set_slider 26.5
-    expect_saved familiarity, "+30", "Aces average +30 · 1 rating"
-    click_button "Fine"
-    set_slider 26.5
-    expect_saved familiarity, "+27", "Aces average +27 · 1 rating"
+    expect_saved familiarity, "30", "Aces average 30 1 rating"
   end
 
   it "keeps the value after a failed save and saves it on retry" do
@@ -117,39 +112,43 @@ RSpec.describe "Player profiles and rating controls" do
     JS
     set_slider 26.5
     row = row_for familiarity
-    expect(row).to have_css(".slider-value", text: "+30")
+    expect(row).to have_css(".slider-value", text: "30")
     expect(row).to have_content("Couldn’t save your rating.")
     expect(ace.ratings.active.count).to eq(0)
     within(row) { click_button "Retry" }
-    expect_saved familiarity, "+30", "Aces average +30 · 1 rating"
+    expect_saved familiarity, "30", "Aces average 30 1 rating"
   end
 
-  it "reuses the shared controls when the browse spectrum picker changes traits" do
+  it "keeps the sitewide dimension selection across browse and profile pages" do
     create(:rating, ace: ace, rated: player, spectrum: skill, value: 20)
     create(:rating, rated: player, spectrum: skill, value: 40)
     visit players_path
-    click_button "Fine"
     find(".spectrum-picker-toggle").click
     within ".spectrum-picker-panel" do
       click_button "Skill"
     end
     expect(page).to have_css(".slider-label", text: "Skill", count: 1)
     expect(page).not_to have_css(".slider-label", text: "Familiarity")
-    expect(row_for(skill)).to have_css(".slider-value", text: "+20")
-    expect(row_for(skill)).to have_content("Aces average +30 · 2 ratings")
+    expect(row_for(skill)).to have_css(".slider-value", text: "20")
+    expect(row_for(skill)).to have_content("Aces average 30 2 ratings")
     row_for(skill).find("input").send_keys :arrow_right
-    expect_saved skill, "+21", "Aces average +31 · 2 ratings"
+    expect_saved skill, "30", "Aces average 35 2 ratings"
 
     within ".spectrum-picker-panel" do
       check "Multiple"
       click_button "Familiarity"
     end
     expect(page).to have_css(".rating-slider-instance", count: 2)
+    visit player_path(player)
+    expect(page).to have_css(".rating-slider-instance", count: 2)
+    find(".spectrum-picker-toggle").click
     within ".spectrum-picker-panel" do
       click_button "Skill"
       click_button "Familiarity"
     end
     expect(page).to have_content("Select a spectrum to see rating sliders.")
+    expect(page).not_to have_css(".rating-slider-instance")
+    visit teams_path
     expect(page).not_to have_css(".rating-slider-instance")
   end
 
@@ -183,18 +182,19 @@ RSpec.describe "Player profiles and rating controls" do
       window.existingRatingInput.value = 40;
       window.existingRatingInput.dispatchEvent(new Event('input', { bubbles: true }));
     JS
+    find(".dimension-picker summary").click
     within ".dimension-picker" do
       click_button "Suggest for me"
       expect(page).to have_content("AI suggestions")
       within(".dimension-suggestions") { click_button "Skill" }
     end
     expect(page).to have_css("#rating_spectrum_#{skill.id}_player_#{player.id} input:focus")
-    expect(row_for(familiarity)).to have_css(".slider-value", text: "+40")
+    expect(row_for(familiarity)).to have_css(".slider-value", text: "40")
     expect(page.evaluate_script("window.existingRatingInput === document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input')")).to be(true)
     expect(ace.ratings.count).to eq(1)
     expect(ace.rating_for(player, familiarity).value).to eq(43)
     row_for(skill).find("input").send_keys :arrow_right
-    expect_saved skill, "+10", "Aces average +10 · 1 rating"
+    expect_saved skill, "10", "Aces average 10 1 rating"
   ensure
     Rails.configuration.x.shared_ratings.suggestion_provider = nil
   end
@@ -207,10 +207,11 @@ RSpec.describe "Player profiles and rating controls" do
       window.existingRatingInput.value = 40;
       window.existingRatingInput.dispatchEvent(new Event('input', { bubbles: true }));
     JS
+    find(".dimension-picker summary").click
     within(".rating-slider-group-container .dimension-picker") { select "Skill", from: "Choose a dimension" }
     expect(row_for(skill)).to have_css("input:focus")
     expect(page).to have_css(".rating-slider-instance", count: 2)
-    expect(row_for(familiarity)).to have_css(".slider-value", text: "+40")
+    expect(row_for(familiarity)).to have_css(".slider-value", text: "40")
     expect(page.evaluate_script("window.existingRatingInput === document.querySelector('#rating_spectrum_#{familiarity.id}_player_#{player.id} input')")).to be(true)
     expect(ace.ratings.count).to eq(0)
   end

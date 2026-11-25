@@ -272,6 +272,8 @@ RSpec.describe "Route access", type: :request do
       GET /player_groups
       GET /player_groups/:id
       GET /browse
+      PATCH /spectrum_preference
+      PUT /spectrum_preference
       PATCH /theme_preference
       PUT /theme_preference
       GET /search

@@ -2,14 +2,26 @@ import { Controller } from "@hotwired/stimulus"
 import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
-  static targets = ["form", "selectedSummary", "toggleIcon", "pickerPanel", "multiSelectToggle", "spectrumButton", "toggleButton", "status"]
+  static targets = ["selectedSummary", "toggleIcon", "pickerPanel", "multiSelectToggle", "spectrumButton", "toggleButton", "status"]
+
+  static values = { url: String }
 
   connect() { this.updateSummaryDisplay() }
 
   toggleExpand() {
-    const expanded = this.toggleButtonTarget.getAttribute("aria-expanded") !== "true"
+    this.setExpanded(this.pickerPanelTarget.hidden)
+  }
+
+  close(event) {
+    if (this.pickerPanelTarget.hidden) return
+    event.stopPropagation()
+    this.setExpanded(false)
+    this.toggleButtonTarget.focus()
+  }
+
+  setExpanded(expanded) {
     this.toggleButtonTarget.setAttribute("aria-expanded", String(expanded))
-    this.pickerPanelTarget.classList.toggle("hidden", !expanded)
+    this.pickerPanelTarget.hidden = !expanded
     this.toggleIconTarget.classList.toggle("rotate-180", expanded)
   }
 
@@ -40,20 +52,28 @@ export default class extends Controller {
   async applySpectrumChange() {
     this.updateSummaryDisplay()
     const ids = this.selectedButtons().map(button => button.dataset.spectrumId)
-    this.formTarget.querySelectorAll('input[name="spectrum_ids[]"]').forEach(input => input.remove())
-    // Keep the ordinary GET form fields in sync with the visible selection.
-    for (const id of ids.length ? ids : [""]) {
-      const input = document.createElement("input")
-      input.type = "hidden"
-      input.name = "spectrum_ids[]"
-      input.value = id
-      this.formTarget.appendChild(input)
+    const multiple = this.multiSelectToggleTarget.checked
+    const savePreference = async () => {
+      const response = await fetch(this.urlValue, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]')?.content || ""
+        },
+        body: JSON.stringify({ spectrum_ids: ids, multiple })
+      })
+      if (!response.ok) throw new Error("Could not save rating dimensions")
+      Turbo.cache.clear()
     }
+    const preferenceSaved = (this.preferenceSaved || Promise.resolve()).then(savePreference, savePreference)
+    this.preferenceSaved = preferenceSaved
     const revision = (this.revision || 0) + 1
     this.revision = revision
     this.statusTarget.textContent = "Loading…"
     try {
-      await Promise.all(Array.from(document.querySelectorAll("[data-rating-spectrum-url]")).map(async container => {
+      await preferenceSaved
+      if (this.revision !== revision) return
+      await Promise.all([...document.querySelectorAll("[data-rating-spectrum-url]")].map(async container => {
         const url = new URL(container.dataset.ratingSpectrumUrl, window.location.origin)
         url.searchParams.set("spectrum_ids", ids.join(","))
         const response = await fetch(url, { headers: { Accept: "text/vnd.turbo-stream.html" } })
@@ -62,8 +82,8 @@ export default class extends Controller {
         if (this.revision === revision) Turbo.renderStreamMessage(stream)
       }))
       if (this.revision === revision) this.statusTarget.textContent = ""
-    } catch (error) {
-      if (this.revision === revision) this.statusTarget.textContent = "Couldn’t load ratings. Choose a trait to try again."
+    } catch {
+      if (this.revision === revision) this.statusTarget.textContent = "Couldn’t load ratings. Choose a dimension to try again."
     }
   }
 }

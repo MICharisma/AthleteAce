@@ -22,7 +22,7 @@ RSpec.describe "Player rating gestures", type: :system do
     row = row_for spectrum
     expect(row).to have_css(".slider-value", text: value)
     expect(row).to have_css(".status-indicator", text: "Saved")
-    expect(row).to have_css(".rating-summary", text: average)
+    expect(row.find(".rating-summary").text.squish).to eq(average)
     expect(row).to have_css("input:not([disabled])")
   end
 
@@ -36,17 +36,16 @@ RSpec.describe "Player rating gestures", type: :system do
     browser = page.driver.browser
     browser.action.move_to(row.find(".rating-drag-handle").native).click_and_hold.perform
     browser.action.move_by(distance, 0).perform
-    expect(row).to have_css(".slider-value", text: "+53")
+    expect(row).to have_css(".slider-value", text: "53")
     browser.action.move_by(0, 40).perform
-    expect(row).to have_css(".drag-precision", text: "Fine")
-    expect(row).to have_css(".slider-value", text: "+53")
+    expect(row).to have_css(".slider-value", text: "53")
     browser.action.move_by(distance, 0).perform
-    expect(row).to have_css(".slider-value", text: "+54")
+    expect(row).to have_css(".slider-value", text: "54")
     browser.action.move_by(0, -40).perform
-    expect(row).to have_css(".slider-value", text: "+54")
+    expect(row).to have_css(".slider-value", text: "54")
     expect(ace.ratings.count).to eq(1)
     browser.action.release.perform
-    expect_saved familiarity, "+54", "Aces average +54 · 1 rating"
+    expect_saved familiarity, "54", "Aces average 54 1 rating"
     expect(original.reload).to be_archived
     expect(ace.ratings.count).to eq(2)
   end
@@ -62,7 +61,7 @@ RSpec.describe "Player rating gestures", type: :system do
     expect(row.find("input")["aria-valuetext"]).to eq("Not rated")
     expect(ace.ratings.count).to eq(0)
     within(row) { click_button "Rate neutral" }
-    expect_saved familiarity, "0", "Aces average 0 · 1 rating"
+    expect_saved familiarity, "0", "Aces average 0 1 rating"
     expect(ace.rating_for(player, familiarity).value).to eq(0)
   end
 
@@ -80,14 +79,12 @@ RSpec.describe "Player rating gestures", type: :system do
     browser.execute_cdp("Emulation.setTouchEmulationEnabled", enabled: true)
     browser.execute_cdp("Input.dispatchTouchEvent", type: "touchStart", touchPoints: [{ x: x, y: y }])
     browser.execute_cdp("Input.dispatchTouchEvent", type: "touchMove", touchPoints: [{ x: x + distance, y: y }])
-    expect(row).to have_css(".slider-value", text: "+53")
+    expect(row).to have_css(".slider-value", text: "53")
     browser.execute_cdp("Input.dispatchTouchEvent", type: "touchMove", touchPoints: [{ x: x + distance, y: y + 40 }])
-    expect(row).to have_css(".drag-precision", text: "Fine")
     browser.execute_cdp("Input.dispatchTouchEvent", type: "touchMove", touchPoints: [{ x: x + distance * 2, y: y + 40 }])
-    expect(row).to have_css(".slider-value", text: "+54")
+    expect(row).to have_css(".slider-value", text: "54")
     browser.execute_cdp("Input.dispatchTouchEvent", type: "touchEnd", touchPoints: [])
-    expect_saved familiarity, "+54", "Aces average +54 · 1 rating"
-    expect(page).not_to have_css(".drag-precision", text: "Fine")
+    expect_saved familiarity, "54", "Aces average 54 1 rating"
     header = row_for(familiarity).find(".slider-header")
     header_rect = page.evaluate_script("arguments[0].getBoundingClientRect().toJSON()", header)
     scroll_before = page.evaluate_script("window.scrollY")

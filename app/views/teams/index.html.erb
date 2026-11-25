@@ -1,16 +1,19 @@
 <% content_for :title, "Teams" %>
 
-<%= browse_header "Teams" do %>
-  <%= link_to new_game_round_path, class: "game-button" do %>
-    <%= icon "player-play", size: 20 %>
-    <%= tag.span "Team Match" %>
+<% filters_open = @q.conditions.any? %>
+<%= tag.div class: "teams-header", data: { controller: "collapse" } do %>
+  <%= browse_header "Teams" do %>
+    <%= tag.button icon("adjustments-horizontal", size: 20), type: "button", class: "tool-button team-filters-toggle",
+          aria: { label: t(".filter_teams"), expanded: filters_open.to_s, controls: "team-filters" },
+          title: t(".filter_teams"), data: { action: "collapse#toggle" } %>
+    <%= link_to new_game_round_path, class: "game-button" do %>
+      <%= icon "player-play", size: 20 %>
+      <%= tag.span "Team Match" %>
+    <% end %>
   <% end %>
-<% end %>
 
-<%= tag.details class: "team-filters", open: @q.conditions.any? do %>
-  <%= tag.summary icon("adjustments-horizontal", size: 20), class: "tool-button",
-        aria: { label: t(".filter_teams") }, title: t(".filter_teams") %>
-  <%= team_search_form(@q) %>
+  <%= tag.div team_search_form(@q), id: "team-filters", class: ("hidden" unless filters_open),
+        data: { collapse_target: "content" } %>
 <% end %>
 
 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -24,9 +27,6 @@
     </div>
   </div>
 </div>
-
-<%# Page-level Spectrum Picker %>
-<%= render_floating_spectrum_picker %>
 
 <div id="teams" class="space-y-4">
   <% @teams.each do |team| %>

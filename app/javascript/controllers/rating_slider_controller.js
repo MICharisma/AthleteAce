@@ -4,23 +4,12 @@ import { Dimension } from "shared-ratings/dimension"
 import { HorizontalDrag } from "shared-ratings/horizontal-drag"
 
 export default class extends Controller {
-  static targets = ["slider", "precisionButton"]
-  static values = { precision: { type: String, default: "coarse" } }
+  static targets = ["slider"]
 
   initialize() {
     this.pointerMove = this.moveDrag.bind(this)
     this.pointerUp = this.finishDrag.bind(this)
     this.pointerCancel = this.cancelDrag.bind(this)
-  }
-
-  precisionValueChanged() {
-    this.precisionButtonTargets.forEach(button => {
-      button.setAttribute("aria-pressed", String(button.dataset.precision === this.precisionValue))
-    })
-  }
-
-  changePrecision(event) {
-    this.precisionValue = event.currentTarget.dataset.precision
   }
 
   sliderTargetConnected(slider) {
@@ -30,10 +19,6 @@ export default class extends Controller {
 
   disconnect() {
     this.endDrag(false)
-  }
-
-  incrementFor(slider) {
-    return this.precisionValue === "fine" ? slider.ratingDimension.fine_step : slider.ratingDimension.coarse_step
   }
 
   async openDimension(event) {
@@ -94,7 +79,7 @@ export default class extends Controller {
       originalAriaValue: slider.getAttribute("aria-valuetext"),
       gesture: new HorizontalDrag({
         dimension: slider.ratingDimension, value: Number(slider.value),
-        x: event.clientX, y: event.clientY, width, precision: this.precisionValue
+        x: event.clientX, y: event.clientY, width, precision: "coarse"
       })
     }
     document.addEventListener("pointermove", this.pointerMove)
@@ -112,9 +97,6 @@ export default class extends Controller {
       slider.value = value
       this.showDraft(slider)
     }
-    const indicator = this.rowFor(slider).querySelector(".drag-precision")
-    const label = gesture.precision === "fine" ? "Fine" : "Coarse"
-    if (indicator.textContent !== label) indicator.textContent = label
   }
 
   finishDrag(event) {
@@ -136,7 +118,6 @@ export default class extends Controller {
     document.removeEventListener("pointercancel", this.pointerCancel)
     if (handle.hasPointerCapture(pointerId)) handle.releasePointerCapture(pointerId)
     const row = this.rowFor(slider)
-    row.querySelector(".drag-precision").textContent = ""
     if (commit && slider.value !== originalValue) {
       this.save(slider)
     } else {
@@ -149,8 +130,7 @@ export default class extends Controller {
   }
 
   formatValue(value) {
-    const number = Number(value)
-    return `${number > 0 ? "+" : ""}${number.toLocaleString()}`
+    return Number(value).toLocaleString()
   }
 
   rowFor(slider) { return slider.closest(".rating-slider-instance") }
@@ -177,7 +157,7 @@ export default class extends Controller {
   updateValue(event) {
     const slider = event.target
     if (this.drag) return
-    const increment = this.incrementFor(slider)
+    const increment = slider.ratingDimension.coarse_step
     slider.value = Math.round(Number(slider.value) / increment) * increment
     this.showDraft(slider)
   }
@@ -193,9 +173,10 @@ export default class extends Controller {
     const increments = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1, PageUp: 10, PageDown: -10 }
     let value
     const dimension = slider.ratingDimension
+    const step = event.shiftKey ? dimension.fine_step : dimension.coarse_step
     if (event.key === "Home") value = dimension.minimum
     else if (event.key === "End") value = dimension.maximum
-    else if (event.key in increments) value = Number(slider.value) + increments[event.key] * this.incrementFor(slider)
+    else if (event.key in increments) value = Number(slider.value) + increments[event.key] * step
     else return
     event.preventDefault()
     slider.value = Math.max(dimension.minimum, Math.min(dimension.maximum, value))

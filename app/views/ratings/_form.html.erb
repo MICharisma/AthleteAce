@@ -27,7 +27,7 @@
   <% end %>
 
   <div class="my-5">
-    <%= form.label :value, "Your Rating (-100 to +500)" %>
+    <%= form.label :value, "Your Rating (-100 to 500)" %>
     <div class="flex items-center space-x-4 mt-2">
       <span class="text-red-500 text-sm"><%= local_assigns[:spectrum]&.low_label || "Low" %></span>
       <%= form.range_field :value, min: Rating::SCALE.minimum, max: Rating::SCALE.maximum, step: Rating::SCALE.fine_step, value: rating.value || Rating::SCALE.neutral_value,
