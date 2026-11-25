@@ -3,8 +3,13 @@ module HasLogos
 
   included do
     has_many :logos, as: :owner, dependent: :destroy
+    has_many :current_logos, -> { where(ongoing: true).order(:entity_code) }, as: :owner, class_name: "Logo"
     belongs_to :primary_logo, class_name: "Logo", optional: true
     validate :primary_logo_matches_owner
+  end
+
+  def display_logo_image
+    primary_logo&.image || current_logos.filter_map(&:image).min_by { |image| image.content_type == "image/svg+xml" ? 1 : 0 }
   end
 
   private

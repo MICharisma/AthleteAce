@@ -17,7 +17,8 @@ class LeaguesController < ApplicationController
     end
     
     # Always include for display purposes
-    base_query = base_query.preload(:sport, :jurisdiction)
+    logo_files = { asset_representations: { file_attachment: :blob } }
+    base_query = base_query.preload(:sport, :jurisdiction, primary_logo: logo_files, current_logos: logo_files)
     
     sql_order = @sort_service.to_sql_order(:leagues)
     
@@ -32,7 +33,8 @@ class LeaguesController < ApplicationController
 
   def show
     load_current_filters
-    @teams = @league.teams.includes(:stadium, primary_logo: { asset_representations: { file_attachment: :blob } }).order(:territory, :mascot)
+    logo_files = { asset_representations: { file_attachment: :blob } }
+    @teams = @league.teams.includes(:stadium, primary_logo: logo_files, current_logos: logo_files).order(:territory, :mascot)
     load_filter_options
     @filtered_breadcrumb = build_filtered_breadcrumb @league, @current_filters
   end

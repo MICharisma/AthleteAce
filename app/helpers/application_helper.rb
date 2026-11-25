@@ -131,15 +131,18 @@ module ApplicationHelper
     record.respond_to?(:display_name) ? record.display_name : record.name
   end
 
+  def catalog_logo_url record
+    return unless record.is_a?(HasLogos)
+
+    image = record.display_logo_image
+    url_for image if image
+  end
+
   def display_name_with_lazy_logo(record, name_attribute: :name, logo_attribute: :logo_url, name: nil, **options)
     return '' unless record
 
-    image = record.primary_logo&.image if logo_attribute == :logo_url && record.is_a?(HasLogos)
-    logo_url_value = if image
-      url_for image
-    elsif record.respond_to? logo_attribute
-      record.public_send logo_attribute
-    end
+    logo_url_value = catalog_logo_url(record) if logo_attribute == :logo_url
+    logo_url_value ||= record.public_send logo_attribute if record.respond_to? logo_attribute
     entity_name = if name
       name
     elsif record.respond_to?(:display_name) && %i[name full_name].include?(name_attribute)

@@ -27,6 +27,7 @@
   @apply inline-flex items-center gap-1.5 px-2 py-1 rounded-md border border-line text-xs font-semibold;
   color: var(--entity-color, var(--color-ink-2));
 }
+.entity-chip .entity-logo { @apply size-4 shrink-0 object-contain; }
 .entity-chip:hover { @apply bg-surface-2; }
 .entity-kind { color: var(--entity-color); }
 .record-identity { @apply flex items-center gap-4 min-w-0; }
@@ -40,6 +41,7 @@
 .entity-initials { @apply font-display font-extrabold text-3xl; }
 .entity-avatar-large .entity-initials { @apply text-6xl; }
 .entity-portrait { @apply absolute inset-0 w-full h-full object-contain; }
+.entity-avatar:is([data-entity="team"], [data-entity="league"]) .entity-portrait { @apply p-1; }
 .entity-avatar[data-entity="player"] .entity-portrait { @apply object-cover object-top; }
 .flash-notice, .flash-alert { @apply p-4 mb-4 border rounded-tool text-sm font-semibold; }
 .flash-notice { @apply bg-ok-tint text-ok-ink border-ok; }

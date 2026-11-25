@@ -1,7 +1,7 @@
 <% content_for :title, @team.name %>
 <%= filtered_breadcrumb_nav @filtered_breadcrumb if @filtered_breadcrumb.present? %>
 <%= tag.section class: "round-panel team-masthead", draggable: true, data: tier_lists_draggable_data(@team) do %>
-  <div class="team-title"><%= round_team_badge @team %><h1 class="page-title"><%= @team.name %></h1></div>
+  <div class="team-title"><%= entity_avatar @team %><h1 class="page-title"><%= @team.name %></h1></div>
   <div class="profile-chips"><%= entity_link @team.league %><%= entity_link @team.division %><%= entity_link @team.stadium %><%= entity_link @team.current_organization %></div>
   <div class="page-actions">
     <%= render "follows/button", record: @team %>

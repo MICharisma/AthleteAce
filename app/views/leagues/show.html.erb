@@ -1,6 +1,6 @@
 <% content_for :title, @league.name %>
 <%= filtered_breadcrumb_nav(@filtered_breadcrumb) if @filtered_breadcrumb.present? %>
-<%= browse_header @league.name do %>
+<%= browse_header @league.name, avatar: entity_avatar(@league) do %>
   <%= link_to "Practice", new_game_round_path(league_id: @league.id), class: "game-button" %>
 <% end %>
 <%= browse_metadata "Sport" => entity_link(@league.sport), "Jurisdiction" => entity_link(@league.jurisdiction) %>

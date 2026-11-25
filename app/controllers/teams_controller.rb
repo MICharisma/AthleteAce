@@ -44,6 +44,9 @@ class TeamsController < ApplicationController
     end
 
     # Paginate the teams collection
+    logo_files = { asset_representations: { file_attachment: :blob } }
+    logos = { primary_logo: logo_files, current_logos: logo_files }
+    @teams = @teams.preload(logos.merge(league: logos))
     @pagy, @teams = pagy @teams, limit: per_page
 
     
