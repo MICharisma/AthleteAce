@@ -18,7 +18,7 @@ RSpec.describe TitleAward do
     expect(constructors.recipient).to eq(team)
     expect([ drivers.recipient, drivers.team ]).to eq([ driver, team ])
     expect(solo.recipient).to eq(driver)
-    expect(championship.title_awards.person_titles).to contain_exactly(drivers, solo)
+    expect(championship.title_awards.individual_titles).to contain_exactly(drivers, solo)
     expect(championship.title_awards.team_titles).to eq([ constructors ])
     expect(driver.title_awards).to contain_exactly(drivers, solo)
     expect { driver.destroy }.not_to change(Player, :count)

@@ -86,7 +86,7 @@ class Admin::FigureClaimsController < ApplicationController
     @practices = Practice.order(:name, :entity_code)
     @topics = Topic.order(:name)
     figure = @claim.figure || (resolve_figure(@figure_code) rescue nil)
-    @staff_tenures = figure ? figure.staff_tenures.chronological.includes(:organization, :team) : []
+    @staff_tenures = figure ? figure.staff_tenures.newest_first.includes(:organization, :team) : []
     @practice_claims = figure ? figure.figure_practice_relationships.includes(:protocol).order(:entity_code) : []
   end
 

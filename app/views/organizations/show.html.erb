@@ -46,7 +46,7 @@
 
       <% if @organization.organization_affiliations.any? %>
         <div class="space-y-3">
-          <% @organization.organization_affiliations.chronological.each do |affiliation| %>
+          <% @organization.organization_affiliations.newest_first.each do |affiliation| %>
             <%= link_to organization_affiliation_path(affiliation), class: "block rounded-card border border-line bg-surface-2 px-4 py-4 transition hover:border-line-2 hover:bg-surface" do %>
               <div class="flex items-start justify-between gap-4">
                 <div>

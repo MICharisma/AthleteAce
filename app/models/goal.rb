@@ -6,7 +6,7 @@ class Goal < ApplicationRecord
   after_create :prepare_learning!
 
   def prepare_learning!
-    quest.highlights.public_requirements.includes(:achievement).find_each do |highlight|
+    quest.highlights.approved.with_approved_achievement.includes(:achievement).find_each do |highlight|
       next if goal_achievements.exists?(achievement: highlight.achievement)
       snapshot = highlight.achievement.roster_snapshot
       next unless snapshot
@@ -23,7 +23,7 @@ class Goal < ApplicationRecord
 
     with_lock do
       prepare_learning!
-      highlights = quest.highlights.public_requirements
+      highlights = quest.highlights.approved.with_approved_achievement
       entries = goal_achievements.where(achievement_id: highlights.select(:achievement_id))
       matched = false
       entries.each do |entry|
@@ -35,7 +35,7 @@ class Goal < ApplicationRecord
         entry.save!
       end
       if matched
-        completed = entries.where.not(completed_at: nil).where(achievement_id: highlights.required.select(:achievement_id)).count
+        completed = entries.completed.where(achievement_id: highlights.required.select(:achievement_id)).count
         total = highlights.required.count
         update! progress: completed, status: total.positive? && completed >= total ? "completed" : "in_progress"
       end
@@ -43,8 +43,8 @@ class Goal < ApplicationRecord
   end
 
   def next_achievement
-    completed = goal_achievements.where.not(completed_at: nil).select(:achievement_id)
-    quest.highlights.public_requirements.required.ordered.where.not(achievement_id: completed).includes(:achievement).map(&:achievement).find { |achievement| achievement.practice_scope }
+    completed = goal_achievements.completed.select(:achievement_id)
+    quest.highlights.approved.with_approved_achievement.required.ordered.where.not(achievement_id: completed).includes(:achievement).map(&:achievement).find { |achievement| achievement.practice_scope }
   end
 
   validates :status, presence: true, inclusion: { in: %w[not_started in_progress completed] }
@@ -59,7 +59,7 @@ class Goal < ApplicationRecord
   end
   
   def percent_complete
-    total_required = quest.highlights.public_requirements.required.count
+    total_required = quest.highlights.approved.with_approved_achievement.required.count
     return 0 if total_required.zero?
     
     (progress.to_f / total_required * 100).round
@@ -77,5 +77,6 @@ class Goal < ApplicationRecord
     quest.achievements.approved.merge(Highlight.approved)
   end
   
-  scope :active, -> { where.not(status: 'completed') }
+  scope :unfinished, -> { where.not(status: "completed") }
+  scope :with_approved_quest, -> { where(quest: Quest.approved) }
 end

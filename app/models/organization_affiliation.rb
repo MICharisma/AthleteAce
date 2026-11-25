@@ -11,7 +11,7 @@ class OrganizationAffiliation < ApplicationRecord
   validates :end_date, comparison: { greater_than_or_equal_to: :start_date }, if: -> { start_date.present? && end_date.present? }
   validate :team_affiliations_do_not_overlap
 
-  scope :chronological, -> { order(start_date: :desc, end_date: :desc, created_at: :desc) }
+  scope :newest_first, -> { order(start_date: :desc, end_date: :desc, created_at: :desc) }
   scope :current, -> {
     where("start_date IS NULL OR start_date <= ?", Date.current)
       .where("end_date IS NULL OR end_date >= ?", Date.current)

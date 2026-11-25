@@ -15,7 +15,7 @@ class StaffTenure < ApplicationRecord
   validates :entity_code, uniqueness: true
   validate :ongoing_has_no_end
 
-  scope :chronological, -> { order(Arel.sql("start_date DESC NULLS LAST"), :id) }
+  scope :newest_first, -> { order(Arel.sql("start_date DESC NULLS LAST"), :id) }
 
   private
 

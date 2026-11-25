@@ -1,7 +1,7 @@
 class FiguresController < ApplicationController
   def show
     @figure = Figure.find(params.expect(:id))
-    @staff_tenures = @figure.staff_tenures.includes(:figure, :organization, :team).chronological
+    @staff_tenures = @figure.staff_tenures.includes(:figure, :organization, :team).newest_first
     @business_ties = @figure.figure_business_relationships.published.includes(:business, attestations: :author).by_recency
     @practice_ties = @figure.figure_practice_relationships.published.includes(:protocol, :practices, attestations: :author).by_recency
     @statements = @figure.attributed_statements.published

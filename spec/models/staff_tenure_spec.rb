@@ -50,6 +50,6 @@ RSpec.describe StaffTenure do
     undated = create :staff_tenure
     first = create :staff_tenure, start_date: "2025"
     second = create :staff_tenure, start_date: "2025"
-    expect(described_class.chronological).to eq([ first, second, undated ])
+    expect(described_class.newest_first).to eq([ first, second, undated ])
   end
 end

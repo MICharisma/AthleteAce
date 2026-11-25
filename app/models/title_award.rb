@@ -9,7 +9,7 @@ class TitleAward < ApplicationRecord
   has_one :team, through: :campaign
 
   scope :team_titles, -> { where(player_id: nil) }
-  scope :person_titles, -> { where.not(player_id: nil) }
+  scope :individual_titles, -> { where.not(player_id: nil) }
 
   validates :key, presence: true, length: { maximum: 80 }, format: { with: /\A[a-z0-9][a-z0-9_-]*\z/ }, uniqueness: { scope: :contest_id }
   validates :name, presence: true, length: { maximum: 200 }

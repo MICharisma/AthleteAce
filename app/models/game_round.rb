@@ -8,6 +8,7 @@ class GameRound < ApplicationRecord
 
   belongs_to :ace
   has_many :game_attempts, dependent: :destroy
+  scope :finished, -> { where.not(finished_at: nil) }
   scope :unfinished, -> { where(finished_at: nil).order(updated_at: :desc) }
 
   validates :game_type, inclusion: { in: GAMES.keys }
@@ -68,7 +69,7 @@ class GameRound < ApplicationRecord
         options_presented: question.fetch("choices").map { |item| item.fetch("id") },
         is_correct: choice&.fetch("id") == question.fetch("target_id"), time_elapsed_ms: answer_time_ms
       PracticeReview.record! attempt, question
-      ace.goals.active.where(quest: Quest.approved).find_each { |goal| goal.record_answer!(attempt) }
+      ace.goals.unfinished.with_approved_quest.find_each { |goal| goal.record_answer!(attempt) }
       learned = newly_known_player_ids
       if known_before == false && attempt.correct? && PlayProgress.new(ace: ace).known_player_ids.include?(attempt.subject_entity_id)
         learned |= [ attempt.subject_entity_id ]
@@ -174,7 +175,7 @@ class GameRound < ApplicationRecord
   end
 
   def quest_progress_snapshot(goal)
-    required = goal.quest.highlights.public_requirements.required.count
+    required = goal.quest.highlights.approved.with_approved_achievement.required.count
     completed = [ goal.progress, required ].min
     { "completed" => completed, "required" => required,
       "percent" => required.positive? ? (completed.fdiv(required) * 100).round : 0 }

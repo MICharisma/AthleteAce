@@ -7,7 +7,7 @@ module QuestsHelper
   end
 
   def quest_progress goal
-    required = goal.quest.highlights.public_requirements.count(&:required?)
+    required = goal.quest.highlights.approved.with_approved_achievement.count(&:required?)
     completed = [goal.progress, required].min
     { completed: completed, required: required, percent: required.positive? ? (completed.fdiv(required) * 100).round : 0 }
   end

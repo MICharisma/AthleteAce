@@ -15,7 +15,7 @@ class Highlight < ApplicationRecord
   end
   
   # Scopes
-  scope :public_requirements, -> { approved.where(achievement: Achievement.approved) }
+  scope :with_approved_achievement, -> { where(achievement: Achievement.approved) }
   scope :required, -> { where(required: true) }
   scope :optional, -> { where(required: false) }
   scope :ordered, -> { order(position: :asc) }

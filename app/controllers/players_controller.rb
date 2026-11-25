@@ -59,7 +59,7 @@ class PlayersController < ApplicationController
       @memory_stats = {
         seen: seen,
         accuracy: seen.positive? ? "#{(right.fdiv(seen) * 100).round}%" : "—",
-        quests: current_ace.goals.where(quest: Quest.approved).joins(:goal_achievements).where("goal_achievements.required_player_ids @> ?::jsonb", [ @player.id ].to_json).distinct.count,
+        quests: current_ace.goals.with_approved_quest.joins(:goal_achievements).where("goal_achievements.required_player_ids @> ?::jsonb", [ @player.id ].to_json).distinct.count,
         last_miss: last_miss ? last_miss.in_time_zone(current_ace.play_time_zone).to_date.strftime("%b %-d, %Y") : "—"
       }
     end

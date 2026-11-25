@@ -5,7 +5,7 @@ class GoalsController < ApplicationController
 
   # GET /goals
   def index
-    @goals = current_ace.goals.where(quest: Quest.approved).includes(:quest)
+    @goals = current_ace.goals.with_approved_quest.includes(:quest)
   end
 
   # GET /goals/:id
@@ -53,7 +53,7 @@ class GoalsController < ApplicationController
 
   private
     def set_goal
-      @goal = current_ace.goals.where(quest: Quest.approved).find(params[:id])
+      @goal = current_ace.goals.with_approved_quest.find(params[:id])
     end
 
     def set_quest

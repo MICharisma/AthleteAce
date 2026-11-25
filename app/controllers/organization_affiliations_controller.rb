@@ -1,6 +1,6 @@
 class OrganizationAffiliationsController < ApplicationController
   def index
-    @organization_affiliations = OrganizationAffiliation.includes(:organization, team: :league).chronological
+    @organization_affiliations = OrganizationAffiliation.includes(:organization, team: :league).newest_first
   end
 
   def show

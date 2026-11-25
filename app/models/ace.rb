@@ -43,7 +43,7 @@ class Ace < ApplicationRecord
   has_many :shout_out_drafts, dependent: :destroy
   has_many :follows, dependent: :destroy
   has_many :goals, dependent: :destroy
-  has_many :active_goals, -> { Goal.active }, class_name: "Goal"
+  has_many :active_goals, -> { Goal.unfinished }, class_name: "Goal"
   has_many :quests, through: :goals
   has_many :ratings, dependent: :destroy
   has_many :rating_revisions, dependent: :delete_all

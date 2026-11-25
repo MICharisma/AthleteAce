@@ -43,7 +43,7 @@ class Admin::ShotsController < ApplicationController
     @tag = params.permit(:tag)[:tag].to_s.strip
     shots = Shot.with_attached_image.order(created_at: :desc, id: :desc)
     shots = shots.tagged(@tag) if @tag.present?
-    shots = shots.untagged_players if params[:unassigned] == "1"
+    shots = shots.without_captures if params[:unassigned] == "1"
     @pagy, @shots = pagy(shots, limit: 24)
   end
 

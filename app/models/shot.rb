@@ -8,7 +8,7 @@ class Shot < ApplicationRecord
 
   normalizes :tags, with: ->(tags) { tags.map { |tag| tag.strip.downcase }.compact_blank.uniq }
   scope :tagged, ->(tag) { where("shots.tags @> ARRAY[?]::text[]", tag.strip.downcase) }
-  scope :untagged_players, -> { where.missing(:captures) }
+  scope :without_captures, -> { where.missing(:captures) }
 
   validate :image_source
   validate :image_type, if: -> { image.attached? }
