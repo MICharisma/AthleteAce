@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_25_101300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -44,7 +44,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["ace_id"], name: "index_ace_rizz_bindings_on_ace_id_active", unique: true, where: "((status)::text = 'active'::text)"
     t.index ["operation_id"], name: "index_ace_rizz_bindings_on_operation_id", unique: true
     t.index ["rizz_sub"], name: "index_ace_rizz_bindings_on_rizz_sub", unique: true
-    t.check_constraint "status::text = ANY (ARRAY['active'::character varying, 'disconnected'::character varying]::text[])", name: "ace_rizz_bindings_status"
+    t.check_constraint "status::text = ANY (ARRAY['active'::character varying::text, 'disconnected'::character varying::text])", name: "ace_rizz_bindings_status"
   end
 
   create_table "aces", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -80,7 +80,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["email"], name: "index_aces_on_email", unique: true
     t.index ["google_uid"], name: "index_aces_on_google_uid", unique: true, where: "(google_uid IS NOT NULL)"
     t.index ["reset_password_token"], name: "index_aces_on_reset_password_token", unique: true
-    t.check_constraint "theme::text = ANY (ARRAY['light'::character varying, 'dark'::character varying, 'system'::character varying]::text[])", name: "aces_theme"
+    t.check_constraint "theme::text = ANY (ARRAY['light'::character varying::text, 'dark'::character varying::text, 'system'::character varying::text])", name: "aces_theme"
   end
 
   create_table "achievements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -101,7 +101,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["moderation_status", "created_at"], name: "index_achievements_on_moderation_status_and_created_at"
     t.index ["seed_version"], name: "index_achievements_on_seed_version"
     t.index ["target_type", "target_id"], name: "index_achievements_on_target"
-    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "achievements_moderation_status"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'hidden'::character varying::text])", name: "achievements_moderation_status"
   end
 
   create_table "activations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -189,7 +189,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["subject_type", "subject_id"], name: "index_asset_representations_on_subject"
     t.check_constraint "byte_size > 0", name: "asset_file_not_empty"
     t.check_constraint "sha256::text ~ '^[a-f0-9]{64}$'::text", name: "asset_sha256_format"
-    t.check_constraint "subject_type::text = ANY (ARRAY['Logo'::character varying, 'Uniform'::character varying, 'UniformPiece'::character varying, 'Figure'::character varying]::text[])", name: "asset_subject_type"
+    t.check_constraint "subject_type::text = ANY (ARRAY['Logo'::character varying::text, 'Uniform'::character varying::text, 'UniformPiece'::character varying::text, 'Figure'::character varying::text])", name: "asset_subject_type"
   end
 
   create_table "attestations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -216,8 +216,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["claim_type", "claim_id"], name: "index_attestations_on_claim"
     t.index ["entered_by_id"], name: "index_attestations_on_entered_by_id"
     t.index ["entity_code"], name: "index_attestations_on_entity_code", unique: true
-    t.check_constraint "claim_type::text = ANY (ARRAY['FigureBusinessRelationship'::character varying, 'FigurePracticeRelationship'::character varying, 'AttributedStatement'::character varying]::text[])", name: "attestations_claim_type"
-    t.check_constraint "content_form::text = ANY (ARRAY['text'::character varying, 'link'::character varying, 'image'::character varying, 'video'::character varying]::text[])", name: "attestations_content_form"
+    t.check_constraint "claim_type::text = ANY (ARRAY['FigureBusinessRelationship'::character varying::text, 'FigurePracticeRelationship'::character varying::text, 'AttributedStatement'::character varying::text])", name: "attestations_claim_type"
+    t.check_constraint "content_form::text = ANY (ARRAY['text'::character varying::text, 'link'::character varying::text, 'image'::character varying::text, 'video'::character varying::text])", name: "attestations_content_form"
   end
 
   create_table "attributed_statements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -244,8 +244,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["observer_id"], name: "index_attributed_statements_on_observer_id"
     t.index ["staff_tenure_id"], name: "index_attributed_statements_on_staff_tenure_id"
     t.index ["topic_id"], name: "index_attributed_statements_on_topic_id"
-    t.check_constraint "attribution_kind::text = ANY (ARRAY['direct_quote'::character varying, 'attributed_paraphrase'::character varying, 'self_stated_value'::character varying, 'observer_characterization'::character varying]::text[])", name: "attributed_statements_attribution_kind"
-    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "attributed_statements_moderation_status"
+    t.check_constraint "attribution_kind::text = ANY (ARRAY['direct_quote'::character varying::text, 'attributed_paraphrase'::character varying::text, 'self_stated_value'::character varying::text, 'observer_characterization'::character varying::text])", name: "attributed_statements_attribution_kind"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'hidden'::character varying::text])", name: "attributed_statements_moderation_status"
   end
 
   create_table "businesses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -323,7 +323,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["id"], name: "index_catalog_edits_without_reason", where: "(reason IS NULL)"
     t.index ["record_type", "record_id", "id"], name: "index_catalog_edits_on_record_type_and_record_id_and_id"
     t.check_constraint "reason IS NULL AND reason_supplied_at IS NULL OR reason IS NOT NULL AND length(btrim(reason)) >= 1 AND length(btrim(reason)) <= 2000 AND reason_supplied_at IS NOT NULL", name: "catalog_edit_reason"
-    t.check_constraint "record_type::text = ANY (ARRAY['Player'::character varying, 'Team'::character varying]::text[])", name: "catalog_edit_record_type"
+    t.check_constraint "record_type::text = ANY (ARRAY['Player'::character varying::text, 'Team'::character varying::text])", name: "catalog_edit_record_type"
   end
 
   create_table "cities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -392,7 +392,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["contest_id"], name: "index_contestants_on_contest_home", unique: true, where: "((side)::text = 'home'::text)"
     t.index ["contest_id"], name: "index_contestants_on_contest_id"
     t.index ["entity_code"], name: "index_contestants_on_entity_code", unique: true
-    t.check_constraint "side IS NULL OR (side::text = ANY (ARRAY['home'::character varying, 'away'::character varying]::text[]))", name: "contestants_have_known_sides"
+    t.check_constraint "side IS NULL OR (side::text = ANY (ARRAY['home'::character varying::text, 'away'::character varying::text]))", name: "contestants_have_known_sides"
   end
 
   create_table "contests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -577,10 +577,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["entity_code"], name: "index_figure_business_relationships_on_entity_code", unique: true
     t.index ["figure_id"], name: "index_figure_business_relationships_on_figure_id"
     t.index ["moderation_status"], name: "index_figure_business_relationships_on_moderation_status"
-    t.check_constraint "compensation::text = ANY (ARRAY['documented_paid'::character varying, 'documented_unpaid'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_compensation"
-    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "figure_business_relationships_moderation_status"
-    t.check_constraint "predicate::text = ANY (ARRAY['founded'::character varying, 'owns'::character varying, 'invests_in'::character varying, 'endorses'::character varying, 'promotes'::character varying, 'sponsored_by'::character varying]::text[])", name: "figure_business_relationships_predicate"
-    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_business_relationships_temporal_state"
+    t.check_constraint "compensation::text = ANY (ARRAY['documented_paid'::character varying::text, 'documented_unpaid'::character varying::text, 'unknown'::character varying::text])", name: "figure_business_relationships_compensation"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'hidden'::character varying::text])", name: "figure_business_relationships_moderation_status"
+    t.check_constraint "predicate::text = ANY (ARRAY['founded'::character varying::text, 'owns'::character varying::text, 'invests_in'::character varying::text, 'endorses'::character varying::text, 'promotes'::character varying::text, 'sponsored_by'::character varying::text])", name: "figure_business_relationships_predicate"
+    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying::text, 'historical'::character varying::text, 'planned'::character varying::text, 'unknown'::character varying::text])", name: "figure_business_relationships_temporal_state"
   end
 
   create_table "figure_practice_relationships", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -603,9 +603,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["figure_id"], name: "index_figure_practice_relationships_on_figure_id"
     t.index ["moderation_status"], name: "index_figure_practice_relationships_on_moderation_status"
     t.index ["protocol_id"], name: "index_figure_practice_relationships_on_protocol_id"
-    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "figure_practice_relationships_moderation_status"
-    t.check_constraint "predicate::text = ANY (ARRAY['participates_in'::character varying, 'recommends'::character varying, 'teaches'::character varying, 'endorses'::character varying]::text[])", name: "figure_practice_relationships_predicate"
-    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying, 'historical'::character varying, 'planned'::character varying, 'unknown'::character varying]::text[])", name: "figure_practice_relationships_temporal_state"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'hidden'::character varying::text])", name: "figure_practice_relationships_moderation_status"
+    t.check_constraint "predicate::text = ANY (ARRAY['participates_in'::character varying::text, 'recommends'::character varying::text, 'teaches'::character varying::text, 'endorses'::character varying::text])", name: "figure_practice_relationships_predicate"
+    t.check_constraint "temporal_state::text = ANY (ARRAY['reported_current'::character varying::text, 'historical'::character varying::text, 'planned'::character varying::text, 'unknown'::character varying::text])", name: "figure_practice_relationships_temporal_state"
   end
 
   create_table "figures", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -637,7 +637,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["ace_id", "followable_type", "followable_id"], name: "index_follows_on_ace_id_and_followable_type_and_followable_id", unique: true
     t.index ["ace_id"], name: "index_follows_on_ace_id"
     t.index ["followable_type", "followable_id"], name: "index_follows_on_followable"
-    t.check_constraint "followable_type::text = ANY (ARRAY['Team'::character varying, 'Player'::character varying]::text[])", name: "follows_supported_type"
+    t.check_constraint "followable_type::text = ANY (ARRAY['Team'::character varying::text, 'Player'::character varying::text])", name: "follows_supported_type"
   end
 
   create_table "game_attempts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -730,7 +730,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["quest_id", "achievement_id"], name: "index_highlights_on_quest_id_and_achievement_id", unique: true
     t.index ["quest_id"], name: "index_highlights_on_quest_id"
     t.index ["seed_version"], name: "index_highlights_on_seed_version"
-    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "highlights_moderation_status"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'hidden'::character varying::text])", name: "highlights_moderation_status"
   end
 
   create_table "jersey_number_assignments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -776,6 +776,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["sport_id"], name: "index_leagues_on_sport_id"
   end
 
+  create_table "listed_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "list_id"
+    t.text "designation"
+    t.text "expression"
+    t.string "content_type"
+    t.uuid "content_id"
+    t.integer "ordering"
+    t.integer "privacy"
+    t.uuid "replacing"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "embed_url"
+    t.index ["content_type", "content_id"], name: "index_listed_items_on_content"
+    t.index ["list_id"], name: "index_listed_items_on_list_id"
+  end
+
+  create_table "lists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "slug", null: false
+    t.text "description"
+    t.integer "mode"
+    t.integer "privacy"
+    t.string "owner_type"
+    t.uuid "owner_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "subject_type"
+    t.uuid "subject_id"
+    t.boolean "standalone", default: false, null: false
+    t.index ["owner_type", "owner_id"], name: "index_lists_on_owner"
+    t.index ["slug"], name: "index_lists_on_slug", unique: true
+    t.index ["subject_type", "subject_id"], name: "index_lists_on_subject"
+  end
+
   create_table "logos", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "name", null: false
     t.string "role"
@@ -792,7 +826,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["entity_code"], name: "index_logos_on_entity_code", unique: true
     t.index ["owner_type", "owner_id"], name: "index_logos_on_owner_type_and_owner_id"
     t.check_constraint "NOT ongoing OR end_date IS NULL", name: "logos_ongoing_without_end"
-    t.check_constraint "owner_type::text = ANY (ARRAY['Sport'::character varying, 'League'::character varying, 'Conference'::character varying, 'Division'::character varying, 'Team'::character varying]::text[])", name: "logo_owner_type"
+    t.check_constraint "owner_type::text = ANY (ARRAY['Sport'::character varying::text, 'League'::character varying::text, 'Conference'::character varying::text, 'Division'::character varying::text, 'Team'::character varying::text])", name: "logo_owner_type"
     t.check_constraint "start_date IS NULL OR end_date IS NULL OR end_date >= start_date", name: "logos_ordered_dates"
   end
 
@@ -933,6 +967,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["entity_code"], name: "index_organizations_on_entity_code", unique: true
   end
 
+  create_table "owner_lists", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "owner_type", null: false
+    t.uuid "owner_id", null: false
+    t.uuid "list_id", null: false
+    t.boolean "in_bookbag", default: false, null: false
+    t.integer "bookbag_position"
+    t.datetime "last_used_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["list_id"], name: "index_owner_lists_on_list_id"
+    t.index ["owner_type", "owner_id", "in_bookbag", "bookbag_position"], name: "index_owner_lists_bookbag"
+    t.index ["owner_type", "owner_id", "last_used_at"], name: "index_owner_lists_last_used"
+    t.index ["owner_type", "owner_id", "list_id"], name: "index_owner_lists_uniqueness", unique: true
+    t.index ["owner_type", "owner_id"], name: "index_owner_lists_on_owner"
+  end
+
   create_table "player_group_memberships", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "entity_code"
     t.jsonb "source", default: {}, null: false
@@ -1005,7 +1055,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["subject_type", "subject_id"], name: "index_position_assignments_on_subject"
     t.index ["subject_type", "subject_id"], name: "index_position_assignments_on_subject_primary", unique: true, where: "\"primary\""
     t.check_constraint "sequence IS NULL OR sequence > 0", name: "position_assignments_have_positive_sequences"
-    t.check_constraint "subject_type::text = ANY (ARRAY['Player'::character varying, 'RosterEntry'::character varying, 'Appearance'::character varying]::text[])", name: "position_assignments_have_known_subjects"
+    t.check_constraint "subject_type::text = ANY (ARRAY['Player'::character varying::text, 'RosterEntry'::character varying::text, 'Appearance'::character varying::text])", name: "position_assignments_have_known_subjects"
   end
 
   create_table "positions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1025,7 +1075,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["parent_id"], name: "index_positions_on_parent_id"
     t.index ["seed_version"], name: "index_positions_on_seed_version"
     t.index ["sport_id"], name: "index_positions_on_sport_id"
-    t.check_constraint "kind::text = ANY (ARRAY['position'::character varying, 'apparatus'::character varying, 'event'::character varying, 'weapon'::character varying]::text[])", name: "positions_have_known_kinds"
+    t.check_constraint "kind::text = ANY (ARRAY['position'::character varying::text, 'apparatus'::character varying::text, 'event'::character varying::text, 'weapon'::character varying::text])", name: "positions_have_known_kinds"
     t.check_constraint "parent_id IS NULL OR parent_id <> id", name: "positions_are_not_their_own_parent"
   end
 
@@ -1096,7 +1146,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["created_by_id"], name: "index_quests_on_created_by_id"
     t.index ["moderation_status", "created_at"], name: "index_quests_on_moderation_status_and_created_at"
     t.index ["seed_version"], name: "index_quests_on_seed_version"
-    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "quests_moderation_status"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'hidden'::character varying::text])", name: "quests_moderation_status"
   end
 
   create_table "rating_revisions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1114,7 +1164,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["ace_id"], name: "index_rating_revisions_on_ace_id"
     t.index ["rated_type", "rated_id"], name: "index_rating_revisions_on_rated"
     t.index ["rating_id", "id"], name: "index_rating_revisions_on_rating_id_and_id"
-    t.check_constraint "operation::text = ANY (ARRAY['set'::character varying, 'archive'::character varying, 'remove'::character varying]::text[])", name: "rating_revisions_valid_operation"
+    t.check_constraint "operation::text = ANY (ARRAY['set'::character varying::text, 'archive'::character varying::text, 'remove'::character varying::text])", name: "rating_revisions_valid_operation"
   end
 
   create_table "ratings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1168,7 +1218,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["handoff_jti"], name: "index_rizz_claim_handoffs_on_handoff_jti", unique: true
     t.index ["operation_id"], name: "index_rizz_claim_handoffs_on_operation_id"
     t.index ["verified_ace_id"], name: "index_rizz_claim_handoffs_on_verified_ace_id"
-    t.check_constraint "intent::text = ANY (ARRAY['claim'::character varying, 'create'::character varying]::text[])", name: "rizz_claim_handoffs_intent"
+    t.check_constraint "intent::text = ANY (ARRAY['claim'::character varying::text, 'create'::character varying::text])", name: "rizz_claim_handoffs_intent"
   end
 
   create_table "rizz_claim_receipts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1212,7 +1262,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.uuid "figure_id", null: false
     t.index ["figure_id", "purpose"], name: "index_rizz_names_on_figure_id_and_purpose", unique: true
     t.index ["purpose", "rizz_entity_id"], name: "index_rizz_names_on_purpose_and_rizz_entity_id"
-    t.check_constraint "state::text = ANY (ARRAY['current'::character varying, 'invalidated'::character varying]::text[])", name: "rizz_names_state"
+    t.check_constraint "state::text = ANY (ARRAY['current'::character varying::text, 'invalidated'::character varying::text])", name: "rizz_names_state"
   end
 
   create_table "rizz_syncs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1230,7 +1280,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["figure_id"], name: "index_rizz_syncs_on_figure_id", unique: true
     t.index ["rizz_entity_id"], name: "index_rizz_syncs_on_rizz_entity_id"
     t.index ["state"], name: "index_rizz_syncs_on_state"
-    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying, 'synced'::character varying, 'review'::character varying, 'merge_needed'::character varying, 'failed'::character varying, 'skipped'::character varying]::text[])", name: "rizz_syncs_state"
+    t.check_constraint "state::text = ANY (ARRAY['pending'::character varying::text, 'synced'::character varying::text, 'review'::character varying::text, 'merge_needed'::character varying::text, 'failed'::character varying::text, 'skipped'::character varying::text])", name: "rizz_syncs_state"
   end
 
   create_table "roster_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1265,7 +1315,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["campaign_id", "kind", "effective_on"], name: "index_rosters_on_campaign_id_and_kind_and_effective_on"
     t.index ["campaign_id"], name: "index_rosters_on_campaign_id"
     t.index ["entity_code"], name: "index_rosters_on_entity_code", unique: true
-    t.check_constraint "coverage::text = ANY (ARRAY['unknown'::character varying, 'partial'::character varying, 'complete'::character varying]::text[])", name: "rosters_have_known_coverage_labels"
+    t.check_constraint "coverage::text = ANY (ARRAY['unknown'::character varying::text, 'partial'::character varying::text, 'complete'::character varying::text])", name: "rosters_have_known_coverage_labels"
   end
 
   create_table "seasons", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1326,7 +1376,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.uuid "target_id"
     t.index ["ace_id"], name: "index_shout_out_drafts_on_ace_id"
     t.index ["target_type", "target_id"], name: "index_shout_out_drafts_on_target"
-    t.check_constraint "target_type IS NULL OR (target_type::text = ANY (ARRAY['Team'::character varying, 'Player'::character varying]::text[]))", name: "drafts_supported_target"
+    t.check_constraint "target_type IS NULL OR (target_type::text = ANY (ARRAY['Team'::character varying::text, 'Player'::character varying::text]))", name: "drafts_supported_target"
   end
 
   create_table "shout_out_reactions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1338,7 +1388,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["ace_id"], name: "index_shout_out_reactions_on_ace_id"
     t.index ["shout_out_id", "ace_id", "kind"], name: "index_shout_out_reactions_on_shout_out_id_and_ace_id_and_kind", unique: true
     t.index ["shout_out_id"], name: "index_shout_out_reactions_on_shout_out_id"
-    t.check_constraint "kind::text = ANY (ARRAY['fire'::character varying, 'love'::character varying, 'legend'::character varying]::text[])", name: "supported_shout_out_reaction"
+    t.check_constraint "kind::text = ANY (ARRAY['fire'::character varying::text, 'love'::character varying::text, 'legend'::character varying::text])", name: "supported_shout_out_reaction"
   end
 
   create_table "shout_out_reports", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1357,8 +1407,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["resolved_by_id"], name: "index_shout_out_reports_on_resolved_by_id"
     t.index ["shout_out_id", "reporter_id"], name: "index_shout_out_reports_on_shout_out_id_and_reporter_id", unique: true
     t.index ["shout_out_id"], name: "index_shout_out_reports_on_shout_out_id"
-    t.check_constraint "reason::text = ANY (ARRAY['Harassment'::character varying, 'Spam'::character varying, 'Off-topic'::character varying, 'Other'::character varying]::text[])", name: "report_reason"
-    t.check_constraint "resolution IS NULL AND resolved_at IS NULL OR resolution IS NOT NULL AND (resolution::text = ANY (ARRAY['kept_live'::character varying, 'hidden'::character varying]::text[])) AND resolved_at IS NOT NULL", name: "report_resolution"
+    t.check_constraint "reason::text = ANY (ARRAY['Harassment'::character varying::text, 'Spam'::character varying::text, 'Off-topic'::character varying::text, 'Other'::character varying::text])", name: "report_reason"
+    t.check_constraint "resolution IS NULL AND resolved_at IS NULL OR resolution IS NOT NULL AND (resolution::text = ANY (ARRAY['kept_live'::character varying::text, 'hidden'::character varying::text])) AND resolved_at IS NOT NULL", name: "report_resolution"
   end
 
   create_table "shout_outs", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1384,7 +1434,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["shout_out_draft_id"], name: "index_shout_outs_on_shout_out_draft_id"
     t.index ["target_type", "target_id"], name: "index_shout_outs_on_target"
     t.index ["team_id"], name: "index_shout_outs_on_team_id"
-    t.check_constraint "(payment_method::text = ANY (ARRAY['credit'::character varying, 'stripe'::character varying]::text[])) AND (funding_status::text = ANY (ARRAY['unfunded'::character varying, 'reserved'::character varying, 'spent'::character varying, 'refunded'::character varying]::text[]))", name: "shout_out_funding_states"
+    t.check_constraint "(payment_method::text = ANY (ARRAY['credit'::character varying::text, 'stripe'::character varying::text])) AND (funding_status::text = ANY (ARRAY['unfunded'::character varying::text, 'reserved'::character varying::text, 'spent'::character varying::text, 'refunded'::character varying::text]))", name: "shout_out_funding_states"
     t.check_constraint "bid_cents > 0", name: "positive_shout_out_bid"
   end
 
@@ -1415,7 +1465,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["moderation_status", "created_at"], name: "index_spectrums_on_moderation_status_and_created_at"
     t.index ["name"], name: "index_spectrums_on_name", unique: true
     t.index ["seed_version"], name: "index_spectrums_on_seed_version"
-    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying, 'approved'::character varying, 'rejected'::character varying, 'hidden'::character varying]::text[])", name: "spectrums_moderation_status"
+    t.check_constraint "moderation_status::text = ANY (ARRAY['pending'::character varying::text, 'approved'::character varying::text, 'rejected'::character varying::text, 'hidden'::character varying::text])", name: "spectrums_moderation_status"
   end
 
   create_table "sports", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1470,7 +1520,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["organization_id"], name: "index_staff_tenures_on_organization_id"
     t.index ["team_id"], name: "index_staff_tenures_on_team_id"
     t.check_constraint "NOT ongoing OR end_date IS NULL", name: "staff_tenures_ongoing_end"
-    t.check_constraint "role::text = ANY (ARRAY['coach'::character varying, 'staff'::character varying, 'broadcaster'::character varying]::text[])", name: "staff_tenures_role"
+    t.check_constraint "role::text = ANY (ARRAY['coach'::character varying::text, 'staff'::character varying::text, 'broadcaster'::character varying::text])", name: "staff_tenures_role"
   end
 
   create_table "states", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1528,7 +1578,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["shout_out_id"], name: "index_stripe_purchases_on_shout_out_id"
     t.index ["stripe_payment_intent_id"], name: "index_stripe_purchases_on_stripe_payment_intent_id", unique: true
     t.index ["stripe_session_id"], name: "index_stripe_purchases_on_stripe_session_id", unique: true
-    t.check_constraint "amount_cents >= 50 AND amount_cents <= 99999999 AND (status::text = ANY (ARRAY['pending'::character varying, 'paid'::character varying, 'expired'::character varying]::text[]))", name: "stripe_purchase_amount_and_status"
+    t.check_constraint "amount_cents >= 50 AND amount_cents <= 99999999 AND (status::text = ANY (ARRAY['pending'::character varying::text, 'paid'::character varying::text, 'expired'::character varying::text]))", name: "stripe_purchase_amount_and_status"
   end
 
   create_table "team_namings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1590,7 +1640,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
     t.index ["entity_code"], name: "index_tenancies_on_entity_code", unique: true
     t.index ["stadium_id"], name: "index_tenancies_on_stadium_id"
     t.index ["team_id"], name: "index_tenancies_on_team_id"
-    t.check_constraint "role::text = ANY (ARRAY['home'::character varying, 'temporary'::character varying, 'shared'::character varying]::text[])", name: "tenancies_have_known_roles"
+    t.check_constraint "role::text = ANY (ARRAY['home'::character varying::text, 'temporary'::character varying::text, 'shared'::character varying::text])", name: "tenancies_have_known_roles"
     t.check_constraint "start_date IS NULL OR end_date IS NULL OR end_date >= start_date", name: "tenancies_have_ordered_dates"
     t.exclusion_constraint "team_id WITH =, daterange(start_date, end_date, '[]'::text) WITH &&", where: "(role)::text = 'home'::text", using: :gist, name: "home_tenancies_do_not_overlap"
   end
@@ -1794,6 +1844,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
   add_foreign_key "jersey_number_assignments", "teams"
   add_foreign_key "leagues", "logos", column: "primary_logo_id", on_delete: :nullify
   add_foreign_key "leagues", "sports"
+  add_foreign_key "listed_items", "lists"
   add_foreign_key "memberships", "conferences"
   add_foreign_key "memberships", "divisions"
   add_foreign_key "memberships", "leagues"
@@ -1810,6 +1861,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_23_190000) do
   add_foreign_key "mutes", "shout_outs", column: "hidden_shout_out_id"
   add_foreign_key "organization_affiliations", "organizations"
   add_foreign_key "organization_affiliations", "teams"
+  add_foreign_key "owner_lists", "lists"
   add_foreign_key "player_group_memberships", "player_groups"
   add_foreign_key "player_group_memberships", "players"
   add_foreign_key "players", "cities", column: "birth_city_id"

@@ -2,7 +2,7 @@
 
 <%= tag.div class: "player-profile" do %>
   <%= render "filtered_show" %>
-  <%= tag.header class: "player-hero" do %>
+  <%= tag.header class: "player-hero", draggable: true, data: tier_lists_draggable_data(@player) do %>
     <%= player_hero_portrait @player %>
     <%= tag.div class: "player-hero-details" do %>
       <%= tag.p "Player", class: "eyebrow entity-kind", data: { entity: "player" } %>

@@ -90,6 +90,22 @@ class Player < ApplicationRecord
   def sport
     super || team&.sport
   end
+
+  def tier_lists_presentation
+    {
+      eyebrow: [ team&.name, sport&.name ].compact_blank.join(" · "),
+      title: display_name,
+      subtitle: [ current_position, team&.league&.name ].compact_blank.join(" · "),
+      image_url: photo_url.presence,
+      badges: [ team&.abbreviation, current_position, sport&.name ].compact_blank.uniq,
+      stats: {
+        "Debut" => debut_year,
+        "Draft" => draft_year,
+        "From" => [ birth_city&.name, birth_country&.name ].compact_blank.join(", ").presence
+      },
+      colors: [ team&.primary_color, team&.secondary_color ].select { |c| TeamPalette.valid_color?(c) }
+    }
+  end
   
   def photo_url(recognition: false)
     candidates = captures.includes(shot: { image_attachment: :blob }).filter_map do |capture|

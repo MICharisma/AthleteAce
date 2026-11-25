@@ -10,10 +10,10 @@ module ShellHelper
     when "play"
       [ [ "Home", "home", strength_path ], [ "Games", "player-play", new_game_round_path ],
         [ "Quests", "script", quests_path(side: "play") ], [ "History", "history", strength_game_attempts_path ],
-        [ "Browse", "layout-grid", browse_path(side: "play") ] ]
+        [ "Playbooks", "list-numbers", tier_lists_path ], [ "Browse", "layout-grid", browse_path(side: "play") ] ]
     when "feed"
       [ [ "Latest", "star", feed_path ], [ "Leaders", "tournament", shout_out_leaderboard_path ], [ "Players", "shirt-sport", players_path(side: "feed") ],
-        [ "Teams", "shield", teams_path(side: "feed") ] ]
+        [ "Teams", "shield", teams_path(side: "feed") ], [ "Playbooks", "list-numbers", tier_lists_path ] ]
     when "mod"
       [ [ "Queue", "shield-check", moderation_path ], [ "Reports", "flag", reports_path ], [ "Escalations", "shield", escalations_path ], [ "Decision log", "history", moderation_log_path ] ]
     when "admin"
@@ -23,6 +23,8 @@ module ShellHelper
   end
 
   def active_shell_tab
+    return "Playbooks" if controller_path.start_with?("tier_lists/")
+
     case current_side
     when "mod"
       return "Escalations" if controller_name == "escalations"

@@ -26,7 +26,7 @@
 
 <div id="teams" class="space-y-4">
   <% @teams.each do |team| %>
-    <%= tag.div(id: dom_id(team), class: "index-record team-record") do %>
+    <%= tag.div(id: dom_id(team), class: "index-record team-record", draggable: true, data: tier_lists_draggable_data(team)) do %>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
         <%= tag.div class: "team-info" do %>
           <%= record_identity team %>

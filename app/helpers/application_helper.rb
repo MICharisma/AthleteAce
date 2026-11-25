@@ -29,14 +29,18 @@ module ApplicationHelper
   
   # Generic index record wrapper
   def index_record(record, record_classes = nil, &block)
-    tag.div(
-      id: dom_id(record), 
+    attrs = {
+      id: dom_id(record),
       class: [
         "index-record",
         record_classes
-      ].compact.join(' '),
-      &block
-    )
+      ].compact.join(" ")
+    }
+    if TierLists.content_source_for(record.class)
+      attrs[:draggable] = true
+      attrs[:data] = tier_lists_draggable_data(record)
+    end
+    tag.div(**attrs, &block)
   end
   
   # Generic record info section

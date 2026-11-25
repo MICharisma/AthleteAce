@@ -57,6 +57,20 @@ class Team < ApplicationRecord
     tenancies.home.in_force_on(date).first&.stadium if date
   end
 
+  def tier_lists_presentation
+    {
+      eyebrow: [ league&.name, conference&.name ].compact_blank.join(" · "),
+      title: name,
+      subtitle: [ abbreviation, stadium&.name ].compact_blank.join(" · "),
+      badges: [ league&.name, conference&.name, division&.name ].compact_blank.uniq,
+      stats: {
+        "Founded" => founded_year,
+        "Players" => players.size.positive? ? players.size : nil
+      },
+      colors: [ primary_color, secondary_color ].select { |c| TeamPalette.valid_color?(c) }
+    }
+  end
+
   
   # Define which attributes can be searched via Ransack
   def self.ransackable_attributes(auth_object = nil)

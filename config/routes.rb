@@ -34,6 +34,9 @@ Rails.application.routes.draw do
   end
   resources :follows, only: [ :create, :destroy ]
   resources :player_groups
+  mount TierLists::Engine => "/playbooks", as: :tier_lists
+  get "/lists", to: redirect("/playbooks")
+  get "/lists/*path", to: redirect("/playbooks/%{path}")
   get "browse", to: "browse#index", as: :browse
   namespace :api do
     namespace :v1 do

@@ -12,6 +12,12 @@ else
   gem "rizz-auth", git: "https://github.com/MICharisma/rizz-integration.git", ref: "72ce12caf426f699d2f995bb6781eb0fd3c98fcb", glob: "packages/rizz-auth/*.gemspec"
 end
 
+if ENV["TIER_LISTS_PATH"] && !ENV["TIER_LISTS_PATH"].empty?
+  gem "tier_lists", path: ENV.fetch("TIER_LISTS_PATH")
+else
+  gem "tier_lists", git: "https://github.com/MICharisma/tier_lists.git", ref: "95c3a1b131ef84b77701ea9174324cce85828d43"
+end
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
