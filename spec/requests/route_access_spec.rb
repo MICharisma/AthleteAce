@@ -486,6 +486,7 @@ RSpec.describe "Route access", type: :request do
       POST /auth/rizz/create
       POST /auth/rizz/create/cancel
       POST /auth/rizz/claim/exchange
+      POST /auth/rizz/usernames/check
       POST /auth/rizz/backchannel_logout
     ROUTES
   }.transform_values { |routes| routes.lines(chomp: true) }.freeze
