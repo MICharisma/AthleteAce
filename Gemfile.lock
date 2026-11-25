@@ -1,4 +1,13 @@
 GIT
+  remote: https://github.com/MICharisma/engagements.git
+  revision: ba0dd1a6476e16b4b20a923055ea998b2e1ab48a
+  ref: ba0dd1a6476e16b4b20a923055ea998b2e1ab48a
+  specs:
+    engagements (0.1.0)
+      rails (>= 8.1)
+      turbo-rails
+
+GIT
   remote: https://github.com/MICharisma/rizz-integration.git
   revision: 2069a5225f708927b5b05ea032e10be6c71e17ae
   ref: 2069a5225f708927b5b05ea032e10be6c71e17ae
@@ -597,6 +606,7 @@ DEPENDENCIES
   csv
   debug
   devise (~> 5.0)
+  engagements!
   factory_bot_rails (~> 6.5)
   faker (~> 3.8)
   importmap-rails

@@ -8,12 +8,7 @@
       <%= tag.p "Player", class: "eyebrow entity-kind", data: { entity: "player" } %>
       <%= tag.h1 player_display_name(@player), class: "page-title" %>
       <%= tag.p player_status_line(@player), class: "player-status-line" %>
-      <%= tag.div class: "profile-chips" do %>
-        <%= entity_link @player.team %>
-        <%= entity_link @player.team&.division %>
-        <%= entity_link @player.league %>
-      <% end %>
-      <%= render "follows/button", record: @player %>
+      <%= engagements_radial_bar_for @player, actor: current_ace %>
       <% if @player.figure %>
         <%= link_to "Career, connections and values", figure_path(@player.figure), class: "tool-link" %>
         <%= render "figure_connections/preview", figure: @player.figure %>

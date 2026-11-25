@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_25_101300) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -526,6 +526,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_101300) do
     t.index ["seed_version"], name: "index_divisions_on_seed_version"
   end
 
+  create_table "engagements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "engageable_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "actor_id", null: false
+    t.uuid "engageable_id", null: false
+    t.string "actor_type", null: false
+    t.string "kind", null: false
+    t.index ["actor_type", "actor_id", "engageable_type", "engageable_id", "kind"], name: "index_engagements_once_per_actor_record_and_kind", unique: true
+    t.index ["actor_type", "actor_id"], name: "index_engagements_on_actor"
+    t.index ["engageable_type", "engageable_id", "kind"], name: "index_engagements_on_record_and_kind"
+    t.check_constraint "kind::text = ANY (ARRAY['bookmark'::character varying, 'favorite'::character varying, 'follow'::character varying, 'hide'::character varying]::text[])", name: "engagements_kind_is_known"
+  end
+
   create_table "entity_codes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "namespace", null: false
     t.string "catalog", null: false
@@ -626,18 +640,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_101300) do
     t.index ["entity_code"], name: "index_figures_on_entity_code", unique: true
     t.index ["primary_portrait_id"], name: "index_figures_on_primary_portrait_id"
     t.index ["sort_name"], name: "index_figures_on_sort_name"
-  end
-
-  create_table "follows", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
-    t.string "followable_type", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.uuid "ace_id", null: false
-    t.uuid "followable_id", null: false
-    t.index ["ace_id", "followable_type", "followable_id"], name: "index_follows_on_ace_id_and_followable_type_and_followable_id", unique: true
-    t.index ["ace_id"], name: "index_follows_on_ace_id"
-    t.index ["followable_type", "followable_id"], name: "index_follows_on_followable"
-    t.check_constraint "followable_type::text = ANY (ARRAY['Team'::character varying::text, 'Player'::character varying::text])", name: "follows_supported_type"
   end
 
   create_table "game_attempts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1824,12 +1826,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_25_101300) do
   add_foreign_key "divisions", "conferences"
   add_foreign_key "divisions", "leagues"
   add_foreign_key "divisions", "logos", column: "primary_logo_id", on_delete: :nullify
+  add_foreign_key "engagements", "aces", column: "actor_id"
   add_foreign_key "figure_business_relationships", "businesses"
   add_foreign_key "figure_business_relationships", "figures"
   add_foreign_key "figure_practice_relationships", "figures"
   add_foreign_key "figure_practice_relationships", "protocols"
   add_foreign_key "figures", "asset_representations", column: "primary_portrait_id", on_delete: :nullify
-  add_foreign_key "follows", "aces"
   add_foreign_key "game_attempts", "aces"
   add_foreign_key "game_attempts", "game_rounds"
   add_foreign_key "game_rounds", "aces"

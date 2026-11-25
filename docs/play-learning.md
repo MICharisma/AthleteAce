@@ -59,19 +59,19 @@ Each saved answer updates a `PracticeReview` for that account, original game, su
 
 Only due questions with existing subjects and answer choices appear. A review round takes the oldest due question for each subject, up to the chosen round size. Other due facts about that subject remain available for later rounds. Older attempts created before this feature do not receive review dates retroactively; unresolved player misses remain available through the home-page drill.
 
-**Quick round** prioritizes due reviews, then unresolved player misses, then followed players, followed teams and teams rated at least +5,000 on the approved Affinity spectrum. It tries recorded seasonal data for the preferred teams when current-team questions are unavailable, then falls back to the general pool.
+**Quick round** prioritizes due reviews, then unresolved player misses, then followed players, followed teams and teams rated at least 250 on the approved Affinity spectrum. It tries recorded seasonal data for the preferred teams when current-team questions are unavailable, then falls back to the general pool.
 
 For followed players, Quick round considers your 30 most recent player follows, including inactive players. It starts Team Match with playable current-team questions, or tries a recorded season if current-team data is absent. If neither works, it offers Name Ciphers when at least two distinct followed names can form puzzles. It never fills a followed-player round with unrelated subjects. When no followed-player round is playable, it moves on to preferred teams and then the general pool.
 
 A Quick round uses up to 30 preferred teams, with recent team follows before Affinity ratings.
 
-## Following teams and players
+## Saving and following teams and players
 
-Use **Follow** on a team or player page while signed in. The button becomes **Following** and updates in place; selecting it again unfollows. Guests see **Sign in to follow**. Your profile has a paginated **Following** list for your account. Each team or player can be followed once, and deleting that entity removes its follows.
+Open the **Engage** menu on a team or player page to **Save**, **Favorite**, **Follow**, or **Hide** it. Choose an active mark again to remove it. Hide removes the record from your Teams or Players browse list. Open **Saved** from your account menu to find your marks by kind, record type, or name, including hidden items you want to unhide. Your profile also lists the players and teams you follow.
 
 Followed players and teams help choose Quick rounds after due reviews and unresolved misses. Existing saved rounds retain their selected players and questions when your follows change; replay uses their recorded scope. Following and Affinity ratings are separate preferences, so unfollowing a team does not remove its high Affinity rating.
 
-Feed's **My teams** view lists followed teams and teams with active ratings of at least +5,000 on the approved Affinity spectrum. A team that qualifies through both appears once with both labels. Player follows do not add their current team. Choose **Sport** and **League**, then select **Search posts** to narrow the list and stream. Pagination retains the selected view, search and filters in the URL. **Clear filters** removes sport and league while keeping My teams and the search query. Guests receive a sign-in prompt, and empty preferences never expand to unrelated teams. The view also shows approved shout-outs for qualifying teams, plus your own funded posts in review. Shout-outs use bid-weighted order and separate pagination from the team list. See [shout-out payments](shout-out-payments.md) for bidding, review, and refund behavior.
+Feed's **My teams** view lists followed teams and teams with active ratings of at least 250 on the approved Affinity spectrum. A team that qualifies through both appears once with both labels. Player follows do not add their current team. Choose **Sport** and **League**, then select **Search posts** to narrow the list and stream. Pagination retains the selected view, search and filters in the URL. **Clear filters** removes sport and league while keeping My teams and the search query. Guests receive a sign-in prompt, and empty preferences never expand to unrelated teams. The view also shows approved shout-outs for qualifying teams, plus your own funded posts in review. Shout-outs use bid-weighted order and separate pagination from the team list. See [shout-out payments](shout-out-payments.md) for bidding, review, and refund behavior.
 
 ## Knowledge and history
 

@@ -41,7 +41,8 @@ class Ace < ApplicationRecord
   has_many :stripe_purchases, dependent: :restrict_with_error
   has_many :shout_outs, foreign_key: :created_by_id, dependent: :restrict_with_error
   has_many :shout_out_drafts, dependent: :destroy
-  has_many :follows, dependent: :destroy
+  include Engagements::Engager
+  has_many :follows, foreign_key: :actor_id, inverse_of: :ace
   has_many :goals, dependent: :destroy
   has_many :active_goals, -> { Goal.unfinished }, class_name: "Goal"
   has_many :quests, through: :goals

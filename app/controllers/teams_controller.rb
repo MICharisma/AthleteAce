@@ -8,7 +8,7 @@ class TeamsController < ApplicationController
     load_filter_options
     
     # Build the base query using the filters
-    base_query = apply_filter :teams
+    base_query = apply_filter(:teams).visible_to(current_ace)
 
     # Build the query with proper joins for sorting and searching
     base_query = base_query.includes(:league, :division, :conference)

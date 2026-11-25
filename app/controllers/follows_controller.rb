@@ -6,7 +6,7 @@ class FollowsController < ApplicationController
     raise ActiveRecord::RecordNotFound unless type
 
     record = type.find(params[:followable_id])
-    current_ace.follows.create_or_find_by!(followable: record)
+    current_ace.follows.find_or_create_by!(followable: record)
     respond_with_button(record)
   end
 

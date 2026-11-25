@@ -44,7 +44,8 @@ version 2 definition. Ascent's separate mountain voting range is unaffected.
 ## Rating dimensions and controls
 
 Open Rating dimensions at the top right of the page to choose which sliders
-appear on browse and detail pages. Turn on Multiple to show more than one
+appear on browse and detail pages. The button stays below the navigation as
+you scroll. Turn on Multiple to show more than one
 dimension. The selection follows you through the current browser session.
 
 Start dragging from the slider handle and move down for finer adjustments.

@@ -9,7 +9,7 @@ RSpec.describe UgcResetService do
   KEPT = {
     accounts: %w[AccountAction AceRizzBinding SignInEvent RizzBackchannelLogoutEvent RizzClaimHandoff RizzClaimReceipt RizzFeedCursor RizzName RizzSync],
     credits: %w[CreditAccount CreditEntry StripePurchase],
-    posts_and_moderation: %w[Follow Mute ShoutOut ShoutOutDraft ShoutOutReaction ShoutOutReport ModerationDecision ModerationEscalation ModeratorNote PostingWarning DecisionEvaluation PracticeReview RatingRevision],
+    posts_and_moderation: %w[Engagements::Engagement Mute ShoutOut ShoutOutDraft ShoutOutReaction ShoutOutReport ModerationDecision ModerationEscalation ModeratorNote PostingWarning DecisionEvaluation PracticeReview RatingRevision],
     play: %w[GameRound GoalAchievement],
     catalog_outside_the_reset: %w[CatalogEdit EntityCode Nickname TeamNaming Tenancy Shot ShotUploadToken Capture]
   }.freeze
@@ -18,13 +18,13 @@ RSpec.describe UgcResetService do
   # at rows that no longer exist. Move a model into CORE_MODELS, or back it up
   # and restore it by identifier, then take it off this list.
   KEPT_POINTING_AT_CATALOG = %w[
-    Capture CreditEntry DecisionEvaluation EntityCode Follow ModerationDecision ModerationEscalation
+    Capture CreditEntry DecisionEvaluation EntityCode Engagements::Engagement ModerationDecision ModerationEscalation
     PostingWarning RizzName RizzSync ShoutOut ShoutOutDraft TeamNaming Tenancy
   ].freeze
 
   def models
     Rails.application.eager_load!
-    ApplicationRecord.descendants.reject(&:abstract_class?).map(&:base_class).uniq
+    (ApplicationRecord.descendants + [Engagements::Engagement]).reject(&:abstract_class?).map(&:base_class).uniq
   end
 
   def points_at_catalog?(model)

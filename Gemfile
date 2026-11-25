@@ -12,6 +12,8 @@ else
   gem "rizz-auth", git: "https://github.com/MICharisma/rizz-integration.git", ref: "72ce12caf426f699d2f995bb6781eb0fd3c98fcb", glob: "packages/rizz-auth/*.gemspec"
 end
 
+gem "engagements", git: "https://github.com/MICharisma/engagements.git", ref: "ba0dd1a6476e16b4b20a923055ea998b2e1ab48a"
+
 if ENV["TIER_LISTS_PATH"] && !ENV["TIER_LISTS_PATH"].empty?
   gem "tier_lists", path: ENV.fetch("TIER_LISTS_PATH")
 else

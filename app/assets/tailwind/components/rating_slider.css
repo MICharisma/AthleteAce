@@ -48,11 +48,19 @@
 .rating-retry { @apply underline min-h-9 px-2 font-semibold text-ink cursor-pointer; }
 .empty-state-message { @apply text-ink-3 text-sm p-4; }
 
-.app-main:has(> .spectrum-picker-bar) { @apply pt-4; }
-.spectrum-picker-bar { @apply flex justify-end mb-3; }
-#spectrum-picker { @apply relative z-40 block max-w-full; }
-.spectrum-picker-toggle { @apply flex-wrap justify-end; }
+#spectrum-picker {
+  @apply fixed z-40 block;
+  top: calc(var(--spectrum-navigation-height, 5rem) + 0.5rem);
+  right: max(1rem, calc((100vw - 80rem) / 2 + 1rem));
+}
+.spectrum-picker-toggle { @apply shadow-card; }
 .spectrum-picker-label { @apply text-ink-2 font-normal; }
+.spectrum-picker-icon.ace-icon { display: none; }
+@media (max-width: 640px) {
+  .spectrum-picker-toggle { @apply px-2; }
+  .spectrum-picker-toggle span, .spectrum-picker-toggle [data-spectrum-picker-target="toggleIcon"] { display: none; }
+  .spectrum-picker-icon.ace-icon { display: inline-block; }
+}
 .spectrum-picker-panel { @apply absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] max-h-[60dvh] overflow-y-auto p-4 border border-line-2 bg-surface text-ink rounded-card shadow-card; }
 .spectrum-buttons button:focus-visible { @apply outline-2 outline-offset-2 outline-accent-text; }
 .spectrum-multiple { @apply flex items-center gap-2 min-h-11 text-sm font-semibold; }

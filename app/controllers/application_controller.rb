@@ -5,6 +5,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   include SpectrumsHelper
+  helper Engagements::EngagementsHelper
 
   # Configure permitted parameters for Devise
   before_action :configure_permitted_parameters, if: :devise_controller?

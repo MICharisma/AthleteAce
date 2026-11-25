@@ -3,7 +3,7 @@ class Team < ApplicationRecord
   has_many :staff_tenures, dependent: :restrict_with_error
   has_many :shout_outs, as: :target, dependent: :nullify
   has_many :shout_out_drafts, as: :target, dependent: :nullify
-  has_many :follows, as: :followable, dependent: :destroy
+  include Engagements::Engageable
   include Ratable
   before_validation :assign_palette_text_color
   

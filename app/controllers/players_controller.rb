@@ -6,7 +6,7 @@ class PlayersController < ApplicationController
   def index
     load_current_filters
     
-    base_query = apply_filter :players
+    base_query = apply_filter(:players).visible_to(current_ace)
     
     @sort_service = HierarchicalSortService.from_params(params)
     

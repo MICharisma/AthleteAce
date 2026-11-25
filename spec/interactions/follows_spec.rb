@@ -11,18 +11,21 @@ RSpec.describe "Following from entity pages" do
   end
 
   it "follows a team without leaving its page" do
-    visit team_path(team)
-    within("#follow_team_#{team.id}") do
+    path = team_path(team)
+    visit path
+    find("#action_bar_team_#{team.id} summary").click
+    within("#action_bar_team_#{team.id}") do
       click_button "Follow"
       expect(page).to have_button("Following")
     end
-    expect(page).to have_current_path(team_path(team))
+    expect(page).to have_current_path(path)
     expect(ace.follows.where(followable: team)).to exist
   end
 
   it "toggles following a player in place" do
     visit player_path(player)
-    within("#follow_player_#{player.id}") do
+    find("#action_bar_player_#{player.id} summary").click
+    within("#action_bar_player_#{player.id}") do
       click_button "Follow"
       expect(page).to have_button("Following")
       click_button "Following"

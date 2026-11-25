@@ -6,7 +6,8 @@ class Player < ApplicationRecord
   before_validation :attach_figure_identity, on: :create
   has_many :shout_outs, as: :target, dependent: :nullify
   has_many :shout_out_drafts, as: :target, dependent: :nullify
-  has_many :follows, as: :followable, dependent: :destroy
+  include Engagements::Engageable
+
   include Ratable
   
   belongs_to :birth_city, class_name: 'City', optional: true
@@ -64,6 +65,10 @@ class Player < ApplicationRecord
     Arel.sql("positions.name")
   end
   
+  def engageable_label
+    display_name
+  end
+
   def self.ransackable_attributes(auth_object = nil)
     ["active", "bio", "birth_city_id", "birth_country_id", "birthdate", "created_at", "current_position", "debut_year", "draft_year", "id", "league_name", "position_name", "sport_name", "team_id", "team_name", "team_territory", "updated_at"]
   end

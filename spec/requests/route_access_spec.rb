@@ -383,6 +383,9 @@ RSpec.describe "Route access", type: :request do
       PATCH /feed/drafts/:id
       PUT /feed/drafts/:id
       DELETE /feed/drafts/:id
+      GET /saved
+      POST /saved
+      DELETE /saved/:id
       POST /follows
       DELETE /follows/:id
       GET /account/posting

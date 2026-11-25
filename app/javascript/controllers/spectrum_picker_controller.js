@@ -6,7 +6,20 @@ export default class extends Controller {
 
   static values = { url: String }
 
-  connect() { this.updateSummaryDisplay() }
+  connect() {
+    this.updateSummaryDisplay()
+    const navigation = document.querySelector(".navigation-container")
+    if (!navigation) return
+
+    const position = () => this.element.style.setProperty("--spectrum-navigation-height", `${navigation.offsetHeight}px`)
+    position()
+    if (typeof ResizeObserver === "undefined") return
+
+    this.navigationObserver = new ResizeObserver(position)
+    this.navigationObserver.observe(navigation)
+  }
+
+  disconnect() { this.navigationObserver?.disconnect() }
 
   toggleExpand() {
     this.setExpanded(this.pickerPanelTarget.hidden)

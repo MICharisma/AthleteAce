@@ -25,6 +25,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders:opsz,wght@10..72,500..900&family=Instrument+Sans:wdth,wght@75..100,400..700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag "engagements", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
     <% if ENV["UMAMI_SCRIPT_URL"].present? && ENV["UMAMI_WEBSITE_ID"].present? %>
