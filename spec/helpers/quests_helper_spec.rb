@@ -64,11 +64,12 @@ RSpec.describe QuestsHelper, type: :helper do
   describe '#quest_participants_badge' do
     let(:quest) { create(:quest) }
 
-    before do
-      create_list(:goal, 2, quest: quest)
+    it 'returns nil when there are no participants' do
+      expect(helper.quest_participants_badge(quest)).to be_nil
     end
 
     it 'renders a badge with the correct count' do
+      create_list(:goal, 2, quest: quest)
       badge = helper.quest_participants_badge(quest)
       expect(badge).to have_selector('span.quest-participants-badge')
       expect(badge).to have_selector('svg.ace-icon.quest-participants-icon[aria-hidden=true]')
@@ -76,7 +77,7 @@ RSpec.describe QuestsHelper, type: :helper do
     end
 
     it 'uses singular form for one participant' do
-      quest.goals.first.destroy
+      create(:goal, quest: quest)
       badge = helper.quest_participants_badge(quest)
       expect(badge).to have_content('1 participant')
     end

@@ -1,9 +1,14 @@
 <article id="<%= dom_id quest %>" class="quest-card">
-  <div class="quest-card-top"><%= icon "script", size: 28 %><span class="eyebrow"><%= pluralize(quest.highlights.approved.with_approved_achievement.count(&:required?), 'required achievement') %></span></div>
-  <%= moderation_notice(quest) %>
-  <h2><%= link_to quest.name, quest_path(quest) %></h2>
-  <p class="quest-card-description"><%= quest.description %></p>
-  <div class="quest-card-meta"><%= quest_participants_badge(quest) %></div>
-  <% if (goal = quest_goal(quest)) %><%= render "quests/progress", goal: goal %><% end %>
-  <div class="page-actions"><%= link_to "View quest", quest_path(quest), class: "tool-button" %><%= begin_quest_button quest %><%= link_to "Edit", edit_quest_path(quest), class: "tool-link" if can_manage?(quest) %></div>
+  <%= tag.div class: "quest-card-top" do %>
+    <%= icon "script", size: 28 %>
+    <%= quest_achievements_indicator quest %>
+  <% end %>
+  <%= moderation_notice quest %>
+  <%= tag.h2 quest_card_title_link(quest) %>
+  <%= tag.p quest.description, class: "quest-card-description" %>
+  <% if (participants = quest_participants_badge quest) %>
+    <%= tag.div participants, class: "quest-card-meta" %>
+  <% end %>
+  <% if (goal = quest_goal quest) %><%= render "quests/progress", goal: goal %><% end %>
+  <%= quest_card_actions quest %>
 </article>

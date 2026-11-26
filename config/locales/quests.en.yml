@@ -1,5 +1,13 @@
 en:
   quests:
+    card:
+      required_achievements:
+        zero: "No required achievements yet"
+        one: "1 required achievement"
+        other: "%{count} required achievements"
+      optional_achievements:
+        one: "1 optional achievement"
+        other: "%{count} optional achievements"
     show:
       activity: "Quest activity"
       days_alive: "Days alive"

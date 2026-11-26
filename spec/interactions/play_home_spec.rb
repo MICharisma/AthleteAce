@@ -27,7 +27,8 @@ RSpec.describe "Play home and quest browsing" do
     expect(page).to have_button("Resume round")
     visit quests_path
     expect(page).to have_css(".quest-card", count: 1)
-    click_link "View quest"
+    expect(page).to have_no_link("View quest")
+    click_link "NFC North Roll Call"
     expect(page).to have_link("Continue Quest")
     click_link "Practice"
     expect(page).to have_content(team.name)

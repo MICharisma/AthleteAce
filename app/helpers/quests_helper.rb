@@ -59,7 +59,36 @@ module QuestsHelper
     end
   end
 
-  # UNUSED
+  def quest_card_title_link quest
+    link_to quest_path(quest), class: "quest-card-link" do
+      tag.span(quest.name, class: "quest-card-title") + icon("arrow-right", size: 22, class: "quest-card-arrow")
+    end
+  end
+
+  def quest_card_actions quest
+    actions = [
+      begin_quest_button(quest),
+      (link_to("Edit", edit_quest_path(quest), class: "tool-link") if can_manage?(quest))
+    ].compact
+    tag.div safe_join(actions), class: "page-actions" if actions.any?
+  end
+
+  def quest_achievements_indicator quest
+    required, optional = quest_card_highlights quest
+    summary = t "quests.card.required_achievements", count: required.size
+    tooltip_id = dom_id quest, :achievements_tooltip_for
+
+    tag.div class: "quest-achievements-indicator" do
+      tag.button(type: "button", class: "quest-achievements-badge",
+        aria: { label: summary, describedby: tooltip_id }) do
+        tag.span(required.size) + icon("medal", size: 18, class: "quest-achievements-icon")
+      end +
+      tag.div(id: tooltip_id, role: "tooltip", class: "quest-achievements-tooltip") do
+        tag.div quest_achievements_tooltip_content(required, optional, summary), class: "quest-achievements-tooltip-card"
+      end
+    end
+  end
+
   # Returns the number of aces currently on a quest
   def quest_participants_count(quest)
     @quest_participant_counts ? @quest_participant_counts.fetch(quest.id, 0) : quest.goals.distinct.count(:ace_id)
@@ -68,9 +97,56 @@ module QuestsHelper
   # Displays the number of participants on a quest with appropriate styling
   def quest_participants_badge(quest)
     count = quest_participants_count(quest)
+    return if count.zero?
+
     content_tag(:span, class: 'quest-participants-badge') do
       icon("users", size: 18, class: "quest-participants-icon") +
       pluralize(count, 'participant')
+    end
+  end
+
+  private
+
+  def quest_card_highlights quest
+    highlights = if quest.highlights.loaded?
+      quest.highlights.select { |highlight| highlight.approved? && highlight.achievement&.approved? }
+        .sort_by { |highlight| [ highlight.position || Float::INFINITY, highlight.id ] }
+    else
+      quest.highlights.approved.with_approved_achievement.ordered.includes(:achievement).to_a
+    end
+    highlights.partition(&:required?)
+  end
+
+  def quest_achievements_tooltip_content required, optional, summary
+    sections = [ tag.p(summary, class: "quest-achievements-tooltip-heading") ]
+    sections << quest_achievements_tooltip_list(required) if required.any?
+    if optional.any?
+      sections << tag.p(t("quests.card.optional_achievements", count: optional.size),
+        class: "quest-achievements-tooltip-subheading")
+      sections << quest_achievements_tooltip_list(optional)
+    end
+    safe_join sections
+  end
+
+  def quest_achievements_tooltip_list highlights
+    tag.ul class: "quest-achievements-tooltip-list" do
+      safe_join highlights.map { |highlight| quest_achievements_tooltip_item highlight.achievement }
+    end
+  end
+
+  def quest_achievements_tooltip_item achievement
+    detail = quest_achievement_tooltip_detail achievement
+    tag.li class: "quest-achievements-tooltip-item" do
+      tag.span(achievement.name, class: "quest-achievements-tooltip-name") +
+      (detail ? tag.span(detail, class: "quest-achievements-tooltip-detail") : "".html_safe)
+    end
+  end
+
+  def quest_achievement_tooltip_detail achievement
+    if achievement.target_type == "Team"
+      t "achievements.roster_levels.#{achievement.roster_level || 'mastery'}"
+    elsif achievement.description.present? && achievement.description != achievement.name
+      achievement.description
     end
   end
 end

@@ -101,4 +101,41 @@ RSpec.describe "Play home and quests", type: :request do
     get quests_path
     expect(response.body).to include("No quests yet", new_game_round_path)
   end
+
+  it "links quest titles, describes achievements on hover, and hides zero participant counts" do
+    empty_quest = create(:quest, name: "Solo Challenge", description: "Start from scratch.")
+    required = create(:achievement, name: "Learn the roster", target: team, roster_level: "fluency")
+    optional = create(:achievement, name: "Bonus history", description: "Know the classic eras.")
+    create(:highlight, quest: empty_quest, achievement: required, required: true)
+    create(:highlight, quest: empty_quest, achievement: optional, required: false)
+
+    active_quest = create(:quest, name: "Crowded Challenge", description: "Already underway.")
+    create(:goal, ace: ace, quest: active_quest)
+
+    get quests_path
+    doc = response.parsed_body
+
+    solo_card = doc.at_css("#quest_#{empty_quest.id}")
+    expect(solo_card.at_css("h2 a.quest-card-link")["href"]).to eq(quest_path(empty_quest))
+    expect(solo_card.at_css("h2 a.quest-card-link .quest-card-title").text).to eq("Solo Challenge")
+    expect(solo_card.at_css("h2 a.quest-card-link svg.quest-card-arrow")).to be_present
+    expect(solo_card.css("a").map(&:text)).not_to include("View quest")
+    expect(solo_card.at_css(".quest-participants-badge")).to be_nil
+    expect(solo_card.at_css(".quest-card-meta")).to be_nil
+    expect(solo_card.at_css(".page-actions")).to be_nil
+
+    badge = solo_card.at_css(".quest-achievements-badge")
+    expect(badge.text.strip).to eq("1")
+    expect(badge["aria-label"]).to eq("1 required achievement")
+    expect(badge.at_css("svg.quest-achievements-icon")).to be_present
+
+    tooltip = solo_card.at_css("##{badge['aria-describedby']}[role='tooltip']")
+    expect(tooltip.text).to include("1 required achievement", "Learn the roster", "Roster fluency",
+      "1 optional achievement", "Bonus history", "Know the classic eras.")
+
+    crowded_card = doc.at_css("#quest_#{active_quest.id}")
+    expect(crowded_card.at_css(".quest-participants-badge").text).to include("1 participant")
+    expect(crowded_card.at_css(".quest-achievements-badge").text.strip).to eq("0")
+    expect(crowded_card.at_css(".quest-achievements-tooltip").text).to include("No required achievements yet")
+  end
 end
