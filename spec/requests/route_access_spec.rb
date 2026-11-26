@@ -434,6 +434,7 @@ RSpec.describe "Route access", type: :request do
       GET /admin/people/:id
       PATCH /admin/people/:id
       PUT /admin/people/:id
+      POST /admin/people/:id/credit_grants
       GET /admin/sports-data
       POST /admin/sports-data
       GET /admin/sports-data/new

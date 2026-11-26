@@ -4,7 +4,7 @@
   <% ShoutOutRevenue::RANGES.each do |days| %><%= link_to "#{days} days", shout_out_revenue_path(days: days), aria: { current: @revenue.days == days ? "page" : nil } %><% end %>
 </nav>
 <p class="round-intro"><%= @revenue.from %> to <%= @revenue.through %> · UTC · today so far</p>
-<p>Purchases are cash received through Stripe. Credit spent is paid from that balance and is not a second cash payment. Credit refunds stay in the wallet.</p>
+<p>Cash purchases come through Stripe. Shout-outs can use purchased or granted credit. Credit refunds stay in the wallet.</p>
 <section class="shell-overview" aria-label="Period totals">
   <% [["Cash purchases", "purchase"], ["Credit spent on approvals", "capture"], ["Reservations released", "release"], ["Refunded to credit", "refund"]].each do |label, kind| %>
     <div class="round-panel"><p class="eyebrow"><%= label %></p><strong><%= number_to_currency @revenue.totals.fetch(kind) / 100.to_d %></strong></div>

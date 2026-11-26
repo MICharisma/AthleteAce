@@ -7,6 +7,24 @@
     <%= link_to "View as moderator", ace_profile_path(@ace, side: "mod"), class: "tool-button" %>
     <p class="round-caption">Opens the moderator profile with your own permissions.</p>
   </section>
+  <section class="round-panel">
+    <h2 class="profile-section-title">Wallet credit</h2>
+    <p><%= number_to_currency @ace.credit_account&.available_cents.to_i / 100.to_d %> available</p>
+    <%= form_with url: credit_grants_admin_person_path(@ace), class: "people-actions" do |form| %>
+      <%= form.hidden_field :request_key, value: SecureRandom.uuid %>
+      <div><%= form.label :amount, "Amount (USD)" %><%= form.number_field :amount, min: "0.01", step: "0.01", required: true, class: "account-input" %></div>
+      <div><%= form.label :reason, "Grant reason" %><%= form.text_area :reason, required: true, maxlength: 2000, class: "moderation-reason" %></div>
+      <%= form.submit "Grant credit", class: "tool-button" %>
+    <% end %>
+    <% if @credit_grants.any? %>
+      <h3>Recent grants</h3>
+      <ul class="wallet-history">
+        <% @credit_grants.each do |grant| %>
+          <li><strong><%= number_to_currency grant.amount_cents / 100.to_d %></strong> · <%= grant.actor&.public_name || "Deleted admin" %> · <%= l grant.created_at, format: :long %><p><%= grant.reason %></p></li>
+        <% end %>
+      </ul>
+    <% end %>
+  </section>
   <% if @ace.id == current_ace.id %><section class="round-panel"><p>Another admin must change your role or account access.</p></section>
   <% else %>
     <section class="round-panel"><h2 class="profile-section-title">Manage account</h2>

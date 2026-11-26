@@ -19,7 +19,12 @@ class CreditAccount < ApplicationRecord
       if available_cents + available_delta < 0 || reserved_cents + reserved_delta < 0
         raise ArgumentError, "There is not enough available credit for this bid."
       end
-      update!(available_cents: available_cents + available_delta, reserved_cents: reserved_cents + reserved_delta)
+      available = available_cents + available_delta
+      reserved = reserved_cents + reserved_delta
+      if [ available, reserved ].any? { |balance| balance > 9_223_372_036_854_775_807 }
+        raise ArgumentError, "This operation exceeds the supported credit balance."
+      end
+      update!(available_cents: available, reserved_cents: reserved)
       credit_entries.create!(source: source, operation_key: key, kind: kind,
         available_delta: available_delta, reserved_delta: reserved_delta)
     end

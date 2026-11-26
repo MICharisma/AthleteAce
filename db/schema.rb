@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_26_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_26_120200) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "btree_gist"
   enable_extension "pg_catalog.plpgsql"
@@ -501,6 +501,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_120100) do
     t.index ["credit_account_id"], name: "index_credit_entries_on_credit_account_id"
     t.index ["operation_key"], name: "index_credit_entries_on_operation_key", unique: true
     t.index ["source_type", "source_id"], name: "index_credit_entries_on_source"
+  end
+
+  create_table "credit_grants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "ace_id", null: false
+    t.uuid "actor_id"
+    t.bigint "amount_cents", null: false
+    t.string "reason", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ace_id"], name: "index_credit_grants_on_ace_id"
+    t.index ["actor_id"], name: "index_credit_grants_on_actor_id"
+    t.check_constraint "amount_cents > 0", name: "credit_grants_positive_amount"
   end
 
   create_table "decision_evaluations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -1848,6 +1860,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_26_120100) do
   add_foreign_key "contracts", "teams"
   add_foreign_key "credit_accounts", "aces"
   add_foreign_key "credit_entries", "credit_accounts"
+  add_foreign_key "credit_grants", "aces"
+  add_foreign_key "credit_grants", "aces", column: "actor_id", on_delete: :nullify
   add_foreign_key "divisions", "conferences"
   add_foreign_key "divisions", "leagues"
   add_foreign_key "divisions", "logos", column: "primary_logo_id", on_delete: :nullify

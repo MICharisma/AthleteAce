@@ -29,6 +29,38 @@ RSpec.describe "Admin people", type: :request do
     expect(response.body).not_to include(ace.encrypted_password)
   end
 
+  it "grants spendable wallet credit once and records it separately from purchases" do
+    sign_in admin
+    attributes = { amount: "12.50", reason: "Opening day thank-you", request_key: SecureRandom.uuid }
+    2.times do
+      post credit_grants_admin_person_path(ace), params: attributes
+      expect(response).to redirect_to(admin_person_path(ace))
+    end
+    grant = CreditGrant.sole
+    expect(grant).to have_attributes(ace: ace, actor: admin, reason: attributes.fetch(:reason), amount_cents: 1250)
+    expect(ace.credit_account.credit_entries.sole).to have_attributes(source: grant, kind: "grant", available_delta: 1250)
+    expect(ShoutOutRevenue.new.totals.fetch("purchase")).to eq(0)
+    post credit_grants_admin_person_path(ace), params: attributes.merge(amount: "25")
+    expect(response).to have_http_status(:conflict)
+    expect(ace.credit_account.reload.available_cents).to eq(1250)
+
+    shout_out = submit_credit(ace: ace, target: create(:team), bid: 500)
+    expect(shout_out.funding_status).to eq("reserved")
+    expect(ace.credit_account.reload.available_cents).to eq(750)
+  end
+
+  it "rolls a grant back when its wallet cannot accept the amount" do
+    sign_in admin
+    CreditAccount.for(ace).update!(available_cents: 100)
+    post credit_grants_admin_person_path(ace), params: {
+      amount: "92233720368547758.07", reason: "Opening day thank-you", request_key: SecureRandom.uuid
+    }
+    expect(response).to redirect_to(admin_person_path(ace))
+    expect(flash[:alert]).to include("exceeds the supported credit balance")
+    expect(ace.credit_account.reload.available_cents).to eq(100)
+    expect(CreditGrant.count).to eq(0)
+  end
+
   it "filters by identity, role, mutually exclusive status and inclusive joined dates" do
     sign_in admin
     ace.update!(created_at: Time.zone.local(2026, 1, 20, 12))

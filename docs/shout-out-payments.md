@@ -6,6 +6,8 @@ Shout-outs use custom USD bids rather than fixed-price tiers. Save a private dra
 
 **Credit wallet** shows available credit, credit reserved for review, and a paginated history. A purchase adds its full amount, with no processing-fee deduction. Stripe Checkout charges the card immediately. Credit purchases have Stripe's $0.50 minimum and allow any cent amount up to AthleteAce's $999,999.99 limit per charge. Stored credit can fund smaller bids. Credit is denominated in USD, cannot be withdrawn to a bank or transferred between aces, and is not automatically refunded to a card.
 
+Admins can grant wallet credit from **Admin → People** on an ace’s account page. Enter a positive USD amount and a reason. The grant becomes available immediately and is recorded with the issuing admin. It appears as a grant in wallet history and does not count as cash received.
+
 Credit-funded submissions reserve the bid atomically. Direct payments create an unfunded post, then open Stripe Checkout; only a verified paid Stripe event adds and reserves its credit. The return page never grants credit. Unfunded posts are absent from the review queue and Feed. Canceled checkout can be resumed from **Payment status** or the unfunded post; an expired checkout requires a new purchase attempt.
 
 Approval spends reserved credit and publishes the post. Rejection releases the reservation to available credit. Hiding a live post returns the full bid as available credit, including posts paid for directly. Fees never reduce this amount. Refunded posts cannot be reopened for free; create a new funded submission. Another reviewer must decide an ace's own submission, including submissions by admins. The existing oldest-first moderation order remains.

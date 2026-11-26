@@ -8,7 +8,8 @@ RSpec.describe UgcResetService do
   # Tables the reset leaves as they are, grouped by what they hold.
   KEPT = {
     accounts: %w[AccountAction AceRizzBinding SignInEvent RizzBackchannelLogoutEvent RizzClaimHandoff RizzClaimReceipt RizzFeedCursor RizzName RizzSync],
-    credits: %w[CreditAccount CreditEntry StripePurchase],
+    credits: %w[CreditAccount CreditEntry CreditGrant StripePurchase],
+    analytics: %w[Ahoy::Event Ahoy::Visit],
     posts_and_moderation: %w[Engagements::Engagement Mute ShoutOut ShoutOutDraft ShoutOutReaction ShoutOutReport ModerationDecision ModerationEscalation ModeratorNote PostingWarning DecisionEvaluation PracticeReview RatingRevision],
     play: %w[GameRound GoalAchievement],
     catalog_outside_the_reset: %w[CatalogEdit EntityCode Nickname TeamNaming Tenancy Shot ShotUploadToken Capture]

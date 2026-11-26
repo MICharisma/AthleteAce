@@ -50,7 +50,9 @@ Rails.application.routes.draw do
     resources :player_histories, path: "player-history", only: :show
     resources :competitions, only: [ :index, :show ]
     resources :games, only: [ :index, :show ]
-    resources :people, only: [ :index, :show, :update ]
+    resources :people, only: [ :index, :show, :update ] do
+      post :credit_grants, on: :member, action: :grant_credit
+    end
     resources :catalog_records, path: "sports-data", only: [ :index, :new, :create, :edit, :update ]
     resources :shots, only: [:index, :create, :edit, :update] do
       resources :captures, only: [:create, :update, :destroy]
