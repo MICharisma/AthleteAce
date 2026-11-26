@@ -1,6 +1,6 @@
 <section class="round-panel" aria-labelledby="submit-shout-out-title">
   <h2 id="submit-shout-out-title" class="profile-section-title">Submit your shout-out</h2>
-  <p>Choose any positive bid in dollars. Its amount plus a random boost determines its Feed order. No placement is guaranteed.</p>
+  <p>Choose any positive bid in dollars. Higher bids improve your chances of appearing near the top of the Feed. Your post has its best chance when it goes live. No placement is guaranteed.</p>
   <p class="round-caption">Credit bids start at $0.01. Direct Stripe payments are $0.50–$999,999.99. Credit is reserved during review and returned to your wallet if the post is rejected or taken down.</p>
   <%= form_with url: shout_outs_path, class: "payment-form" do |form| %>
     <%= form.hidden_field :draft_id, value: @draft.id %><%= form.hidden_field :draft_revision, value: @draft.lock_version %>

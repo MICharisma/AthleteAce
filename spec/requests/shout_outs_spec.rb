@@ -60,15 +60,20 @@ RSpec.describe "Funded shout-out submission and Feed" do
     expect(Nokogiri::HTML(response.body).css(".shout-out-card").map { |node| node["id"] }).to eq(first_ids)
   end
 
-  it "uses the exact dollar-based formula with per-visitor deterministic draws" do
-    buy_credit(ace)
-    posts = 8.times.map { |index| submit_credit(ace: ace, target: target, bid: 50 + index * 5) }
-    expected = posts.sort_by do |post|
-      draw = Digest::MD5.hexdigest("visitor-a:#{post.id}").first(13).to_i(16).fdiv(2**52)
-      -((post.bid_cents / 100.0 + 0.5 + 2 * draw)**1.6)
+  it "orders weighted draws by bid and time since approval" do
+    buy_credit(ace, amount: 6000)
+    posts = [ [ 25, 0 ], [ 100, 0 ], [ 500, 0 ], [ 2500, 2 ], [ 2500, 6 ] ].map do |bid, days_live|
+      post = travel_to(10.days.ago) { submit_credit(ace: ace, target: target, bid: bid) }
+      travel_to(days_live.days.ago) { review_post(post, action: "approve") }
+      [ post, days_live ]
     end
-    ranked = ShoutOutFeed.ranked(ShoutOut.all, seed: "visitor-a").pluck(:id)
-    expect(ranked).to eq(expected.map(&:id))
-    expect(ShoutOutFeed.ranked(ShoutOut.all, seed: "visitor-b").pluck(:id)).not_to eq(ranked)
+    %w[visitor-a visitor-b].each do |seed|
+      expected = posts.sort_by do |post, days_live|
+        draw = (Digest::MD5.hexdigest("#{seed}:#{post.id}").first(13).to_i(16) + 0.5) / 2**52
+        weight = (1 + Math.sqrt(post.bid_cents / 100.0)) * 2**(-days_live / 2.0)
+        -Math.log(draw) / weight
+      end
+      expect(ShoutOutFeed.ranked(ShoutOut.live, seed: seed).pluck(:id)).to eq(expected.map { |post, _| post.id })
+    end
   end
 end

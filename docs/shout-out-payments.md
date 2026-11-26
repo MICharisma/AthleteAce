@@ -29,10 +29,10 @@ Both Feed views support sport/league filters and live approval/removal updates. 
 For each visitor, ranking uses:
 
 ```text
-score = (bid_in_dollars + uniform_random(0.5, 2.5)) ** 1.6
+weight = (1 + sqrt(bid_in_dollars)) * 2 ** (-days_since_publication / 2)
 ```
 
-Higher scores appear first. Each post has its own draw, derived from a random visitor-session seed and the post ID. The draw is stable across refreshes and pagination within that session; separate visitors get separate seeds. Score ties use descending post ID. This affects Feed, live-post search and featured-card display order only, never bid or ledger amounts. Free reactions do not change the score; the weekly leaderboard ranks by post count instead. No placement, number of views, tier, pin, or duration is guaranteed. Post pagination uses `posts_page`, independently of the My teams cards' `page` parameter.
+Each slot is drawn from the remaining posts in proportion to their weights. Age starts at first approval. Older records without an approval decision and private posts awaiting review use creation time. The draw uses the visitor’s session seed and the post ID, which keeps pagination stable while the eligible posts stay the same. Ties use descending post ID. This affects Feed, live-post search and featured-card display order only, never bid or ledger amounts. Free reactions do not change the score; the weekly leaderboard ranks by post count instead. No placement, number of views, tier, pin, or duration is guaranteed. Post pagination uses `posts_page`, independently of the My teams cards' `page` parameter.
 
 Posting mutes block new shout-out submissions. Already-submitted posts and in-flight payments keep their normal funding/review lifecycle. An optional hide during a mute returns the full bid as credit. See [posting moderation](posting-moderation.md).
 

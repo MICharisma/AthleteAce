@@ -53,7 +53,7 @@
   <% end %>
   <% if @posts&.any? %>
     <section aria-label="Shout-outs" class="shout-out-stream">
-      <p class="round-caption">Bid-weighted order with a random boost for each visitor.</p>
+      <p class="round-caption">Newer posts and higher bids have a better chance of appearing first.</p>
       <% reactions = ShoutOutReactionSummary.new(posts: @posts, ace: current_ace) %>
       <% @posts.each do |post| %>
         <%= render "shout_outs/card", post: post, reactions: reactions %>

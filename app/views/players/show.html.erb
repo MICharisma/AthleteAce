@@ -61,7 +61,7 @@
     <div class="play-section-heading"><h2 id="player-shout-outs-title" class="profile-section-title">Shout-outs for <%= player_display_name(@player) %></h2><%= link_to "All player shout-outs", player_shout_outs_path(@player), class: "tool-link" %></div>
     <p class="round-caption"><%= pluralize @weekly_shout_out_count, "live shout-out" %> approved this week · UTC</p>
     <% if @shout_outs.any? %>
-      <p class="round-caption">Top live posts, in bid-weighted order with a random boost for each visitor.</p>
+      <p class="round-caption">Newer posts and higher bids have a better chance of appearing first.</p>
       <%= render partial: "shout_outs/card", collection: @shout_outs, as: :post, locals: { reactions: ShoutOutReactionSummary.new(posts: @shout_outs, ace: current_ace) } %>
     <% else %>
       <p class="profile-empty">No live shout-outs for this player yet.</p>
