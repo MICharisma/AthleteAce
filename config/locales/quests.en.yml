@@ -6,6 +6,9 @@ en:
       begun: "Begun"
       completed: "Completed"
       progress: "%{known} of %{required} players known"
+  goals:
+    create:
+      success: "have fun on your quest"
   achievements:
     roster_levels:
       mastery: "Roster mastery"

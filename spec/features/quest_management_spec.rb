@@ -41,13 +41,13 @@ RSpec.feature "Quest Management", type: :feature do
     end
     
     # Expect to see a success message
-    expect(page).to have_content("You've successfully adopted this quest!")
+    expect(page).to have_content("have fun on your quest")
     
     # Expect the button to change to "Continue Quest"
     expect(page).to have_content("Continue Quest")
     
     # Expect the participant count to be updated
-    expect(page).to have_content("1 participant")
+    expect(page).to have_css(".quest-activity", text: "Begun 1")
   end
   
   scenario "Ace discovers a random quest" do

@@ -33,7 +33,7 @@ RSpec.describe GoalsController, type: :controller do
       it "redirects to the quest page with a success notice" do
         post :create, params: { quest_id: quest.id }
         expect(response).to redirect_to(quest)
-        expect(flash[:notice]).to eq("You've successfully adopted this quest!")
+        expect(flash[:notice]).to eq("have fun on your quest")
       end
       
       context "when the ace has already adopted the quest" do

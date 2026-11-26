@@ -18,7 +18,7 @@ class GoalsController < ApplicationController
 
     respond_to do |format|
       if @goal.persisted?
-        format.html { redirect_to @goal.quest, notice: "You've successfully adopted this quest!" }
+        format.html { redirect_to @goal.quest, notice: t(".success") }
         format.json { render :show, status: :created, location: @goal }
       else
         format.html { redirect_to @quest, alert: "Unable to adopt this quest: #{@goal.errors.full_messages.join(', ')}" }
