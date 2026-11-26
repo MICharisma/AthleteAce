@@ -76,6 +76,25 @@ RSpec.describe "Shout-out credit accounting" do
     expect(account.reload.attributes.values_at("available_cents", "reserved_cents")).to eq([ 75, 0 ])
   end
 
+  it "records each funnel step once as a direct bid moves from unpaid to public" do
+    draft = create(:shout_out_draft, ace: ace, target: target)
+    post = ShoutOutSubmission.call(draft: draft, revision: 0, bid_cents: 225, payment_method: "stripe")
+    events = Ahoy::Event.where(user: ace).where("properties ->> 'shout_out_id' = ?", post.id)
+    decline = create(:stripe_purchase, :declined, ace: ace, shout_out: post, amount_cents: 225)
+    expect(decline.status).to eq("pending")
+    expect(events.pluck(:name)).to contain_exactly("shout_out_submitted")
+    expect(ShoutOut.live).not_to include(post)
+
+    purchase = create(:stripe_purchase, :paid, ace: ace, shout_out: post, amount_cents: 225)
+    purchase.fulfill!(paid_session(purchase))
+    review_post(post.reload, action: "approve")
+
+    expect(events.pluck(:name)).to contain_exactly("shout_out_submitted", "shout_out_funded", "shout_out_published")
+    expect(events.pluck(:properties).uniq).to eq([
+      { "shout_out_id" => post.id, "target_type" => "Player", "payment_method" => "stripe", "bid_cents" => 225 }
+    ])
+  end
+
   it "cannot self-review, alter funded text, or approve a deleted target" do
     ace.update!(admin: true)
     account = buy_credit(ace)

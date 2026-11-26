@@ -28,6 +28,7 @@ class ShoutOut < ApplicationRecord
       CreditAccount.for(created_by).apply!(source: self, kind: "reserve", available_delta: -bid_cents, reserved_delta: bid_cents)
       update!(funding_status: "reserved")
       record_submission
+      Ahoy::Event.track "shout_out_funded", user: created_by, **funding_event_properties
     end
   end
 
@@ -51,6 +52,10 @@ class ShoutOut < ApplicationRecord
       account.apply!(source: self, kind: "refund", available_delta: bid_cents)
       update!(funding_status: "refunded")
     end
+  end
+
+  def funding_event_properties
+    { shout_out_id: id, target_type: target_type, payment_method: payment_method, bid_cents: bid_cents }
   end
 
   private

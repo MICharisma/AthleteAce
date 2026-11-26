@@ -66,6 +66,7 @@ gem 'pagy', '~> 43.6'
 gem 'devise', '~> 5.0'
 gem "omniauth-google-oauth2", "~> 1.2"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
+gem "ahoy_matey", "~> 5.5"
 gem "jwt", "~> 3.3"
 
 group :development, :test do

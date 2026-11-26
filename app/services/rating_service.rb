@@ -10,6 +10,7 @@ class RatingService
       else
         existing&.update!(archived: true)
         replacement.save!
+        Ahoy::Event.track "rating_saved", user: ace, rating_id: replacement.id, rated_type: replacement.rated_type
         replacement
       end
     end

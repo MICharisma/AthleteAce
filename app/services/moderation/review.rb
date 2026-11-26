@@ -36,6 +36,9 @@ module Moderation
         record.update!(moderation_status: destination)
         record.moderation_decisions.create!(actor: actor, action: action == "reopen" ? "reopened" : destination,
           from_status: previous, to_status: destination, revision: revision, reason: reason, snapshot: record.moderation_snapshot)
+        if record.is_a?(ShoutOut) && action == "approve"
+          Ahoy::Event.track "shout_out_published", user: record.created_by, **record.funding_event_properties
+        end
         if record.is_a?(ShoutOut) && action == "hide"
           record.shout_out_reports.open.update_all(resolution: "hidden", decision_reason: reason, resolved_by_id: actor.id,
             resolved_at: Time.current, updated_at: Time.current)

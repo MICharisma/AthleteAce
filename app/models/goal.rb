@@ -4,6 +4,9 @@ class Goal < ApplicationRecord
   has_many :goal_achievements, dependent: :destroy
 
   after_create :prepare_learning!
+  after_create_commit do
+    Ahoy::Event.track "quest_adopted", user: ace, quest_id: quest_id, goal_id: id
+  end
 
   def prepare_learning!
     quest.highlights.approved.with_approved_achievement.includes(:achievement).find_each do |highlight|

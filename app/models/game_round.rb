@@ -68,6 +68,7 @@ class GameRound < ApplicationRecord
         chosen_entity_type: choice && question.fetch("target_type"), chosen_entity_id: choice&.fetch("id"),
         options_presented: question.fetch("choices").map { |item| item.fetch("id") },
         is_correct: choice&.fetch("id") == question.fetch("target_id"), time_elapsed_ms: answer_time_ms
+      Ahoy::Event.track "game_attempt_saved", user: ace, game_attempt_id: attempt.id, game_type: attempt.game_type
       PracticeReview.record! attempt, question
       ace.goals.unfinished.with_approved_quest.find_each { |goal| goal.record_answer!(attempt) }
       learned = newly_known_player_ids

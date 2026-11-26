@@ -19,6 +19,7 @@ class ShoutOutSubmission
       post = draft.shout_outs.create!(created_by: draft.ace, target: draft.target, target_name: player ? player.display_name : draft.target.name,
         team_id: team&.id, league_id: team&.league_id, message: draft.message, draft_revision: revision,
         bid_cents: bid_cents, payment_method: payment_method)
+      Ahoy::Event.track "shout_out_submitted", user: draft.ace, **post.funding_event_properties
       post.reserve_credit! if payment_method == "credit"
       post
     end

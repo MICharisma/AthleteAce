@@ -36,6 +36,7 @@ class GameAttemptsController < ApplicationController
     @game_attempt.is_correct = @game_attempt.chose_target?
 
     if @game_attempt.save
+      Ahoy::Event.track "game_attempt_saved", user: current_ace, game_attempt_id: @game_attempt.id, game_type: @game_attempt.game_type
       # Return the saved attempt as JSON with associated entities
       render json: @game_attempt.as_json(include: {
         subject_entity: { methods: [:logo_url, :name] },
