@@ -5,6 +5,7 @@ All scored games use saved rounds under `/play/rounds/new`. The selected 10, 20,
 ## Games and scope
 
 - Team Match uses current team assignments or a selected roster season. After selecting an answer or choosing to see the answer, feedback appears and the round advances automatically 1.5 seconds after selection. The last answer advances to the round summary. Pausing stops automatic advancement until the round resumes.
+- On the Team asks yes or no for one focus team. It mixes that roster with other players from the same league so the answer is not always yes. Quest **Test** starts this mode for team achievements. It auto-advances like Team Match.
 - Guess the Division uses current team classifications.
 - Guess the League asks which recorded league a team belongs to. Filters choose the teams to ask about. Choices come from leagues with teams in the same sport, including leagues outside the question scope. At least two distinct league names are required.
 - Guess the Sport asks which sport a team plays. Filters choose the teams to ask about. Choices come from recorded sports with teams, including sports outside the question scope. At least two distinct sport names are required.

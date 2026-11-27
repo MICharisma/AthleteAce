@@ -79,6 +79,9 @@
 .round-athlete-photo { @apply absolute inset-0 w-full h-full object-cover object-top; }
 .round-subject .page-title:focus, .round-feedback:focus { outline: none; }
 .round-choices { @apply grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4; }
+.round-boolean-choices { @apply grid-cols-2 sm:grid-cols-2 max-w-xl; }
+.round-boolean-choices .round-choice { @apply items-center min-h-24; }
+.round-boolean-choices .round-choice-name { @apply font-display text-3xl; }
 .round-choice { @apply relative flex flex-col justify-center items-start gap-2 text-left min-h-32 p-4 sm:p-5 rounded-tool border-2 border-ink bg-surface text-ink shadow-press cursor-pointer; }
 .round-choice:not(:disabled):hover { @apply bg-accent-tint; }
 .round-choice:focus-visible { @apply outline-2 outline-offset-4 outline-accent-text; }

@@ -8,5 +8,5 @@ class Follow < Engagements::Engagement
   belongs_to :ace, foreign_key: :actor_id, inverse_of: :follows
   belongs_to :followable, polymorphic: true, foreign_key: :engageable_id, foreign_type: :engageable_type
 
-  validates :followable_type, inclusion: { in: %w[Team Player] }
+  validates :followable_type, inclusion: { in: %w[Team Player Quest Achievement] }
 end

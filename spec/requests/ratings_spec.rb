@@ -183,3 +183,57 @@ RSpec.describe "Shared rating rows", type: :request do
     expect(response.body).not_to include("rating-slider-input")
   end
 end
+
+RSpec.describe "Floating dimension picker", type: :request do
+  let(:ace) { create(:ace) }
+  let!(:spectrum) { create(:familiarity) }
+  let!(:player) { create(:player) }
+  let(:team) { player.team }
+  let!(:division) do
+    conference = create(:conference, league: team.league)
+    create(:division, conference: conference, league: team.league).tap { |div| create(:membership, team: team, division: div) }
+  end
+  let!(:quest) { create(:quest) }
+  let!(:goal) { ace.adopt_quest(quest) }
+
+  before { sign_in ace }
+
+  it "renders only on pages with rating sliders, even when no dimensions are selected" do
+    [
+      player_path(player),
+      players_path,
+      teams_path,
+      team_path(team, tab: "ratings"),
+      divisions_path
+    ].each do |path|
+      get path
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("#spectrum-picker")).to be_present, "expected #spectrum-picker on #{path}"
+    end
+
+    [
+      team_path(team),
+      team_path(team, tab: "roster"),
+      team_path(team, tab: "staff"),
+      division_path(division),
+      quest_path(quest),
+      goal_path(goal),
+      strength_path,
+      spectrums_path,
+      new_player_rating_path(player)
+    ].each do |path|
+      get path
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("#spectrum-picker")).to be_nil, "expected no #spectrum-picker on #{path}"
+    end
+
+    patch spectrum_preference_path, params: { spectrum_ids: [], multiple: false }, as: :json
+    expect(response).to have_http_status(:no_content)
+
+    [ player_path(player), teams_path ].each do |path|
+      get path
+      expect(response).to have_http_status(:ok)
+      expect(response.parsed_body.at_css("#spectrum-picker")).to be_present, "expected #spectrum-picker on #{path} after clearing selection"
+    end
+  end
+end

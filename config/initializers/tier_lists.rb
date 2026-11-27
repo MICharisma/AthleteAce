@@ -21,7 +21,7 @@ TierLists.configure do |config|
   config.owner_resolver = ->(controller) { controller.current_ace }
   config.authenticate_owner = ->(controller) { controller.authenticate_ace! }
   config.default_owner = -> { Ace.first }
-  config.default_item_classes = %w[Team Player League Sport]
+  config.default_item_classes = %w[Team Player League Sport Quest Achievement]
 
   config.register_content_source(
     "Team",
@@ -78,6 +78,37 @@ TierLists.configure do |config|
     records: ->(scope:) { Sport.includes(primary_logo: { asset_representations: { file_attachment: :blob } }) },
     designation: ->(sport) { sport.name },
     avatar: logo_avatar
+  )
+
+  config.register_content_source(
+    "Quest",
+    records: ->(scope:) { Quest.approved.includes(highlights: :achievement) },
+    designation: ->(quest) { quest.name },
+    expression: ->(quest) {
+      required = quest.highlights.approved.with_approved_achievement.required.count
+      [ "Quest", (required.positive? ? "#{required} required" : nil) ].compact.join(" · ")
+    },
+    colors: ->(_quest) { [ "#4A6500", "#84CC16" ] }
+  )
+
+  config.register_content_source(
+    "Achievement",
+    records: ->(scope:) { Achievement.approved.includes(:target) },
+    designation: ->(achievement) { achievement.name },
+    expression: ->(achievement) {
+      parts = [ "Achievement" ]
+      parts << achievement.target.name if achievement.target
+      if achievement.target_type == "Team"
+        level = achievement.roster_level || "mastery"
+        parts << I18n.t("achievements.roster_levels.#{level}")
+      end
+      parts.join(" · ")
+    },
+    avatar: ->(achievement) {
+      target = achievement.target
+      logo_avatar.call(target) if target.is_a?(Team) || target.is_a?(League)
+    },
+    colors: ->(_achievement) { [ "#B45309", "#F59E0B" ] }
   )
 end
 

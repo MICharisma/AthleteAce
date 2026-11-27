@@ -10,6 +10,11 @@ class GoalsController < ApplicationController
 
   # GET /goals/:id
   def show
+    @goal.goal_achievements.load
+    @goal_entries = @goal.goal_achievements.index_by(&:achievement_id)
+    highlights = @goal.quest.highlights.approved.with_approved_achievement.ordered.includes(achievement: :target).to_a
+    @required_highlights, @optional_highlights = highlights.partition(&:required?)
+    @engagement_summary = Engagements::Summary.new([ @goal.quest, *@required_highlights.map(&:achievement), *@optional_highlights.map(&:achievement) ], current_ace)
   end
 
   # POST /quests/:quest_id/goals

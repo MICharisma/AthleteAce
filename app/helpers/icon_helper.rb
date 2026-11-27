@@ -6,7 +6,7 @@ module IconHelper
 
   RESOURCE_ICONS = {
     sport: "ball-basketball", league: "stack-2", conference: "layout-columns",
-    division: "tournament", team: "shield", player: "shirt-sport",
+    division: "tournament", team: "shield", player: "shirt-sport", player_group: "users",
     stadium: "building-stadium", country: "world", state: "map", city: "building-community",
     quest: "script", goal: "target", highlight: "star", achievement: "medal",
     strength: "barbell", rating: "list-numbers", spectrum: "gauge", membership: "id-badge-2",

@@ -1,5 +1,5 @@
 Engagements.configure do |config|
-  config.engageable_types = %w[Player Team]
+  config.engageable_types = %w[Player Team Quest Achievement]
   config.actor_resolver = ->(controller) { controller.current_ace }
   config.authenticate_actor = ->(controller) { controller.authenticate_ace! }
   config.sign_in_path = ->(view) { view.main_app.new_ace_session_path }

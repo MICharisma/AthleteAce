@@ -6,8 +6,9 @@ RSpec.describe "Play home and quest browsing" do
   let(:quest) { create(:quest, name: "NFC North Roll Call", description: "Know the teams and the players who make them go.") }
 
   before do
-    create(:team, league: team.league)
+    rival = create(:team, league: team.league)
     create_list(:player, 10, team: team)
+    create_list(:player, 5, team: rival)
     achievement = create(:achievement, name: "Learn the Packers roster", target: team)
     create(:highlight, quest: quest, achievement: achievement)
     create(:goal, ace: ace, quest: quest, status: "in_progress")
@@ -30,10 +31,80 @@ RSpec.describe "Play home and quest browsing" do
     expect(page).to have_no_link("View quest")
     click_link "NFC North Roll Call"
     expect(page).to have_link("Continue Quest")
+    click_button "20"
+    expect(page).to have_css('.quest-session-length[aria-pressed="true"]', text: "20")
+    expect(page).to have_link("Practice", href: /length=20/)
+    expect(page).to have_link("Arena", href: /length=20/)
     click_link "Practice"
+    expect(page).to have_css(".flash-card-page")
+    expect(page).to have_content(team.name)
+    visit quest_path(quest)
+    click_button "30"
+    click_button "Test"
+    expect(page).to have_css(".round-question-prompt", text: /Is this player on the/i)
+    expect(page).to have_css(".round-choice-name", text: "Yes")
+    expect(page).to have_css(".round-choice-name", text: "No")
+    expect(page).to have_css(".round-game-progress", text: %r{1 / (1[0-5]|[1-9])})
+    visit quest_path(quest)
+    click_link "Arena"
     expect(page).to have_content(team.name)
     expect(page).to have_button("Start round")
   end
+
+  it "launches Practice, Test, and Arena at the selected length from a goal" do
+    goal = ace.goals.find_by!(quest: quest)
+    visit goal_path(goal)
+
+    click_button "20"
+    expect(page).to have_css('.quest-session-length[aria-pressed="true"]', text: "20")
+    expect(page).to have_link("Practice", href: /length=20/)
+    expect(page).to have_link("Arena", href: /length=20/)
+
+    click_link "Practice"
+    expect(page).to have_css(".flash-card-page")
+    expect(page).to have_content(team.name)
+
+    visit goal_path(goal)
+    click_button "30"
+    click_button "Test"
+    expect(page).to have_css(".round-question-prompt", text: /Is this player on the/i)
+    expect(page).to have_css(".round-choice-name", text: "Yes")
+    expect(page).to have_css(".round-choice-name", text: "No")
+    expect(page).to have_css(".round-game-progress", text: %r{1 / (1[0-5]|[1-9])})
+
+    visit goal_path(goal)
+    click_link "Arena"
+    expect(page).to have_content(team.name)
+    expect(page).to have_button("Start round")
+  end
+
+  it "launches Practice, Test, and Arena at the selected length from an achievement" do
+    achievement = quest.achievements.first!
+    visit achievement_path(achievement)
+
+    click_button "20"
+    expect(page).to have_css('.quest-session-length[aria-pressed="true"]', text: "20")
+    expect(page).to have_link("Practice", href: /length=20/)
+    expect(page).to have_link("Arena", href: /length=20/)
+
+    click_link "Practice"
+    expect(page).to have_css(".flash-card-page")
+    expect(page).to have_content(team.name)
+
+    visit achievement_path(achievement)
+    click_button "30"
+    click_button "Test"
+    expect(page).to have_css(".round-question-prompt", text: /Is this player on the/i)
+    expect(page).to have_css(".round-choice-name", text: "Yes")
+    expect(page).to have_css(".round-choice-name", text: "No")
+    expect(page).to have_css(".round-game-progress", text: %r{1 / (1[0-5]|[1-9])})
+
+    visit achievement_path(achievement)
+    click_link "Arena"
+    expect(page).to have_content(team.name)
+    expect(page).to have_button("Start round")
+  end
+
   it "drills unresolved misses, clears a corrected name and links today's player ratings" do
     player = team.players.first
     create(:game_attempt, ace: ace, subject_entity: player, is_correct: true)

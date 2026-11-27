@@ -83,6 +83,7 @@ Rails.application.routes.draw do
   resource :theme_preference, only: :update
   get "search", to: "searches#index", as: :search
   resource :posting_status, only: :show, path: "account/posting"
+  resource :shared_space, path: "shared-space", only: :show
   resources :ace_profiles, only: :show, path: "moderate/aces" do
     resources :posting_actions, only: :create
   end

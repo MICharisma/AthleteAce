@@ -1,9 +1,9 @@
 class GameRound < ApplicationRecord
   class InvalidAction < StandardError; end
 
-  GAMES = { "player_team_match" => "Team Match", "guess_the_division" => "Guess the Division", "name_ciphers" => "Name Ciphers",
-    "multiple_choice" => "Multiple Choice", "phased_repetition" => "Phased Repetition", "image_recognition" => "Image Recognition",
-    "guess_the_league" => "Guess the League", "guess_the_sport" => "Guess the Sport" }.freeze
+  GAMES = { "player_team_match" => "Team Match", "on_the_team" => "On the Team", "guess_the_division" => "Guess the Division",
+    "name_ciphers" => "Name Ciphers", "multiple_choice" => "Multiple Choice", "phased_repetition" => "Phased Repetition",
+    "image_recognition" => "Image Recognition", "guess_the_league" => "Guess the League", "guess_the_sport" => "Guess the Sport" }.freeze
   LENGTHS = [ 10, 20, 30 ].freeze
 
   belongs_to :ace
@@ -62,12 +62,19 @@ class GameRound < ApplicationRecord
       raise InvalidAction, "Choose one of the answers shown." if choice_id.present? && !choice
 
       known_before = PlayProgress.new(ace: ace).known_player_ids.include?(question.fetch("subject_id")) if question.fetch("subject_type") == "Player"
+      correct = if game_type == "on_the_team"
+        focus_id = question.fetch("focus_team_id").to_s
+        chose_yes = choice&.fetch("id").to_s == focus_id
+        choice.present? && chose_yes == ActiveModel::Type::Boolean.new.cast(question.fetch("on_team"))
+      else
+        choice&.fetch("id") == question.fetch("target_id")
+      end
       attempt = game_attempts.create! ace: ace, game_type: game_type, round_position: position,
         subject_entity_type: question.fetch("subject_type"), subject_entity_id: question.fetch("subject_id"),
         target_entity_type: question.fetch("target_type"), target_entity_id: question.fetch("target_id"),
         chosen_entity_type: choice && question.fetch("target_type"), chosen_entity_id: choice&.fetch("id"),
         options_presented: question.fetch("choices").map { |item| item.fetch("id") },
-        is_correct: choice&.fetch("id") == question.fetch("target_id"), time_elapsed_ms: answer_time_ms
+        is_correct: correct, time_elapsed_ms: answer_time_ms
       Ahoy::Event.track "game_attempt_saved", user: ace, game_attempt_id: attempt.id, game_type: attempt.game_type
       PracticeReview.record! attempt, question
       ace.goals.unfinished.with_approved_quest.find_each { |goal| goal.record_answer!(attempt) }

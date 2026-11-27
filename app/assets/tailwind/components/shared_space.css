@@ -1,0 +1,95 @@
+.shared-space-page { @apply text-ink; }
+.shared-space-subtitle { @apply text-sm text-ink-2 max-w-2xl -mt-2 mb-6; }
+
+.shared-space-jump { @apply flex flex-wrap gap-2 mb-8; }
+.shared-space-jump-pill {
+  @apply inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-line bg-surface text-sm text-ink transition-colors;
+}
+.shared-space-jump-pill:hover { @apply border-accent-text bg-accent-tint text-ink; }
+.shared-space-jump-pill:focus-visible { @apply outline-2 outline-offset-2 outline-accent-text; }
+.shared-space-jump-pill.is-active-now { @apply border-accent-text bg-accent-tint; }
+.shared-space-jump-span { @apply font-mono text-xs font-bold tabular-nums text-ink-3; }
+.shared-space-jump-pill.is-active-now .shared-space-jump-span { @apply text-accent-text; }
+.shared-space-jump-label { @apply font-semibold; }
+
+.shared-space-section { @apply mb-10; }
+.shared-space-section-head { @apply flex items-center gap-2.5 mb-4 text-accent-text; }
+.shared-space-section-head h2 { @apply text-ink; }
+
+.shared-space-timeline { @apply flex flex-col gap-5; }
+
+.shared-space-era {
+  @apply grid gap-0 rounded-card border border-line bg-surface overflow-hidden;
+  grid-template-columns: 5.25rem minmax(0, 1fr);
+  scroll-margin-top: 6rem;
+}
+.shared-space-era.is-active-now { @apply border-accent-text; }
+
+.shared-space-rail {
+  @apply flex flex-col items-center justify-center gap-1 px-2 py-5 bg-surface-2 border-r border-line text-center select-none;
+}
+.shared-space-era.is-active-now .shared-space-rail { @apply bg-accent-tint border-accent-text/40; }
+.shared-space-rail-year {
+  @apply font-mono text-xs sm:text-sm font-bold tabular-nums leading-tight text-ink;
+}
+.shared-space-era.is-active-now .shared-space-rail-year { @apply text-accent-text; }
+.shared-space-rail-dash { @apply font-mono text-xs text-ink-3 leading-none; }
+
+.shared-space-era-body { @apply flex flex-col gap-5 p-5 sm:p-6 min-w-0; }
+.shared-space-era-header { @apply flex flex-wrap items-start justify-between gap-3; }
+.shared-space-era-heading { @apply flex flex-col gap-1 min-w-0; }
+.shared-space-era-badges { @apply flex flex-wrap items-center gap-1.5 mb-1; }
+.shared-space-badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-line bg-surface-2 font-mono text-[11px] font-bold uppercase tracking-wider text-ink-2;
+}
+.shared-space-badge.is-current, .shared-space-badge.is-home {
+  @apply border-accent-text bg-accent-tint text-accent-text;
+}
+.shared-space-era-title { @apply font-display text-3xl sm:text-4xl font-extrabold uppercase leading-none tracking-tight; }
+.shared-space-era-place { @apply text-sm text-ink-2; }
+.shared-space-era-count {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full bg-surface-2 border border-line font-mono text-xs font-bold tabular-nums text-ink-2 shrink-0;
+}
+
+.shared-space-team-grid { @apply grid gap-3 sm:grid-cols-2; }
+.shared-space-team-card {
+  @apply flex flex-col justify-between gap-3 p-4 rounded-tool border border-line bg-ground/60 min-w-0;
+}
+.shared-space-team-top { @apply flex items-start gap-3 min-w-0; }
+.shared-space-team-copy { @apply flex flex-col gap-1.5 min-w-0 flex-1; }
+.shared-space-team-name {
+  @apply font-display text-xl font-bold leading-tight text-ink hover:text-accent-text hover:underline;
+  overflow-wrap: anywhere;
+}
+.shared-space-team-meta { @apply flex flex-wrap items-center gap-2 text-xs text-ink-2; }
+.shared-space-team-venue { @apply inline-flex items-center gap-1 text-xs text-ink-3 min-w-0; }
+.shared-space-team-venue span { @apply truncate; }
+
+.shared-space-team-actions {
+  @apply flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-line/70;
+}
+.shared-space-practice-link { @apply inline-flex items-center gap-1 text-xs font-semibold; }
+
+.shared-space-regional { @apply border-t border-line pt-4; }
+.shared-space-regional-toggle {
+  @apply flex items-center gap-2 text-sm font-semibold text-ink-2 cursor-pointer list-none select-none py-1;
+}
+.shared-space-regional-toggle::-webkit-details-marker { display: none; }
+.shared-space-regional-toggle:hover { @apply text-ink; }
+.shared-space-regional-chevron { @apply ml-auto transition-transform; }
+.shared-space-regional[open] .shared-space-regional-chevron { transform: rotate(180deg); }
+.shared-space-regional[open] .shared-space-team-grid { @apply mt-3; }
+
+.shared-space-era-empty { @apply text-sm text-ink-3 italic; }
+.shared-space-state { @apply max-w-xl; }
+
+@media (max-width: 640px) {
+  .shared-space-era {
+    grid-template-columns: 4.25rem minmax(0, 1fr);
+  }
+  .shared-space-rail { @apply px-1.5 py-4; }
+  .shared-space-era-body { @apply p-4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shared-space-regional-chevron, .shared-space-jump-pill { transition: none; }
+}

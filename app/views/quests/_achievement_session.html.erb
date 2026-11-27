@@ -1,0 +1,31 @@
+<% if (flash_path = quest_flash_cards_path(achievement, goal: goal)) -%>
+  <% variant = local_assigns[:variant] -%>
+  <% session_class = case variant
+       when "goal" then "quest-session goal-session"
+       when "achievement" then "quest-session achievement-session"
+       else "quest-session"
+     end -%>
+  <% test_button_class = case variant
+       when "goal" then "tool-button goal-session-test"
+       when "achievement" then "tool-button achievement-session-test"
+       else "tool-button"
+     end -%>
+  <%= tag.div class: session_class, data: { controller: "quest-session", quest_session_length_value: 10 } do %>
+    <%= tag.div class: "quest-session-lengths", role: "group", aria: { label: "Round length" } do %>
+      <% GameRound::LENGTHS.each do |length| %>
+        <%= tag.button length, type: "button", class: "quest-session-length",
+              aria: { pressed: length == 10, label: "#{length} questions" },
+              data: { length: length, quest_session_target: "length", action: "quest-session#changeLength" } %>
+      <% end %>
+    <% end %>
+    <%= tag.div class: "page-actions" do %>
+      <%= link_to "Practice", flash_path, class: "tool-button",
+            aria: { label: "Practice #{achievement.name}" }, data: { quest_session_target: "practice" } %>
+      <%= button_to "Test", game_rounds_path, params: quest_team_match_params(achievement, goal: goal),
+            class: test_button_class, aria: { label: "Test #{achievement.name}" },
+            form: { data: { quest_session_target: "testForm" } } %>
+      <%= link_to "Arena", quest_practice_path(achievement, goal: goal), class: "tool-link",
+            aria: { label: "Arena for #{achievement.name}" }, data: { quest_session_target: "arena" } %>
+    <% end %>
+  <% end %>
+<% end -%>

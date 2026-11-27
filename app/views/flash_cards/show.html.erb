@@ -15,12 +15,19 @@
   <%= tag.div class: "flash-card-deck", aria: { live: "polite" } do %>
     <% @cards.each_with_index do |card, index| %>
       <% player, team = card.values_at(:player, :team) %>
-      <%= tag.section class: "round-subject flash-card", hidden: index.positive?, data: { flash_cards_target: "card", step: @setup.delay.zero? ? 3 : 1 } do %>
+      <%= tag.section class: "round-subject flash-card", hidden: index.positive?, data: { flash_cards_target: "card", step: @setup.delay.zero? ? 4 : 1 } do %>
         <%= round_player_portrait({ "subject_primary_color" => team.primary_color, "subject_secondary_color" => team.secondary_color, "subject_text_color" => team.text_color }, player) %>
         <%= tag.div class: "round-subject-details" do %>
           <%= tag.p "Listed for #{@setup.season.name}", class: "eyebrow" if @setup.season %>
           <%= tag.p class: "flash-card-sentence" do %>
-            <%= link_to player.display_name, player_path(player), class: "flash-card-player" %>
+            <%= link_to player_path(player), class: "flash-card-player" do %>
+              <% if player.first_name.present? && player.last_name.present? %>
+                <%= tag.span player.first_name, class: "flash-card-given" %>
+                <%= tag.span player.last_name, class: "flash-card-family" %>
+              <% else %>
+                <%= tag.span player.display_name, class: "flash-card-given" %>
+              <% end %>
+            <% end %>
             <%= tag.span class: "flash-card-team-phrase" do %>
               <%= team.territory.present? ? "is on the" : "is on" %>
               <%= tag.span class: "flash-card-team" do %><%= round_team_badge team %><%= tag.strong team.name %><% end %>

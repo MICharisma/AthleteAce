@@ -1,8 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Steps through flash cards. With a delay, each card shows the name, then
-// fades in the team, then the position, and moves on by itself. A card's
-// data-step (1 name, 2 team, 3 position) drives the fades.
+// Steps through flash cards. With a delay, each card bulges the given name,
+// then the family name, fades in the team, then the position, and moves on.
+// A card's data-step (1 given, 2 family, 3 team, 4 position) drives the motion.
 export default class extends Controller {
   static targets = ["card", "counter", "progress", "finish", "previous", "pause", "next", "pace", "paceLink", "delay"]
   static values = { delay: Number }
@@ -53,7 +53,7 @@ export default class extends Controller {
     } else {
       this.clearTimers()
       const card = this.cardTargets[this.index]
-      if (card) card.dataset.step = 3
+      if (card) card.dataset.step = 4
     }
   }
 
@@ -75,7 +75,7 @@ export default class extends Controller {
 
     this.cardTargets.forEach((card, position) => {
       card.hidden = position !== this.index
-      card.dataset.step = this.playing ? 1 : 3
+      card.dataset.step = this.playing ? 1 : 4
     })
     this.finishTarget.hidden = !finished
     this.counterTarget.textContent = `${Math.min(this.index + 1, total)} / ${total}`
@@ -90,12 +90,14 @@ export default class extends Controller {
     const card = this.cardTargets[this.index]
     if (!card) return
 
-    this.teamTimer = setTimeout(() => card.dataset.step = Math.max(card.dataset.step, 2), this.delayValue * 300)
-    this.positionTimer = setTimeout(() => card.dataset.step = 3, this.delayValue * 600)
+    this.familyTimer = setTimeout(() => card.dataset.step = Math.max(card.dataset.step, 2), this.delayValue * 250)
+    this.teamTimer = setTimeout(() => card.dataset.step = Math.max(card.dataset.step, 3), this.delayValue * 500)
+    this.positionTimer = setTimeout(() => card.dataset.step = 4, this.delayValue * 750)
     this.advanceTimer = setTimeout(() => this.next(), this.delayValue * 1000)
   }
 
   clearTimers() {
+    clearTimeout(this.familyTimer)
     clearTimeout(this.teamTimer)
     clearTimeout(this.positionTimer)
     clearTimeout(this.advanceTimer)

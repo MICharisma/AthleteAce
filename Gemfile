@@ -17,7 +17,7 @@ gem "engagements", git: "https://github.com/MICharisma/engagements.git", ref: "b
 if ENV["TIER_LISTS_PATH"] && !ENV["TIER_LISTS_PATH"].empty?
   gem "tier_lists", path: ENV.fetch("TIER_LISTS_PATH")
 else
-  gem "tier_lists", git: "https://github.com/MICharisma/tier_lists.git", ref: "95c3a1b131ef84b77701ea9174324cce85828d43"
+  gem "tier_lists", git: "https://github.com/MICharisma/tier_lists.git", ref: "ab9494639d460d2c32db80a2cc621ad962ba9336"
 end
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"

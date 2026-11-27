@@ -6,15 +6,17 @@ RSpec.describe "Flash cards" do
 
   before { create(:team, league: team.league) }
 
-  it "shows the name, then the team, then the position, then moves to the next card" do
+  it "bulges the given name, then the family name, then shows the team and position" do
     visit flash_cards_path(team_ids: [ team.id ], delay: 5)
-    expect(page).to have_css(".flash-card[data-step='1']:not([hidden])")
+    expect(page).to have_css(".flash-card[data-step='1']:not([hidden]) .flash-card-given")
     expect(page).to have_css(".round-game-progress strong", text: "1 / 2")
-    travel 2.seconds
-    expect(page).to have_css(".flash-card[data-step='2']:not([hidden]) .flash-card-team-phrase", text: team.name)
     travel 1.5.seconds
-    expect(page).to have_css(".flash-card[data-step='3']:not([hidden]) .flash-card-position", text: "(SP)")
-    travel 2.seconds
+    expect(page).to have_css(".flash-card[data-step='2']:not([hidden]) .flash-card-family")
+    travel 1.5.seconds
+    expect(page).to have_css(".flash-card[data-step='3']:not([hidden]) .flash-card-team-phrase", text: team.name)
+    travel 1.5.seconds
+    expect(page).to have_css(".flash-card[data-step='4']:not([hidden]) .flash-card-position", text: "(SP)")
+    travel 1.seconds
     expect(page).to have_css(".round-game-progress strong", text: "2 / 2")
     expect(page).to have_css(".flash-card[data-step='1']:not([hidden])")
   end
@@ -32,7 +34,7 @@ RSpec.describe "Flash cards" do
     choose "Flash Cards"
     expect(page).to have_css(".round-start-dock", text: "Flash Cards · 2 cards")
     click_button "Start flash cards"
-    expect(page).to have_css(".flash-card[data-step='3']", text: "(SP)")
+    expect(page).to have_css(".flash-card[data-step='4']", text: "(SP)")
     expect(page).to have_button("Previous", disabled: true)
     expect(page).to have_no_button("Pause")
     click_button "Next"

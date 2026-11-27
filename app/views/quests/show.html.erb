@@ -2,18 +2,19 @@
 <%= moderation_notice(@quest) %>
 <% goal = quest_goal(@quest) %>
 <% goal_entries = goal ? goal.goal_achievements.index_by(&:achievement_id) : {} %>
-<% highlights = @quest.highlights.visible_to(current_ace).where(achievement: Achievement.visible_to(current_ace)).ordered.includes(achievement: :target).to_a %>
+<% highlights = @highlights || @quest.highlights.visible_to(current_ace).where(achievement: Achievement.visible_to(current_ace)).ordered.includes(achievement: :target).to_a %>
 <% required, optional = highlights.partition(&:required?) %>
 <div class="quest-detail" id="<%= dom_id @quest %>">
   <%= link_to "← All quests", quests_path, class: "tool-link" %>
   <% if @random_mode %>
     <section id="quest_discovery" class="play-panel play-section-heading"><div><h2>Quest Discovery</h2><p>Explore this quest or find another one.</p></div><%= link_to "Next Quest", random_quests_path, class: "tool-button" %></section>
   <% end %>
-  <header class="browse-header">
+  <%= tag.header class: "browse-header", **draggable_listable_attrs(@quest) do %>
     <div>
-      <p class="eyebrow">Quest · <%= pluralize(highlights.size, "achievement") %></p>
+      <p class="eyebrow entity-kind" data-entity="quest"><%= icon "script", size: 14 %> Quest · <%= pluralize(highlights.size, "achievement") %></p>
       <h1 class="page-title"><%= @quest.name %></h1>
       <p class="round-intro"><%= @quest.description %></p>
+      <%= curation_bar_for @quest, summary: @engagement_summary %>
     </div>
     <%= tag.div class: "quest-header-actions" do %>
       <% if @quest.approved? %>
@@ -32,7 +33,7 @@
         <%= link_to "Sign in to begin", new_ace_session_path, class: "game-button quest-cta" %>
       <% end %>
     <% end %>
-  </header>
+  <% end %>
   <%= render "aces/attribution", ace: @quest.created_by %>
   <%= link_to "Edit quest", edit_quest_path(@quest), class: "tool-link" if can_manage?(@quest) %>
   <% if highlights.empty? %>
@@ -47,7 +48,7 @@
           <% achievement = highlight.achievement %>
           <% earned = goal_entries[achievement.id] %>
           <% player_count = earned&.target_player_count || achievement.fixed_roster_requirement || achievement.roster_snapshot&.fetch(:ids)&.size %>
-          <%= tag.li class: "quest-achievement" do %>
+          <%= tag.li class: "quest-achievement", **draggable_listable_attrs(achievement, data: { entity: "achievement" }) do %>
             <%= tag.div class: "quest-achievement-copy" do %>
               <%= moderation_notice(highlight) %>
               <%= tag.h3 link_to(achievement.name, achievement_path(achievement)) %>
@@ -62,13 +63,12 @@
                   <%= tag.span t("achievements.roster_levels.#{level}"), class: "quest-roster-level", data: { roster_level: level } %>
                 <% end %>
               <% end %>
+              <%= curation_bar_for achievement, summary: @engagement_summary, compact: true %>
             <% end %>
             <%= tag.div class: "quest-achievement-side" do %>
-              <%= tag.div class: "page-actions" do %>
-                <% if (practice_path = quest_practice_path(achievement, goal: goal)) %>
-                  <%= link_to "Practice", practice_path, class: "tool-button", aria: { label: "Practice #{achievement.name}" } %>
-                <% end %>
-                <% if can_manage?(@quest) %>
+              <%= render "quests/achievement_session", achievement: achievement, goal: goal %>
+              <% if can_manage?(@quest) %>
+                <%= tag.div class: "page-actions" do %>
                   <%= link_to "Edit", edit_quest_highlight_path(@quest, highlight), class: "tool-link" %>
                   <%= button_to "Remove", quest_highlight_path(@quest, highlight), method: :delete, class: "tool-link", data: { turbo_confirm: "Remove this achievement from the quest?" } %>
                 <% end %>

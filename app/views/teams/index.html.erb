@@ -3,6 +3,12 @@
 <% filters_open = @q.conditions.any? %>
 <%= tag.div class: "teams-header", data: { controller: "collapse" } do %>
   <%= browse_header "Teams" do %>
+    <% if ace_signed_in? %>
+      <%= link_to shared_space_path, class: "tool-button" do %>
+        <%= icon "pin", size: 18 %>
+        <%= tag.span "Shared space" %>
+      <% end %>
+    <% end %>
     <%= tag.button icon("adjustments-horizontal", size: 20), type: "button", class: "tool-button team-filters-toggle",
           aria: { label: t(".filter_teams"), expanded: filters_open.to_s, controls: "team-filters" },
           title: t(".filter_teams"), data: { action: "collapse#toggle" } %>

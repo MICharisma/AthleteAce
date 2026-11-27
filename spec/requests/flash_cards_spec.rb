@@ -11,6 +11,8 @@ RSpec.describe "Flash cards", type: :request do
     }.not_to change { [ GameRound.count, GameAttempt.count ] }
     expect(response).to have_http_status(:ok)
     card = Nokogiri::HTML(response.body).at_css(".flash-card")
+    expect(card.at_css(".flash-card-given").text).to eq("Chase")
+    expect(card.at_css(".flash-card-family").text).to eq("Burns")
     expect(card.text.squish).to include("Chase Burns is on the", team.name, "(SP)")
     expect(response.body).to include('data-flash-cards-delay-value="2"', "2s per card")
   end

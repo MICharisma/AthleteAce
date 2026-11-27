@@ -89,6 +89,8 @@
   --color-entity-competition: light-dark(#D0306A, #EA5A93);
   --color-entity-places: light-dark(#00868C, #16A2A6);
   --color-entity-time: light-dark(#B26A00, #D48A12);
+  --color-entity-quest: light-dark(#4A6500, #B8E82A);
+  --color-entity-achievement: light-dark(#B45309, #F5B041);
 
   /* Charts */
   --color-chart-1: light-dark(#2A78D6, #3987E5);
@@ -188,5 +190,13 @@
   :is([data-entity="year"], [data-entity="season"], [data-entity="campaign"], [data-entity="activation"],
       [data-entity="contest"], [data-entity="contestant"]) {
     --entity-color: var(--color-entity-time);
+  }
+
+  [data-entity="quest"] {
+    --entity-color: var(--color-entity-quest);
+  }
+
+  [data-entity="achievement"] {
+    --entity-color: var(--color-entity-achievement);
   }
 }

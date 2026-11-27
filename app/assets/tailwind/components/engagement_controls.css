@@ -16,3 +16,45 @@
 .engagements-saved-page h1 { @apply font-display text-5xl font-extrabold uppercase; }
 .engagements-radial-item.is-marked, .engagements-saved-page .engagements-btn.is-marked { @apply bg-accent-tint text-accent-text border-accent-text; }
 .engagements-saved-name:hover { @apply underline; }
+
+.entity-curation-bar {
+  @apply flex flex-wrap items-center gap-2.5 mt-3;
+}
+.entity-curation-bar--compact {
+  @apply gap-2 mt-3;
+}
+.entity-curation-bar--compact .engagements-radial {
+  @apply my-0;
+}
+.entity-curation-bar--compact .engagements-radial-trigger {
+  width: 2.25rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+}
+.playbook-item-action {
+  @apply inline-flex items-center justify-center gap-1.5 min-h-11 px-3 py-2 rounded-lg border border-dashed border-info bg-surface text-info-ink text-xs font-semibold tracking-wide transition-colors duration-150 cursor-pointer;
+}
+.playbook-item-action[draggable="true"] {
+  cursor: grab;
+}
+.playbook-item-action[draggable="true"]:active {
+  cursor: grabbing;
+}
+.playbook-item-action:hover {
+  @apply border-solid bg-info-tint text-info-ink;
+}
+.playbook-item-action:focus-visible {
+  @apply outline-2 outline-offset-2 outline-accent-text;
+}
+.playbook-item-action[data-playbook-state="pending"] {
+  @apply opacity-60 cursor-wait;
+}
+.playbook-item-action[data-playbook-state="added"] {
+  @apply border-solid border-ok bg-ok-tint text-ok-ink;
+}
+.playbook-item-action--compact {
+  @apply min-h-9 px-2.5 py-1;
+}
+.engagements-saved-type {
+  @apply inline-flex items-center px-2 py-0.5 rounded-md border border-line bg-surface-2 font-mono text-[11px] font-semibold;
+}

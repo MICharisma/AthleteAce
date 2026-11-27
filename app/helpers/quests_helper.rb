@@ -22,17 +22,34 @@ module QuestsHelper
     { completed: completed, required: required, percent: required.positive? ? (completed.fdiv(required) * 100).round : 0 }
   end
 
-  def quest_practice_path(achievement, goal: nil, remaining: false)
+  def quest_practice_scope(achievement, goal: nil, remaining: false)
     return unless achievement.practice_scope && achievement.target
 
     goal ||= quest_goal(@quest) if @quest
-    entry = goal&.goal_achievements&.find_by(achievement: achievement)
+    entry = if goal
+      goal.goal_achievements.loaded? ? goal.goal_achievements.find { |item| item.achievement_id == achievement.id } : goal.goal_achievements.find_by(achievement: achievement)
+    end
     scope = entry ? entry.practice_scope : achievement.practice_scope
     if entry && achievement.target_type == "PlayerGroup"
       scope = scope.merge(goal_achievement_id: entry.id)
       scope = scope.merge(practice_filter: "remaining", game_type: "name_ciphers") if remaining
     end
-    new_game_round_path(scope)
+    scope
+  end
+
+  def quest_practice_path(achievement, goal: nil, remaining: false, length: 10)
+    scope = quest_practice_scope(achievement, goal: goal, remaining: remaining)
+    new_game_round_path(scope.merge(length: length)) if scope
+  end
+
+  def quest_flash_cards_path(achievement, goal: nil, length: 10)
+    scope = quest_practice_scope(achievement, goal: goal)
+    flash_cards_path(scope.merge(delay: 5, length: length)) if scope
+  end
+
+  def quest_team_match_params(achievement, goal: nil, length: 10)
+    scope = quest_practice_scope(achievement, goal: goal)
+    scope&.merge(game_type: "on_the_team", length: length)
   end
 
   # Renders a button for an ace to begin a quest

@@ -52,6 +52,8 @@ module RatingsHelper
   def rating_slider_container record, spectrums
     return unless record.is_ratable?
 
+    content_for(:rating_sliders, "1") unless content_for?(:rating_sliders)
+
     tag.div class: "rating-container" do
       tag.div id: dom_id(record, :rating_slider_group), class: "rating-slider-group-container", data: {
         controller: "rating-slider",

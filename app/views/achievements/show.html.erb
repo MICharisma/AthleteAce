@@ -1,15 +1,154 @@
-<% content_for :title, "Showing achievement" %>
+<% content_for :title, @achievement.name %>
+<%= moderation_notice(@achievement) %>
+<div class="achievement-detail" id="<%= dom_id @achievement %>">
+  <%= link_to t(".all_achievements"), achievements_path, class: "tool-link" %>
 
-<div class="md:w-2/3 w-full">
-  <% if notice.present? %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
+  <%= tag.header class: "browse-header", **draggable_listable_attrs(@achievement) do %>
+    <div>
+      <p class="eyebrow entity-kind" data-entity="achievement"><%= icon "medal", size: 14 %> Achievement · <%= @achievement.target_type.underscore.humanize %></p>
+      <h1 class="page-title"><%= @achievement.name %></h1>
+      <% if @achievement.description.present? %>
+        <p class="round-intro"><%= @achievement.description %></p>
+      <% end %>
+      <div class="quest-achievement-meta">
+        <%= @achievement.target ? entity_link(@achievement.target) : tag.span("Target unavailable", class: "entity-chip") %>
+        <% if @achievement.target_type == "Team" %>
+          <% level = (@primary_entry ? @primary_entry.roster_level : @achievement.roster_level) || "mastery" %>
+          <%= tag.span t("achievements.roster_levels.#{level}"), class: "quest-roster-level", data: { roster_level: level } %>
+        <% end %>
+      </div>
+      <%= curation_bar_for @achievement, summary: @engagement_summary %>
+    </div>
+
+    <div class="achievement-header-actions">
+      <dl class="achievement-stats" aria-label="<%= t(".stats") %>">
+        <% if @player_count&.positive? %>
+          <div>
+            <dt><%= t(".players") %></dt>
+            <dd><%= number_with_delimiter(@player_count) %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt><%= t(".quests") %></dt>
+          <dd><%= number_with_delimiter(@highlights.size) %></dd>
+        </div>
+        <% if @achievement.approved? %>
+          <div>
+            <dt><%= t(".earned") %></dt>
+            <dd><%= number_with_delimiter(@earned_count) %></dd>
+          </div>
+        <% end %>
+      </dl>
+
+      <% if ace_signed_in? || admin_signed_in? %>
+        <div class="page-actions">
+          <%= link_to "Add to quest", new_highlight_path(achievement_id: @achievement.id), class: "tool-button" if ace_signed_in? %>
+          <% if admin_signed_in? %>
+            <%= link_to "Edit", edit_achievement_path(@achievement), class: "tool-button" %>
+            <%= button_to "Delete", @achievement, method: :delete, class: "tool-link achievement-delete-link", data: { turbo_confirm: "Delete this achievement?" } %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
   <% end %>
 
-  <%= browse_header @achievement.name %>
+  <% if @achievement.practice_scope && @achievement.target %>
+    <section class="play-panel achievement-play-panel" aria-labelledby="achievement-play-title">
+      <div class="achievement-play-copy">
+        <h2 id="achievement-play-title"><%= t(".train_heading") %></h2>
+        <% if @achievement.target_type == "Team" %>
+          <% level = (@primary_entry ? @primary_entry.roster_level : @achievement.roster_level) || "mastery" %>
+          <% if level == "mastery" %>
+            <p><%= t(".roster_mastery_hint") %></p>
+          <% else %>
+            <p><%= t(".roster_level_hint", count: @player_count, level: t("achievements.roster_levels.#{level}")) %></p>
+          <% end %>
+        <% else %>
+          <p><%= t(".general_hint") %></p>
+        <% end %>
 
-  <%= render @achievement %>
+        <% if @primary_entry && @player_count&.positive? %>
+          <% known = @primary_entry.roster_progress %>
+          <% completed = @primary_entry.completed_at.present? %>
+          <% percent = [ (known.fdiv(@player_count) * 100).round, 100 ].min %>
+          <div class="achievement-progress">
+            <div class="achievement-progress-header">
+              <span class="achievement-progress-status" data-complete="<%= completed %>">
+                <%= icon(completed ? "check" : "target", size: 16) %>
+                <%= completed ? t(".completed") : t(".in_progress") %>
+              </span>
+              <%= tag.span "#{known}/#{@player_count}", class: "quest-roster-progress",
+                    data: { complete: completed },
+                    aria: { label: t("quests.show.progress", known: known, required: @player_count) } %>
+            </div>
+            <div class="quest-progress">
+              <progress value="<%= percent %>" max="100" aria-label="<%= @achievement.name %> progress"><%= percent %>%</progress>
+            </div>
+            <p class="achievement-progress-goal">
+              Tracked in <%= link_to @primary_goal.quest.name, goal_path(@primary_goal), class: "achievement-inline-link" %>
+            </p>
+          </div>
+        <% elsif !ace_signed_in? %>
+          <p class="achievement-guest-note">
+            <%= link_to "Sign in", new_ace_session_path, class: "achievement-inline-link" %> to track progress toward quests featuring this achievement.
+          </p>
+        <% end %>
+      </div>
+
+      <div class="achievement-play-controls">
+        <%= render "quests/achievement_session", achievement: @achievement, goal: @primary_goal, variant: "achievement" %>
+      </div>
+    </section>
+  <% end %>
+
   <%= render "aces/attribution", ace: @achievement.created_by %>
 
-  <%= link_to "Edit this achievement", edit_achievement_path(@achievement), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-surface-2 hover:bg-surface-2 inline-block font-medium" if admin_signed_in? %>
-  <%= link_to "Back to achievements", achievements_path, class: "w-full sm:w-auto text-center mt-2 sm:mt-0 sm:ml-2 rounded-md px-3.5 py-2.5 bg-surface-2 hover:bg-surface-2 inline-block font-medium" %>
+  <section class="achievement-quests" aria-labelledby="achievement-quests-title">
+    <h2 id="achievement-quests-title" class="eyebrow"><%= t(".featured_in_quests") %> · <%= @highlights.size %></h2>
+    <% if @highlights.any? %>
+      <ul>
+        <% @highlights.each do |highlight| %>
+          <% quest = highlight.quest %>
+          <% goal = quest_goal(quest) %>
+          <%= tag.li class: "achievement-quest-row", **draggable_listable_attrs(quest, data: { entity: "quest" }) do %>
+            <div class="achievement-quest-copy">
+              <%= moderation_notice(highlight) %>
+              <h3><%= link_to quest.name, quest_path(quest), class: "achievement-quest-link" %></h3>
+              <% if quest.description.present? %>
+                <p><%= quest.description %></p>
+              <% end %>
+              <div class="quest-achievement-meta">
+                <%= tag.span highlight.required? ? t(".required") : t(".optional"),
+                      class: "achievement-quest-role", data: { required: highlight.required? } %>
+              </div>
+              <%= curation_bar_for quest, summary: @engagement_summary, compact: true %>
+              <% if goal %>
+                <div class="achievement-quest-progress">
+                  <%= render "quests/progress", goal: goal %>
+                </div>
+              <% end %>
+            </div>
+            <div class="achievement-quest-side">
+              <% if ace_signed_in? && quest.approved? %>
+                <%= begin_quest_button quest %>
+              <% else %>
+                <%= link_to "View quest", quest_path(quest), class: "tool-button" %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="play-panel play-empty">
+        <h3><%= t(".no_quests") %></h3>
+        <p>Add this achievement to a quest so players can work toward it as a goal.</p>
+        <div class="page-actions">
+          <% if ace_signed_in? %>
+            <%= link_to "Add to quest", new_highlight_path(achievement_id: @achievement.id), class: "tool-button" %>
+          <% end %>
+          <%= link_to "Browse quests", quests_path, class: "tool-link" %>
+        </div>
+      </div>
+    <% end %>
+  </section>
 </div>

@@ -1,0 +1,64 @@
+<% content_for :title, t("shared_space.title") %>
+
+<%= tag.div class: "shared-space-page" do %>
+  <%= browse_header t("shared_space.title"), eyebrow: t("shared_space.eyebrow") do %>
+    <% if @manage_places_url.present? %>
+      <%= link_to @manage_places_url, class: "tool-button", target: "_blank", rel: "noopener" do %>
+        <%= tag.span t("shared_space.manage_in_rizz") %>
+        <%= icon "arrow-up-right", size: 16 %>
+      <% end %>
+    <% end %>
+    <%= link_to t("shared_space.saved_teams"), engagements.engagements_path, class: "tool-button" %>
+    <%= link_to t("shared_space.browse_all_teams"), teams_path, class: "tool-link" %>
+  <% end %>
+
+  <%= tag.p t("shared_space.subtitle"), class: "shared-space-subtitle" %>
+
+  <% if @state == :ready %>
+    <%= tag.section class: "play-scoreboard shared-space-summary", aria: { label: t("shared_space.eyebrow") } do %>
+      <%= tag.div do %>
+        <%= tag.span t("shared_space.stats.homes"), class: "eyebrow" %>
+        <%= tag.strong @shared_space.home_eras.size %>
+        <%= tag.span t("shared_space.stats.eras") %>
+      <% end %>
+      <%= tag.div do %>
+        <%= tag.span t("shared_space.stats.trips"), class: "eyebrow" %>
+        <%= tag.strong @shared_space.trip_eras.size %>
+        <%= tag.span t("shared_space.trips_heading") %>
+      <% end %>
+      <%= tag.div do %>
+        <%= tag.span t("shared_space.stats.local_teams"), class: "eyebrow" %>
+        <%= tag.strong @shared_space.direct_team_count %>
+        <%= tag.span t("shared_space.direct_teams_count", count: @shared_space.direct_team_count) %>
+      <% end %>
+    <% end %>
+
+    <%= shared_space_jump_nav @shared_space %>
+
+    <% if @shared_space.home_eras.any? %>
+      <%= tag.section class: "shared-space-section", aria: { labelledby: "shared-space-homes-heading" } do %>
+        <%= tag.div class: "shared-space-section-head" do %>
+          <%= icon "home", size: 20 %>
+          <%= tag.h2 t("shared_space.homes_heading"), id: "shared-space-homes-heading", class: "profile-section-title" %>
+        <% end %>
+        <%= tag.div class: "shared-space-timeline" do %>
+          <%= safe_join(@shared_space.home_eras.map { |era| shared_space_era_card(era, summary: @engagement_summary) }) %>
+        <% end %>
+      <% end %>
+    <% end %>
+
+    <% if @shared_space.trip_eras.any? %>
+      <%= tag.section class: "shared-space-section", aria: { labelledby: "shared-space-trips-heading" } do %>
+        <%= tag.div class: "shared-space-section-head" do %>
+          <%= icon "compass", size: 20 %>
+          <%= tag.h2 t("shared_space.trips_heading"), id: "shared-space-trips-heading", class: "profile-section-title" %>
+        <% end %>
+        <%= tag.div class: "shared-space-timeline" do %>
+          <%= safe_join(@shared_space.trip_eras.map { |era| shared_space_era_card(era, summary: @engagement_summary) }) %>
+        <% end %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <%= shared_space_empty_state @state, manage_url: @manage_places_url %>
+  <% end %>
+<% end %>

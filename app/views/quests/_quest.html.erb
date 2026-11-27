@@ -1,4 +1,4 @@
-<article id="<%= dom_id quest %>" class="quest-card">
+<%= tag.article id: dom_id(quest), class: "quest-card", **draggable_listable_attrs(quest, data: { entity: "quest" }) do %>
   <%= tag.div class: "quest-card-top" do %>
     <%= icon "script", size: 28 %>
     <%= quest_achievements_indicator quest %>
@@ -10,5 +10,6 @@
     <%= tag.div participants, class: "quest-card-meta" %>
   <% end %>
   <% if (goal = quest_goal quest) %><%= render "quests/progress", goal: goal %><% end %>
+  <%= curation_bar_for quest, summary: @engagement_summary %>
   <%= quest_card_actions quest %>
-</article>
+<% end %>

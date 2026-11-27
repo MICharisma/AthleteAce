@@ -71,4 +71,70 @@ RSpec.describe "TierLists integration in AthleteAce", type: :request do
     expect(response).to have_http_status(:created)
     expect(list.listed_items.reload.map(&:content)).to include(player)
   end
+
+  it "supports Quests and Achievements as listed items and exposes curation affordances" do
+    ace = create(:ace)
+    team = create(:team, territory: "Boston", mascot: "Celtics", abbreviation: "BOS",
+                         primary_color: "#007A33", secondary_color: "#BA9653",
+                         logo_url: "https://example.com/bos.svg")
+    achievement = create(:achievement, name: "Celtics Fluency", target: team, roster_level: "fluency")
+    quest = create(:quest, name: "Atlantic Challenge", description: "Master Atlantic teams.")
+    create(:highlight, quest: quest, achievement: achievement, required: true)
+    list = TierLists::List.create!(name: "Study Path", owner: ace, privacy: :published)
+
+    sign_in ace
+
+    post "/playbooks/builder/items", params: { list_id: list.id, content_type: "Quest", content_id: quest.id }, as: :json
+    expect(response).to have_http_status(:created)
+
+    post "/playbooks/builder/items", params: { list_id: list.id, content_type: "Achievement", content_id: achievement.id }, as: :json
+    expect(response).to have_http_status(:created)
+
+    expect(list.listed_items.reload.map(&:content)).to contain_exactly(quest, achievement)
+
+    get "/playbooks/#{list.slug}"
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(
+      quest.name, achievement.name,
+      "--tier-color-1: #4A6500", "--tier-color-1: #B45309",
+      "Quest · 1 required", "Achievement · #{team.name} · Roster fluency",
+      "href=\"/quests/#{quest.id}\"", "href=\"/achievements/#{achievement.id}\""
+    )
+
+    get "/playbooks/#{list.slug}/present"
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("tier-present-card", quest.name)
+
+    get "/playbooks/#{list.slug}/present", params: { page: 2 }
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("tier-present-card", achievement.name)
+
+    goal = ace.adopt_quest(quest)
+
+    [
+      [ "/quests", "Quest", quest.id ],
+      [ "/quests/#{quest.id}", "Quest", quest.id ],
+      [ "/achievements", "Achievement", achievement.id ],
+      [ "/achievements/#{achievement.id}", "Achievement", achievement.id ],
+      [ "/goals/#{goal.id}", "Achievement", achievement.id ]
+    ].each do |path, expected_type, expected_id|
+      get path
+      expect(response).to have_http_status(:ok), path
+      doc = response.parsed_body
+      expect(doc.at_css("[draggable='true'][data-tier-listable-type='#{expected_type}'][data-tier-listable-id='#{expected_id}']")).to be_present, "missing draggable #{expected_type} on #{path}"
+      expect(doc.at_css(".engagements-radial")).to be_present, "missing engagements radial bar on #{path}"
+      expect(doc.at_css(".playbook-item-action")).to be_present, "missing + Playbook button on #{path}"
+    end
+
+    pending_quest = create(:quest, created_by: ace, name: "Draft Quest")
+    pending_achievement = create(:achievement, created_by: ace, name: "Draft Achievement", target: team)
+    [ "/quests/#{pending_quest.id}", "/achievements/#{pending_achievement.id}" ].each do |path|
+      get path
+      expect(response).to have_http_status(:ok)
+      doc = response.parsed_body
+      expect(doc.at_css(".engagements-radial")).to be_nil
+      expect(doc.at_css(".playbook-item-action")).to be_nil
+      expect(doc.at_css("[data-tier-listable-type]")).to be_nil
+    end
+  end
 end

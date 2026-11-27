@@ -45,7 +45,14 @@ module InterfaceHelper
   end
 
   def entity_avatar record, size: :small
-    image_url = record.is_a?(Player) ? player_portrait_url(record) : (catalog_logo_url(record) || record.logo_url)
+    if record.is_a?(Quest) || record.is_a?(Achievement)
+      icon_size = size == :large ? 56 : 28
+      return tag.span(class: "entity-avatar entity-avatar-#{size}", data: { entity: record.model_name.singular }) do
+        icon_for_resource record.model_name.singular, size: icon_size
+      end
+    end
+
+    image_url = record.is_a?(Player) ? player_portrait_url(record) : (catalog_logo_url(record) || record.try(:logo_url))
     # No initials for a name Rizz withholds.
     initials = record.try(:name_withheld?) ? "" : person_name(record).split.filter_map { |word| word[0] }.first(3).join.upcase
     tag.span class: "entity-avatar entity-avatar-#{size}", data: {

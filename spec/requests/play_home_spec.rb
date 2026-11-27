@@ -61,6 +61,9 @@ RSpec.describe "Play home and quests", type: :request do
   end
 
   it "shows required progress separately from optional achievements and scopes practice" do
+    rival = create(:team, league: team.league)
+    create_list(:player, 3, team: team)
+    create_list(:player, 3, team: rival)
     quest = create(:quest)
     achievement = create(:achievement, target: team, name: "Learn this roster")
     create(:highlight, quest: quest, achievement: achievement)
@@ -69,16 +72,29 @@ RSpec.describe "Play home and quests", type: :request do
     sign_in ace
     get quest_path(quest)
     doc = Nokogiri::HTML(response.body)
-    expect(doc.at_css("progress")[:value]).to eq("100")
-    expect(response.body).to include("1 of 1 required achievements", goal_path(goal))
+    expect(response.body).to include(goal_path(goal), "Continue Quest")
+    session = doc.at_css(".quest-session")
+    expect(session.css(".quest-session-length").map(&:text)).to eq(%w[10 20 30])
+    expect(session.at_css('.quest-session-length[aria-pressed="true"]').text).to eq("10")
     practice = doc.at_css('a[aria-label="Practice Learn this roster"]')
-    expect(Rack::Utils.parse_nested_query(URI.parse(practice["href"]).query)).to include("team_id" => team.id.to_s, "include_inactive" => "true")
+    expect(practice["href"]).to start_with(flash_cards_path)
+    expect(Rack::Utils.parse_nested_query(URI.parse(practice["href"]).query)).to include(
+      "team_id" => team.id.to_s, "include_inactive" => "true", "delay" => "5", "length" => "10"
+    )
+    arena = doc.at_css('a[aria-label="Arena for Learn this roster"]')
+    expect(Rack::Utils.parse_nested_query(URI.parse(arena["href"]).query)).to include(
+      "team_id" => team.id.to_s, "include_inactive" => "true", "length" => "10"
+    )
+    test_form = doc.css("form").find { |form| form.at_css('button[aria-label="Test Learn this roster"]') }
+    expect(test_form).to be_present
+    expect(test_form.at_css('input[name="game_type"]')["value"]).to eq("on_the_team")
+    expect(test_form.at_css('input[name="team_id"]')["value"]).to eq(team.id.to_s)
+    expect(test_form.at_css('input[name="length"]')["value"]).to eq("10")
     expect(response.body).not_to include("Created by")
     expect(goal.reload.progress).to eq(5)
     sign_out ace
     get quest_path(quest)
     expect(response.body).to include("Sign in to begin")
-    expect(Nokogiri::HTML(response.body).css("progress")).to be_empty
   end
 
   it "uses the adopted roster scope for the next quest on the home page" do

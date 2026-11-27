@@ -1,0 +1,59 @@
+en:
+  shared_space:
+    eyebrow: "Shared space"
+    title: "Teams you’ve shared space with"
+    subtitle: "Teams matched to the homes and trips you’ve shared from Rizz, segmented by era. Use Save, Favorite, Follow, or Hide on any team."
+    manage_in_rizz: "Manage places in Rizz"
+    browse_all_teams: "All teams"
+    saved_teams: "Saved & favorites"
+    homes_heading: "Home eras"
+    trips_heading: "Trips & visits"
+    jump_to_era: "Jump to an era"
+    current_here: "Here now"
+    current_home: "Current home"
+    practice_team: "Practice"
+    direct_teams_count:
+      one: "1 local team"
+      other: "%{count} local teams"
+    regional_teams_summary:
+      one: "Also in %{region} (1 more team)"
+      other: "Also in %{region} (%{count} more teams)"
+    regional_only_summary:
+      one: "Teams in %{region} (1)"
+      other: "Teams in %{region} (%{count})"
+    no_teams_in_place: "No AthleteAce teams are listed in %{place} yet."
+    no_teams_in_place_or_state: "No AthleteAce teams are listed in %{place} or elsewhere in %{region} yet."
+    stats:
+      eras: "Shared eras"
+      homes: "Home eras"
+      trips: "Trips"
+      local_teams: "Local teams"
+    kinds:
+      hometown: "Hometown"
+      residence: "Residence"
+      home: "Home"
+      current: "Current"
+      frequent: "Frequent"
+      work: "Work"
+      school: "School"
+      trip: "Trip"
+    states:
+      unlinked:
+        title: "Connect your Rizz account"
+        body: "Share your home eras and trips from Rizz to see the teams you’ve shared space with here."
+        cta: "Sign in with Rizz"
+      disconnected:
+        title: "Rizz connection paused"
+        body: "Your AthleteAce connection is currently disconnected in Rizz. Reconnect or share places from Rizz to bring your eras back."
+        cta: "Open Rizz places"
+      unavailable:
+        title: "Couldn’t reach Rizz right now"
+        body: "AthleteAce reads your shared places live from Rizz without storing a separate copy. Try refreshing in a moment."
+        cta: "Try again"
+      empty:
+        title: "No places shared with AthleteAce yet"
+        body: "Add your homes and trips in Rizz and check AthleteAce under sharing to populate your eras here."
+        cta: "Share places in Rizz"
+      disabled:
+        title: "Rizz places aren’t enabled here"
+        body: "Rizz integration isn’t configured in this environment yet."

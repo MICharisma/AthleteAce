@@ -12,13 +12,14 @@
   <div id="achievements" class="min-w-full divide-y divide-line space-y-5">
     <% if @achievements.any? %>
       <% @achievements.each do |achievement| %>
-        <div class="catalog-record">
+        <%= tag.div class: "catalog-record achievement-catalog-record", **draggable_listable_attrs(achievement, data: { entity: "achievement" }) do %>
           <%= render achievement %>
-          <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
+          <%= curation_bar_for achievement, summary: @engagement_summary %>
+          <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2 mt-4">
             <%= link_to "Show", achievement, class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-surface-2 hover:bg-surface-2 inline-block font-medium" %>
             <%= link_to "Add to Quest", new_highlight_path(achievement_id: achievement.id), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-accent text-on-accent hover:opacity-90 inline-block font-medium" %>
           </div>
-        </div>
+        <% end %>
       <% end %>
     <% else %>
       <%= browse_empty @achievements, "Achievements" %>

@@ -189,7 +189,7 @@ module GoalsHelper
               class: "goal-action-button goal-action-danger",
               title: "Abandon Quest", aria: { label: "Abandon Quest" },
               id: dom_id(goal, :abandon_button_detail) do
-(icon("trash", size: 18, class: "mr-2") + "Abandon Quest").html_safe
+(icon("trash", size: 18) + "Abandon Quest").html_safe
       end
     end
   end
@@ -232,38 +232,80 @@ module GoalsHelper
   # @param highlight [Highlight] The highlight/achievement object
   # @param required [Boolean] Whether this achievement is required
   # @return [String] HTML for achievement item
-  def achievement_item(highlight, required: true)
-    icon_class = required ? "achievement-icon-required" :
-                           "achievement-icon-optional"
+  def achievement_item(highlight, required: true, goal: nil, earned: nil, engagement_summary: nil)
+    achievement = highlight.achievement
+    completed = earned&.completed_at.present?
+    player_count = earned&.target_player_count || achievement.fixed_roster_requirement || achievement.roster_snapshot&.fetch(:ids)&.size
+    icon_name = completed ? "check" : "star"
+    icon_class = if completed
+      "achievement-icon-completed"
+    elsif required
+      "achievement-icon-required"
+    else
+      "achievement-icon-optional"
+    end
 
-    tag.div class: "achievement-item" do
-      (tag.div(class: "achievement-icon-container") do
-         icon "star", class: icon_class
-       end +
-       tag.div(class: "achievement-content") do
-         (tag.h3(highlight.achievement.name, class: "achievement-name") +
-          tag.p(highlight.achievement.description, class: "achievement-description")).html_safe
-       end).html_safe
+    meta_parts = []
+    meta_parts << tag.span(class: "entity-chip") do
+      safe_join [
+        icon_for_resource(achievement.target_type.underscore, size: 16),
+        achievement.target ? link_to_name(achievement.target) : "Target unavailable"
+      ], " "
+    end
+    if achievement.target_type == "Team"
+      level = (earned ? earned.roster_level : achievement.roster_level) || "mastery"
+      meta_parts << tag.span(t("achievements.roster_levels.#{level}"), class: "quest-roster-level", data: { roster_level: level })
+    end
+
+    session_controls = render("quests/achievement_session", achievement: achievement, goal: goal, variant: "goal")
+    progress_badge = if player_count
+      known = earned&.roster_progress || 0
+      tag.span("#{known}/#{player_count}", class: "quest-roster-progress",
+        data: { complete: completed },
+        aria: { label: t("quests.show.progress", known: known, required: player_count) })
+    end
+
+    side_parts = [ (session_controls if session_controls.present?), progress_badge ].compact
+
+    tag.div class: "achievement-item", **draggable_listable_attrs(achievement, data: { complete: completed, entity: "achievement" }) do
+      main = tag.div(class: "goal-achievement-main") do
+        tag.div(class: "achievement-icon-container") { icon(icon_name, class: icon_class) } +
+          tag.div(class: "achievement-content") do
+            safe_join([
+              tag.h3(link_to(achievement.name, achievement_path(achievement), class: "achievement-name-link"), class: "achievement-name"),
+              (tag.p(achievement.description, class: "achievement-description") if achievement.description.present?),
+              tag.div(safe_join(meta_parts), class: "quest-achievement-meta"),
+              curation_bar_for(achievement, summary: engagement_summary, compact: true)
+            ].compact)
+          end
+      end
+
+      side = tag.div(safe_join(side_parts), class: "goal-achievement-side") if side_parts.any?
+      safe_join([ main, side ].compact)
     end
   end
 
   # Renders achievement list section
-  # @param highlights [ActiveRecord::Relation] Collection of highlights
+  # @param highlights [ActiveRecord::Relation, Array<Highlight>] Collection of highlights
   # @param title [String] Section title
   # @param required [Boolean] Whether these are required achievements
   # @return [String] HTML for achievements section
-  def achievements_section(highlights, title, required: true)
+  def achievements_section(highlights, title, required: true, goal: nil, goal_entries: {}, engagement_summary: nil)
+    items = highlights.respond_to?(:includes) ? highlights.includes(achievement: :target).to_a : highlights.to_a
+
     tag.div class: "achievements-section" do
-      (tag.h2(title, class: "achievements-section-title") +
-       if highlights.any?
-         tag.div(class: "achievements-list") do
-           highlights.includes(:achievement).map do |highlight|
-             achievement_item highlight, required: required
-           end.join.html_safe
-         end
-       else
-         tag.p("No #{title.downcase} for this quest.", class: "achievements-empty")
-       end).html_safe
+      safe_join([
+        tag.h2(title, class: "achievements-section-title"),
+        if items.any?
+          tag.div(class: "achievements-list") do
+            safe_join(items.map do |highlight|
+              achievement_item highlight, required: required, goal: goal, earned: goal_entries[highlight.achievement_id], engagement_summary: engagement_summary
+            end)
+          end
+        else
+          tag.p("No #{title.downcase} for this quest.", class: "achievements-empty")
+        end
+      ])
     end
   end
 end

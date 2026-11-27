@@ -6,13 +6,15 @@ class QuestsController < ApplicationController
 
   # GET /quests or /quests.json
   def index
-    @quests = Quest.visible_to(current_ace).includes(highlights: :achievement).order(:name)
+    @quests = Quest.visible_to(current_ace).unhidden_for(current_ace).includes(highlights: :achievement).order(:name)
     @quest_goals = current_ace ? current_ace.goals.where(quest: @quests).includes(quest: { highlights: :achievement }).index_by(&:quest_id) : {}
     @quest_participant_counts = Goal.where(quest: @quests).group(:quest_id).distinct.count(:ace_id)
+    @engagement_summary = Engagements::Summary.new(@quests, current_ace)
   end
 
   # GET /quests/1 or /quests/1.json
   def show
+    prepare_show_context
   end
 
   # GET /quests/new
@@ -67,19 +69,21 @@ class QuestsController < ApplicationController
   def random
     # Find quests the current ace hasn't started yet
     current_ace_quest_ids = current_ace.goals.pluck(:quest_id)
-    available_quests = Quest.approved.where.not(id: current_ace_quest_ids)
+    available_quests = Quest.approved.unhidden_for(current_ace).where.not(id: current_ace_quest_ids)
     
     if available_quests.any?
       # Get a random quest
       @quest = available_quests.order("RANDOM()").first
       @random_mode = true
+      prepare_show_context
       render :show
     else
       # If the ace has started all quests, just show a random one
-      @quest = Quest.approved.order("RANDOM()").first
+      @quest = Quest.approved.unhidden_for(current_ace).order("RANDOM()").first || Quest.approved.order("RANDOM()").first
       @random_mode = true
       
       if @quest
+        prepare_show_context
         render :show
       else
         redirect_to quests_path, alert: "No quests available."
@@ -88,6 +92,11 @@ class QuestsController < ApplicationController
   end
 
   private
+    def prepare_show_context
+      @highlights = @quest.highlights.visible_to(current_ace).where(achievement: Achievement.visible_to(current_ace)).ordered.includes(achievement: :target).to_a
+      @engagement_summary = Engagements::Summary.new([ @quest, *@highlights.map(&:achievement) ], current_ace)
+    end
+
     # Use callbacks to share common setup or constraints between actions.
     def set_quest
       @quest = Quest.visible_to(current_ace).find(params.require(:id))

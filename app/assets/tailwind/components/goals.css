@@ -40,7 +40,7 @@
 }
 
 .goal-page-actions {
-  @apply flex space-x-3;
+  @apply flex flex-wrap items-center gap-3;
 }
 
 /* Goal cards */
@@ -132,19 +132,23 @@
 }
 
 .goal-action-button {
-  @apply text-center rounded-md px-3 py-2 font-medium transition-colors duration-200;
+  @apply inline-flex items-center justify-center gap-2 min-h-11 px-3.5 py-2 rounded-lg border text-sm font-semibold text-center transition-colors duration-150 cursor-pointer;
+}
+
+.goal-action-button:focus-visible {
+  @apply outline-2 outline-offset-4 outline-accent-text;
 }
 
 .goal-action-primary {
-  @apply bg-surface-2 hover:bg-surface-2 text-ink;
+  @apply bg-accent-tint border-accent-text text-accent-text hover:bg-accent hover:text-on-accent;
 }
 
 .goal-action-secondary {
-  @apply bg-surface-2 hover:bg-surface-2 text-ink-2;
+  @apply bg-surface border-line-2 text-ink hover:bg-surface-2;
 }
 
 .goal-action-danger {
-  @apply bg-red-100 hover:bg-red-50 text-red-700;
+  @apply bg-bad-tint border-bad text-bad-ink hover:bg-bad hover:text-surface;
 }
 
 /* Achievement components */
@@ -165,15 +169,27 @@
 }
 
 .achievement-item {
-  @apply flex items-center space-x-3 p-3 border border-line rounded-card;
+  @apply flex flex-wrap sm:flex-nowrap items-start justify-between gap-4 p-4 border border-line rounded-card;
+}
+
+.achievement-item[data-complete="true"] {
+  @apply border-ok;
+}
+
+.goal-achievement-main {
+  @apply flex items-start gap-3 flex-1 min-w-0;
 }
 
 .achievement-icon-container {
-  @apply flex-shrink-0;
+  @apply flex-shrink-0 pt-0.5;
+}
+
+.achievement-icon-completed {
+  @apply text-ok-ink;
 }
 
 .achievement-icon-required {
-  @apply text-yellow-500;
+  @apply text-warn;
 }
 
 .achievement-icon-optional {
@@ -181,15 +197,59 @@
 }
 
 .achievement-content {
-  @apply flex-1;
+  @apply flex-1 min-w-0;
 }
 
 .achievement-name {
-  @apply font-medium text-ink;
+  @apply font-display text-xl font-bold text-ink;
+  overflow-wrap: anywhere;
+}
+
+.achievement-name-link:hover {
+  @apply text-accent-text underline;
+}
+
+.achievement-name-link:focus-visible {
+  @apply outline-2 outline-offset-4 outline-accent-text;
 }
 
 .achievement-description {
-  @apply text-ink-2 text-sm;
+  @apply text-ink-2 text-sm mt-1;
+}
+
+.goal-achievement-side {
+  @apply flex shrink-0 self-stretch flex-col items-end justify-between gap-3;
+}
+
+.goal-session .quest-session-lengths {
+  @apply bg-surface-2 border-line;
+}
+
+.goal-session .quest-session-length[aria-pressed="true"] {
+  @apply bg-surface text-accent-text;
+  box-shadow: inset 0 0 0 1px var(--color-accent-text);
+}
+
+.goal-session .goal-session-test {
+  @apply bg-accent-tint border-accent-text text-accent-text;
+}
+
+.goal-session .goal-session-test:hover {
+  @apply bg-accent text-on-accent;
+}
+
+@media (max-width: 640px) {
+  .goal-achievement-side {
+    @apply w-full items-start;
+  }
+
+  .goal-session {
+    @apply items-start;
+  }
+
+  .goal-session > .page-actions {
+    @apply justify-start;
+  }
 }
 
 /* Goal list styles */

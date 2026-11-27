@@ -37,8 +37,8 @@ GIT
 
 GIT
   remote: https://github.com/MICharisma/tier_lists.git
-  revision: 95c3a1b131ef84b77701ea9174324cce85828d43
-  ref: 95c3a1b131ef84b77701ea9174324cce85828d43
+  revision: ab9494639d460d2c32db80a2cc621ad962ba9336
+  ref: ab9494639d460d2c32db80a2cc621ad962ba9336
   specs:
     tier_lists (0.1.0)
       rails (>= 8.1)

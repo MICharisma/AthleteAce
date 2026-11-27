@@ -1,5 +1,5 @@
-.play-home, .quest-browser, .quest-detail { @apply text-ink; }
-.play-home .page-title, .quest-detail .page-title { @apply max-w-4xl; overflow-wrap: anywhere; }
+.play-home, .quest-browser, .quest-detail, .achievement-detail { @apply text-ink; }
+.play-home .page-title, .quest-detail .page-title, .achievement-detail .page-title { @apply max-w-4xl; overflow-wrap: anywhere; }
 .play-scoreboard { @apply grid grid-cols-3 border border-line rounded-card bg-surface mb-6 overflow-hidden; }
 .play-scoreboard > div { @apply flex flex-col gap-2 p-6; }
 .play-scoreboard > div + div { @apply border-l border-line; }
@@ -41,7 +41,9 @@
 .play-quest-name { @apply font-display text-xl font-bold; }
 .quest-grid { @apply grid md:grid-cols-2 xl:grid-cols-3 gap-5; }
 .quest-card { @apply flex flex-col gap-5 bg-surface text-ink border border-line-2 rounded-card p-6; }
+.quest-card[data-entity="quest"] { border-top: 3px solid var(--entity-color); }
 .quest-card-top { @apply flex items-center justify-between gap-4 text-accent-text; }
+.quest-card[data-entity="quest"] .quest-card-top { color: var(--entity-color); }
 .quest-achievements-indicator { @apply relative inline-flex items-center; }
 .quest-achievements-badge {
   @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-line bg-surface-2 font-mono text-sm font-bold tabular-nums text-ink cursor-help;
@@ -123,11 +125,64 @@
 .quest-roster-level[data-roster-level="conversational"] { @apply border-info-ink bg-info-tint text-info-ink; }
 .quest-roster-level[data-roster-level="introductory"] { @apply border-warn-ink bg-warn-tint text-warn-ink; }
 .quest-achievement-side { @apply flex shrink-0 self-stretch flex-col items-end justify-between gap-3; }
-.quest-achievement-side > .page-actions { @apply justify-end; }
+.quest-achievement-side > .page-actions, .quest-session > .page-actions { @apply justify-end; }
+.quest-session { @apply flex flex-col items-end gap-2; }
+.quest-session-lengths { @apply flex gap-1 p-1 rounded-tool border border-line-2; }
+.quest-session-length { @apply min-w-10 px-3 py-1.5 rounded-lg text-sm font-semibold tabular-nums text-ink-2 cursor-pointer; }
+.quest-session-length:hover { @apply text-ink; }
+.quest-session-length[aria-pressed="true"] { @apply bg-accent-tint text-ink; box-shadow: inset 0 0 0 1px var(--color-accent-text); }
+.quest-session-length:focus-visible { @apply outline-2 outline-offset-2 outline-accent-text; }
 .quest-roster-progress { @apply rounded-md bg-surface-2 px-2.5 py-1 text-sm font-mono font-bold text-ink; }
 .quest-roster-progress[data-complete="true"] { @apply bg-accent-tint text-accent-text; }
 .achievement-roster-level:not([hidden]) { @apply grid gap-1 my-5 max-w-sm; }
 .achievement-roster-level select { @apply min-h-11 rounded-lg border border-line-2 bg-surface text-ink px-3; }
+.achievement-detail { @apply min-w-0; }
+.achievement-detail > .tool-link { @apply mb-6; }
+.achievement-header-actions { @apply flex flex-col items-end gap-4; }
+.achievement-stats {
+  @apply grid rounded-card border border-line-2 bg-surface shadow-card overflow-hidden;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+.achievement-stats > div { @apply flex flex-col-reverse gap-1 min-w-0 px-4 py-3; }
+.achievement-stats > div + div { @apply border-l border-line; }
+.achievement-stats dt { @apply text-xs font-semibold text-ink-2 whitespace-nowrap; }
+.achievement-stats dd { @apply font-display text-3xl font-extrabold leading-none tabular-nums text-ink; }
+.achievement-stats > div:last-child dd { @apply text-accent-text; }
+.achievement-delete-link { @apply text-bad-ink; }
+.achievement-delete-link:hover { @apply text-bad underline; }
+.achievement-play-panel { @apply flex flex-wrap lg:flex-nowrap items-start justify-between gap-6 mb-8; }
+.achievement-play-copy { @apply flex-1 min-w-0; }
+.achievement-play-copy h2 { @apply font-display text-2xl font-bold leading-tight text-ink; }
+.achievement-play-copy > p { @apply text-sm text-ink-2 mt-2 max-w-xl; }
+.achievement-play-controls { @apply shrink-0; }
+.achievement-session .achievement-session-test { @apply bg-accent-tint border-accent-text text-accent-text; }
+.achievement-session .achievement-session-test:hover { @apply bg-accent text-on-accent; }
+.achievement-progress { @apply mt-4 pt-4 border-t border-line max-w-md space-y-2; }
+.achievement-progress-header { @apply flex items-center justify-between gap-3; }
+.achievement-progress-status { @apply inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide font-mono text-ink-2; }
+.achievement-progress-status[data-complete="true"] { @apply text-ok-ink; }
+.achievement-progress-goal, .achievement-guest-note { @apply text-xs text-ink-2 mt-2; }
+.achievement-inline-link { @apply font-semibold text-accent-text underline underline-offset-2; }
+.achievement-inline-link:hover { @apply text-ink; }
+.achievement-inline-link:focus-visible, .achievement-quest-link:focus-visible { @apply outline-2 outline-offset-4 outline-accent-text; }
+.achievement-quests { @apply mt-6 mb-8; }
+.achievement-quests > h2 { @apply mb-4; }
+.achievement-quests ul { @apply rounded-card border border-line bg-surface overflow-hidden; }
+.achievement-quest-row { @apply flex flex-wrap sm:flex-nowrap items-start justify-between gap-4 p-5; }
+.achievement-quest-row + .achievement-quest-row { @apply border-t border-line; }
+.achievement-quest-copy { @apply flex-1 min-w-0; }
+.achievement-quest-copy h3 { @apply font-display text-xl font-bold; overflow-wrap: anywhere; }
+.achievement-quest-link:hover { @apply text-accent-text underline; }
+.achievement-quest-copy > p { @apply text-sm text-ink-2 mt-2; }
+.achievement-quest-role { @apply rounded-md border border-line px-2 py-1 text-xs font-semibold text-ink-2 bg-surface-2; }
+.achievement-quest-role[data-required="true"] { @apply border-accent-text bg-accent-tint text-accent-text; }
+.achievement-quest-progress { @apply mt-3 max-w-md; }
+.achievement-quest-side { @apply flex shrink-0 flex-col items-end gap-2; }
+.quest-detail .eyebrow.entity-kind, .achievement-detail .eyebrow.entity-kind { @apply inline-flex items-center gap-1.5; }
+.achievement-catalog-record[data-entity="achievement"] { border-left: 4px solid var(--entity-color); }
+.quest-achievement[data-entity="achievement"] { border-left: 3px solid var(--entity-color); }
+.achievement-quest-row[data-entity="quest"] { border-left: 3px solid var(--entity-color); }
 @media (max-width: 1023px) {
   .play-has-round .round-continue { order: -1; }
 }
@@ -140,6 +195,11 @@
   .play-launch h2 { @apply text-5xl; }
   .quest-header-actions { @apply w-full items-start; }
   .quest-achievement-side { @apply w-full; }
+  .achievement-header-actions { @apply w-full items-start; }
+  .achievement-play-controls { @apply w-full; }
+  .achievement-play-controls .quest-session { @apply items-start; }
+  .achievement-play-controls .quest-session > .page-actions { @apply justify-start; }
+  .achievement-quest-side { @apply w-full items-start; }
 }
 .play-player-list { @apply mb-5; }
 .play-player-list li { @apply flex items-center gap-4 py-4 border-t border-line; }

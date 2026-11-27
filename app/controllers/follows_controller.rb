@@ -2,10 +2,11 @@ class FollowsController < ApplicationController
   before_action :authenticate_ace!
 
   def create
-    type = { "Team" => Team, "Player" => Player }[params[:followable_type]]
+    type = { "Team" => Team, "Player" => Player, "Quest" => Quest, "Achievement" => Achievement }[params[:followable_type]]
     raise ActiveRecord::RecordNotFound unless type
 
-    record = type.find(params[:followable_id])
+    scope = [ Quest, Achievement ].include?(type) ? type.visible_to(current_ace) : type
+    record = scope.find(params[:followable_id])
     current_ace.follows.find_or_create_by!(followable: record)
     respond_with_button(record)
   end

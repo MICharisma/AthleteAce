@@ -1,7 +1,7 @@
 class GameHistory
   GAMES = GameRound::GAMES
   CIPHER_TEAM = "NULLIF(game_rounds.questions -> game_attempts.round_position ->> 'team_id', '')::uuid".freeze
-  RECORDED_GAMES = %w[name_ciphers multiple_choice phased_repetition image_recognition guess_the_league guess_the_sport].freeze
+  RECORDED_GAMES = %w[name_ciphers multiple_choice phased_repetition image_recognition guess_the_league guess_the_sport on_the_team].freeze
   attr_reader :attempts, :game_type, :team, :today, :time_zone
 
   def initialize(ace:, game_type: nil, team: nil, now: Time.current)
@@ -15,6 +15,7 @@ class GameHistory
       cipher_ids = cipher_attempts.where("#{CIPHER_TEAM} = ?", team.id).select("game_attempts.id")
       # Attribute Team Match to the recorded answer, even if the player later moves teams.
       @attempts = attempts.where(game_type: "player_team_match", target_entity_type: "Team", target_entity_id: team.id)
+        .or(attempts.where(game_type: "on_the_team", target_entity_type: "Team", target_entity_id: team.id))
         .or(attempts.where(game_type: "guess_the_division", subject_entity_type: "Team", subject_entity_id: team.id))
         .or(attempts.where(id: cipher_ids))
     end

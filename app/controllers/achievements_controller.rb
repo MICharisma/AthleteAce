@@ -6,11 +6,42 @@ class AchievementsController < ApplicationController
 
   # GET /achievements or /achievements.json
   def index
-    @achievements = Achievement.visible_to(current_ace)
+    @achievements = Achievement.visible_to(current_ace).unhidden_for(current_ace).includes(:target, highlights: :quest).order(:name)
+    @engagement_summary = Engagements::Summary.new(@achievements, current_ace)
   end
 
   # GET /achievements/1 or /achievements/1.json
   def show
+    @highlights = @achievement.highlights
+      .visible_to(current_ace)
+      .where(quest: Quest.visible_to(current_ace))
+      .includes(:quest)
+      .to_a
+      .sort_by { |highlight| highlight.quest.name.downcase }
+
+    @quest_goals = if current_ace
+      current_ace.goals
+        .where(quest_id: @highlights.map(&:quest_id))
+        .includes(:goal_achievements, quest: { highlights: :achievement })
+        .index_by(&:quest_id)
+    else
+      {}
+    end
+
+    @ace_entries = if current_ace
+      GoalAchievement.joins(:goal)
+        .where(achievement: @achievement, goals: { ace_id: current_ace.id, quest_id: Quest.approved.select(:id) })
+        .includes(goal: [ :quest, :goal_achievements ])
+        .to_a
+    else
+      []
+    end
+
+    @primary_entry = @ace_entries.find { |entry| entry.completed_at.nil? } || @ace_entries.first
+    @primary_goal = @primary_entry&.goal
+    @player_count = @primary_entry&.target_player_count || @achievement.fixed_roster_requirement || @achievement.roster_snapshot&.fetch(:ids)&.size
+    @earned_count = @achievement.approved? ? GoalAchievement.completed.joins(:goal).where(achievement: @achievement).distinct.count("goals.ace_id") : 0
+    @engagement_summary = Engagements::Summary.new([ @achievement, *@highlights.map(&:quest) ], current_ace)
   end
 
   # GET /achievements/new

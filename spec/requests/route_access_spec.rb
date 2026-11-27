@@ -289,6 +289,7 @@ RSpec.describe "Route access", type: :request do
       DELETE /aces
       GET /profile/edit
       GET /profile
+      GET /shared-space
       PATCH /profile
       PUT /profile
       GET /ratings

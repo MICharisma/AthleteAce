@@ -1,7 +1,37 @@
 class Achievement < ApplicationRecord
+  # Included before Moderatable so Moderatable's visible_to stays the moderation boundary.
+  include Engagements::Engageable
   include Moderatable
   ROSTER_LEVELS = { "mastery" => nil, "fluency" => 15, "conversational" => 8, "introductory" => 3 }.freeze
   TARGET_TYPES = %w[Player Team Division Conference League Sport City State Country Federation PlayerGroup].freeze
+
+  scope :unhidden_for, ->(actor) {
+    if actor
+      where.not(id: actor.engagements.hide.where(engageable_type: polymorphic_name).select(:engageable_id))
+    else
+      all
+    end
+  }
+
+  def tier_lists_presentation
+    level_label = target_type == "Team" ? I18n.t("achievements.roster_levels.#{roster_level || 'mastery'}") : nil
+    quest_count = highlights.approved.where(quest: Quest.approved).count
+    earned_count = goal_achievements.completed.joins(:goal).distinct.count("goals.ace_id")
+
+    {
+      eyebrow: [ "Achievement", target_type.underscore.humanize ].compact_blank.join(" · "),
+      title: name,
+      subtitle: [ target&.name, level_label ].compact_blank.join(" · ").presence,
+      body: description.presence,
+      badges: [ "Achievement", target&.name, level_label ].compact_blank.uniq,
+      stats: {
+        "Target" => target_type.underscore.humanize,
+        "Quests" => quest_count.positive? ? quest_count : nil,
+        "Earned" => earned_count.positive? ? earned_count : nil
+      },
+      colors: [ "#B45309", "#F59E0B" ]
+    }
+  end
 
   has_many :goal_achievements, dependent: :destroy
   PRACTICE_SCOPES = { "PlayerGroup" => :player_group_id, "Team" => :team_id, "Division" => :division_id, "Conference" => :conference_id,
