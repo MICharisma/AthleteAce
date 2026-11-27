@@ -10,7 +10,7 @@
         <%= search.search_field :q, maxlength: 80, class: "account-input", data: { action: "input->draft-composer#search" } %>
         <%= search.submit "Search", class: "tool-button" %>
       <% end %>
-      <%= turbo_frame_tag "draft-target-results" %>
+      <%= turbo_frame_tag "draft-target-results", data: { analytics_frame: "draft_target_results" } %>
       <%= form_with model: @draft do |form| %>
         <%= form.hidden_field :target_type, data: { draft_composer_target: "type" } %>
         <%= form.hidden_field :target_id, data: { draft_composer_target: "id" } %>

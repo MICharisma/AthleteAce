@@ -38,12 +38,13 @@ RSpec.describe "Account flow", type: :request do
     get new_ace_registration_path
     post ace_registration_path, params: { ace: { username: "wrigley_wes", display_name: "Wes Rivera", email: "new-ace@example.com", password: "password123", password_confirmation: "password123" } }
     expect(response).to redirect_to(new_ace_session_path)
-    expect(response.cookies.keys).not_to include("ahoy_visit", "ahoy_visitor")
+    expect(cookies.to_hash.keys).to include("ahoy_visit", "ahoy_visitor")
     follow_redirect!
     new_ace = Ace.find_by! email: "new-ace@example.com"
     expect(new_ace).not_to be_confirmed
     event = Ahoy::Event.where(name: "signup_completed").sole
     expect(event.user).to eq(new_ace)
+    expect(event.visit.visit_token).to eq(cookies["ahoy_visit"])
     expect(event.visit.user).to eq(new_ace)
     expect(event.properties).to eq("method" => "email")
     new_ace.confirm

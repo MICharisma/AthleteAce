@@ -25,7 +25,7 @@
     <% end %>
   <% end %>
 
-  <%= turbo_frame_tag "round_setup" do %>
+  <%= turbo_frame_tag "round_setup", data: { analytics_frame: "round_setup" } do %>
     <%= render "setup" %>
   <% end %>
 

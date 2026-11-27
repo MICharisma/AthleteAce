@@ -59,6 +59,8 @@ class Ace < ApplicationRecord
   has_one :active_rizz_binding, -> { active }, class_name: "AceRizzBinding"
   has_many :rizz_bindings, class_name: "AceRizzBinding", dependent: :destroy
   has_many :moderator_notes
+  has_many :ahoy_visits, class_name: "Ahoy::Visit", foreign_key: :user_id, dependent: :nullify
+  has_many :ahoy_events, class_name: "Ahoy::Event", foreign_key: :user_id, dependent: :nullify
   validates :time_zone, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name) }, allow_nil: true
 
   def self.from_google(auth)

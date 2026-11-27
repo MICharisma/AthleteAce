@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { track } from "analytics"
 
 // Keeps Practice, Test, and Arena on a quest achievement pointed at the
 // selected 10 / 20 / 30 length without a round trip.
@@ -13,6 +14,7 @@ export default class extends Controller {
   changeLength(event) {
     this.lengthValue = Number(event.currentTarget.dataset.length)
     this.apply()
+    track("quest_length_changed", { length: this.lengthValue })
   }
 
   apply() {

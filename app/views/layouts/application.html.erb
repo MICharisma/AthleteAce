@@ -9,6 +9,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <%= tag.meta name: "app-analytics", content: analytics_context.to_json %>
 
     <%= yield :head %>
 

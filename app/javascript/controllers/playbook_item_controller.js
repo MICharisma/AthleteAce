@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { track } from "analytics"
 
 // Click-to-add affordance for listable entities, paired with the drag-and-drop
 // Playbook Builder tray (#tier-builder-root).
@@ -102,5 +103,6 @@ export default class extends Controller {
     if (this.hasLabelTarget) {
       this.labelTarget.textContent = "In playbook"
     }
+    track("playbook_item_added", { content_type: this.typeValue })
   }
 }

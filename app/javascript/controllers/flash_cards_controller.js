@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { track } from "analytics"
 
 // Steps through flash cards. With a delay, each card bulges the given name,
 // then the family name, fades in the team, then the position, and moves on.
@@ -16,6 +17,7 @@ export default class extends Controller {
   // keeps the URL and links in step, so a reload or shuffle keeps it too.
   changeDelay(event) {
     this.delayValue = Number(event.currentTarget.dataset.delay)
+    track("flash_cards_pace_changed", { delay: this.delayValue })
     for (const button of this.delayTargets) button.setAttribute("aria-pressed", button === event.currentTarget)
     this.playing = this.delayValue > 0
     this.pauseTarget.textContent = "Pause"
