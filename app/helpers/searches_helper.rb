@@ -11,6 +11,13 @@ module SearchesHelper
     person_name(record)
   end
 
+  def shell_search_subtitle(record)
+    return record.handle if record.is_a?(Ace)
+    return [ record.model_name.human, team_context_label(record, style: :short) ].compact_blank.join(" · ") if record.is_a?(Team)
+
+    record.model_name.human
+  end
+
   def shell_search_path(record)
     if record.is_a?(ShoutOut) && current_side == "feed"
       feed_post_path(record)

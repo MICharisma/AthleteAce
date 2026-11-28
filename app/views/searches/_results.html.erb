@@ -9,7 +9,7 @@
     <% records.each do |record| %>
       <%= link_to shell_search_path(record), class: "search-result entity-chip", role: "option", aria: { selected: false },
         id: "search-#{record.model_name.singular}-#{record.id}", data: { search_target: "result", action: "click->search#choose", entity: record.model_name.singular } do %>
-        <%= icon_for_resource record.model_name.singular, size: 18 %><span><%= shell_search_name record %><small><%= record.is_a?(Ace) ? record.handle : record.model_name.human %></small></span>
+        <%= icon_for_resource record.model_name.singular, size: 18 %><span><%= shell_search_name record %><small><%= shell_search_subtitle record %></small></span>
       <% end %>
     <% end %>
   </section>

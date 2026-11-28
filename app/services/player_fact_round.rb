@@ -20,12 +20,20 @@ class PlayerFactRound
     RoundSubjectPicker.pick(players, length: length, &key).map do |player|
       target = target_for(player)
       choices = ((@targets - [ target ]).sample(3) + [ target ]).shuffle
+      duplicate_names = @fact_type == "team" ? Team.ambiguous_names(choices) : Set.new
       { subject_type: "Player", subject_id: player.id, subject_name: player.display_name,
         target_type: target.class.name, target_id: target.id, target_name: name_of(target),
         game_type: @game_type, fact_type: @fact_type, team_id: team_for(player)&.id, team_name: team_for(player)&.name,
         season_id: @season&.id, season_name: @season&.name,
         subject_photo_url: player.photo_url(recognition: @game_type == "image_recognition"),
-        choices: choices.map { |choice| { id: choice.id, name: name_of(choice) } } }
+        choices: choices.map { |choice|
+          { id: choice.id, name: name_of(choice) }.tap do |entry|
+            if @fact_type == "team" && choice.is_a?(Team) && duplicate_names.include?(Team.normalized_name(choice.name)) &&
+              (context = choice.league_sport_label(style: :short)).present?
+              entry[:league_context] = context
+            end
+          end
+        } }
     end
   end
 

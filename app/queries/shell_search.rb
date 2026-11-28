@@ -23,7 +23,7 @@ class ShellSearch
     else
       groups = {
         "Players" => Player.matching_name(query).by_name.limit(LIMIT).to_a,
-        "Teams" => Team.matching_name(query).order(:territory, :mascot, :id).limit(LIMIT).to_a
+        "Teams" => Team.matching_name(query).includes(league: :sport).order(:territory, :mascot, :id).limit(LIMIT).to_a
       }
       groups["Shout-outs"] = ShoutOutFeed.ranked(ShoutOut.live.matching_text(query), seed: @seed).limit(LIMIT).to_a if @side == "feed"
       unless @side == "feed"

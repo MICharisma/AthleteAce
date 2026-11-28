@@ -145,7 +145,7 @@ class GameRoundSetup
     if team_query.present?
       scope = scope.matching_name(team_query)
     end
-    scope.order(:territory, :mascot).limit(100)
+    scope.includes(league: :sport).order(:territory, :mascot).limit(100)
   end
 
   def selected_team_ids
@@ -153,7 +153,7 @@ class GameRoundSetup
   end
 
   def team_options
-    selected = teams.where(id: selected_team_ids).order(:territory, :mascot).to_a
+    selected = teams.includes(league: :sport).where(id: selected_team_ids).order(:territory, :mascot).to_a
     selected + (selectable_teams.to_a - selected)
   end
 
@@ -185,7 +185,7 @@ class GameRoundSetup
   end
 
   def fact_pool
-    @fact_pool ||= PlayerFactRound.new(players: (season ? filter_players(season_pool.players) : scoped_players).includes(:team, :birth_city, :birth_country, figure: :rizz_names).to_a,
+    @fact_pool ||= PlayerFactRound.new(players: (season ? filter_players(season_pool.players) : scoped_players).includes({ team: { league: :sport } }, :birth_city, :birth_country, figure: :rizz_names).to_a,
       game_type: game_type, fact_type: fact_type, subject_ids: practice_subject_ids, season: season, team_for: season ? season_pool.method(:team_for) : nil)
   end
 
@@ -286,7 +286,7 @@ class GameRoundSetup
   end
 
   def flash_cards
-    players = subjects.includes(:team, figure: :rizz_names)
+    players = subjects.includes({ team: { league: :sport } }, figure: :rizz_names)
     players = if selected_team_ids.size > 1
       RoundSubjectPicker.pick(players.to_a, length: length) { |player| team_for(player).id }
     else
@@ -355,6 +355,7 @@ class GameRoundSetup
       question_league = season ? season.league : subject.league
       pool = pools[question_league.id] ||= choice_pool(question_league)
       choices = ((pool - [ target ]).sample(5) + [ target ]).shuffle
+      duplicate_names = game_type == "player_team_match" ? Team.ambiguous_names(choices) : Set.new
       { subject_type: subject.class.name, subject_id: subject.id, subject_name: subject.is_a?(Player) ? subject.display_name : subject.name,
         team_id: subject.is_a?(Player) ? target.id : subject.id, season_id: season_id,
         target_type: target.class.name, target_id: target.id, target_name: target.name,
@@ -363,6 +364,9 @@ class GameRoundSetup
             if item.is_a?(Team)
               choice.merge!(territory: item.territory, mascot: item.mascot,
                 primary_color: item.primary_color, secondary_color: item.secondary_color, text_color: item.text_color)
+              if duplicate_names.include?(Team.normalized_name(item.name)) && (context = item.league_sport_label(style: :short)).present?
+                choice[:league_context] = context
+              end
             end
           end
         } }.tap do |question|
@@ -398,7 +402,7 @@ class GameRoundSetup
 
     pool = selected_team_ids.size > 1 ? Team.where(id: selected_team_ids) : question_league.teams
     pool = pool.where(id: Campaign.where(season_id: season_id).select(:team_id)) if season_id
-    pool.to_a
+    pool.includes(league: :sport).to_a
   end
 
   def team_for(player)

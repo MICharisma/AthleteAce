@@ -16,7 +16,8 @@ module GameRoundsHelper
     return "Which sport does this team play?" if mode == "guess_the_sport"
     if mode == "on_the_team"
       team = round.question.fetch("focus_team_name")
-      return "Is this player on the #{team}?"
+      context = round.question["focus_team_context"]
+      return context.present? ? "Is this player on the #{team} (#{context})?" : "Is this player on the #{team}?"
     end
 
     season_name = round.question["season_name"]

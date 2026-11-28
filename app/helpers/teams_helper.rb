@@ -1,4 +1,51 @@
 module TeamsHelper
+  TEAM_NAME_CONTEXT_MODES = %i[auto always never].freeze
+
+  def team_context_label(team, style: :full, include_sport: true)
+    team&.league_sport_label(style: style, include_sport: include_sport)
+  end
+
+  def team_name_ambiguous?(team, ambiguous_names: nil)
+    return false unless team
+
+    names = ambiguous_names.nil? ? (@ambiguous_team_names ||= Team.ambiguous_names) : ambiguous_names
+    team.name_ambiguous?(names)
+  end
+
+  def team_display_name(team, context: :auto, ambiguous_names: nil, style: :full, include_sport: true, separator: " · ")
+    return "" unless team
+
+    validate_team_context_mode!(context)
+    case context
+    when :always
+      team.name_with_context(style: style, include_sport: include_sport, separator: separator)
+    when :never
+      team.name
+    when :auto
+      if team_name_ambiguous?(team, ambiguous_names: ambiguous_names)
+        team.name_with_context(style: style, include_sport: include_sport, separator: separator)
+      else
+        team.name
+      end
+    end
+  end
+
+  def team_name_with_context(team, context: :auto, ambiguous_names: nil, style: :full, include_sport: true,
+    tag_name: :span, name_tag: :span, name_class: nil, context_class: "text-xs text-ink-3", separator: nil, **options)
+    return "" unless team
+
+    validate_team_context_mode!(context)
+    show_context = context == :always || (context == :auto && team_name_ambiguous?(team, ambiguous_names: ambiguous_names))
+    label = show_context ? team_context_label(team, style: style, include_sport: include_sport) : nil
+
+    parts = [ tag.public_send(name_tag, team.name, class: name_class) ]
+    if label.present?
+      parts << tag.span(separator, class: context_class, aria: { hidden: true }) if separator.present?
+      parts << tag.span(label, class: context_class)
+    end
+
+    tag.public_send(tag_name, safe_join(parts), **options)
+  end
   # Generates a link to start a quiz for a given resource
   # @param resource [Object] The resource to generate the quiz link for
   # @param options [Hash] Additional HTML options for the link
@@ -14,7 +61,7 @@ module TeamsHelper
     }
 
     # Use a named route for team_match, dynamically setting the query parameter based on resource type
-    link_to 'Quiz Me', new_game_round_path(:"#{resource_type}_id" => resource.id),
+    link_to "Quiz Me", new_game_round_path("#{resource_type}_id": resource.id),
            default_options.merge(options)
   end
 
@@ -56,7 +103,7 @@ module TeamsHelper
   def auto_submit_select(form, attribute, collection, label_text, include_blank: true, blank_text: nil)
     blank_text ||= "-- Select #{label_text} --"
 
-    select_options = include_blank ? [[blank_text, nil]] : []
+    select_options = include_blank ? [ [ blank_text, nil ] ] : []
     select_options += collection
 
     tag.div do
@@ -116,38 +163,38 @@ module TeamsHelper
 
               # Sport filter
               if @filter_options[:sports].present?
-                sports = @filter_options[:sports].map { |s| [s.name, s.id] }
+                sports = @filter_options[:sports].map { |s| [ s.name, s.id ] }
                 grid_fields << auto_submit_select(f, :league_sport_id_eq, sports, "Sport")
               end
 
               # League filter
               if @filter_options[:leagues].present?
-                leagues = @filter_options[:leagues].map { |l| [l.name, l.id] }
+                leagues = @filter_options[:leagues].map { |l| [ l.name, l.id ] }
                 grid_fields << auto_submit_select(f, :league_id_eq, leagues, "League")
               end
               # Conference filter
               if @filter_options[:conferences].present?
-                conferences = @filter_options[:conferences].map { |c| [c.name, c.id] }
+                conferences = @filter_options[:conferences].map { |c| [ c.name, c.id ] }
                 grid_fields << auto_submit_select(f, :conference_id_eq, conferences, "Conference")
               end
               # Division filter
               if @filter_options[:divisions].present?
-                divisions = @filter_options[:divisions].map { |d| [d.name, d.id] }
+                divisions = @filter_options[:divisions].map { |d| [ d.name, d.id ] }
                 grid_fields << auto_submit_select(f, :division_id_eq, divisions, "Division")
               end
               # State filter
               if @filter_options[:states].present?
-                states = @filter_options[:states].map { |s| [s.name, s.id] }
+                states = @filter_options[:states].map { |s| [ s.name, s.id ] }
                 grid_fields << auto_submit_select(f, :stadium_city_state_id_eq, states, "State")
               end
               # City filter
               if @filter_options[:cities].present?
-                cities = @filter_options[:cities].map { |c| [c.name, c.id] }
+                cities = @filter_options[:cities].map { |c| [ c.name, c.id ] }
                 grid_fields << auto_submit_select(f, :stadium_city_id_eq, cities, "City")
               end
               # Stadium filter
               if @filter_options[:stadiums].present?
-                stadiums = @filter_options[:stadiums].map { |s| [s.name, s.id] }
+                stadiums = @filter_options[:stadiums].map { |s| [ s.name, s.id ] }
                 grid_fields << auto_submit_select(f, :stadium_id_eq, stadiums, "Stadium")
               end
 
@@ -174,7 +221,7 @@ module TeamsHelper
   # Generates association links for a given resource based on FilterableAssociations
   # @param resource [Object] The resource to generate association links for
   # @return [String] HTML for the association links
-  def association_links resource
+  def association_links(resource)
     return unless resource.present?
 
     model_name = resource.class.name.underscore.to_sym
@@ -185,10 +232,18 @@ module TeamsHelper
       count = resource.send(assoc).count
       next if count.zero?
 
-      tag.div link_to(pluralize(count, assoc.to_s.singularize), [resource, assoc]),
+      tag.div link_to(pluralize(count, assoc.to_s.singularize), [ resource, assoc ]),
               class: "association-to-collection #{assoc}", data: { entity: assoc.to_s.singularize }
     end.compact
 
     tag.div safe_join(links), class: "association-links #{model_name}"
+  end
+
+  private
+
+  def validate_team_context_mode!(context)
+    return if TEAM_NAME_CONTEXT_MODES.include?(context)
+
+    raise ArgumentError, "Unknown team context mode: #{context.inspect}"
   end
 end

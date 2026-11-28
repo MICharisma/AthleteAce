@@ -1,4 +1,6 @@
 class Team < ApplicationRecord
+  NORMALIZED_NAME_SQL = "REGEXP_REPLACE(LOWER(BTRIM(CONCAT_WS(' ', NULLIF(BTRIM(territory), ''), NULLIF(BTRIM(mascot), '')))), '\\s+', ' ', 'g')".freeze
+
   include HasLogos
   has_many :staff_tenures, dependent: :restrict_with_error
   has_many :shout_outs, as: :target, dependent: :nullify
@@ -6,7 +8,7 @@ class Team < ApplicationRecord
   include Engagements::Engageable
   include Ratable
   before_validation :assign_palette_text_color
-  
+
   belongs_to :league
   belongs_to :stadium, optional: true
   has_many :players
@@ -24,7 +26,7 @@ class Team < ApplicationRecord
   has_many :memberships, dependent: :destroy
   has_many :campaigns, dependent: :destroy
   has_many :title_awards, through: :campaigns
-  has_one :active_membership, -> { where(active: true) }, class_name: 'Membership'
+  has_one :active_membership, -> { where(active: true) }, class_name: "Membership"
   has_one :division, through: :active_membership
   has_one :conference, through: :active_membership
   has_many :contestants, through: :campaigns
@@ -41,10 +43,55 @@ class Team < ApplicationRecord
     where("CONCAT_WS(' ', teams.territory, teams.mascot, teams.abbreviation) ILIKE ?", "%#{sanitize_sql_like(query)}%")
   }
 
+  def self.normalized_name(value)
+    value.to_s.squish.downcase
+  end
+
+  def self.ambiguous_names(teams = nil)
+    if teams.nil? || (teams.is_a?(ActiveRecord::Relation) && !teams.loaded?)
+      (teams || all)
+        .except(:order, :select)
+        .group(Arel.sql(NORMALIZED_NAME_SQL))
+        .having("COUNT(*) > 1")
+        .pluck(Arel.sql(NORMALIZED_NAME_SQL))
+        .reject(&:blank?)
+        .to_set
+    else
+      teams
+        .filter_map { |team| normalized_name(team.name).presence }
+        .tally
+        .each_with_object(Set.new) { |(key, count), names| names << key if count > 1 }
+    end
+  end
+
   def name
     [ territory, mascot ].compact_blank.join(" ")
   end
   alias :full_name :name
+
+  def league_sport_label(style: :full, include_sport: true)
+    league&.context_label(style: style, include_sport: include_sport)
+  end
+
+  def name_with_context(style: :full, include_sport: true, separator: " · ")
+    [ name, league_sport_label(style: style, include_sport: include_sport) ].compact_blank.join(separator)
+  end
+
+  def name_ambiguous?(ambiguous_names = nil)
+    key = self.class.normalized_name(name)
+    return false if key.blank?
+    return ambiguous_names.include?(key) unless ambiguous_names.nil?
+
+    self.class.where.not(id: id).where("#{NORMALIZED_NAME_SQL} = ?", key).exists?
+  end
+
+  def disambiguated_name(ambiguous_names: nil, always: false, style: :full, include_sport: true, separator: " · ")
+    if always || name_ambiguous?(ambiguous_names)
+      name_with_context(style: style, include_sport: include_sport, separator: separator)
+    else
+      name
+    end
+  end
 
   # The territory, mascot, abbreviation and stadium columns cache the current
   # values. A name falls back to that cache, since it still identifies the
@@ -71,15 +118,15 @@ class Team < ApplicationRecord
     }
   end
 
-  
+
   # Define which attributes can be searched via Ransack
   def self.ransackable_attributes(auth_object = nil)
-    ["created_at", "id", "league_id", "mascot", "stadium_id", "territory", "updated_at"]
+    [ "created_at", "id", "league_id", "mascot", "stadium_id", "territory", "updated_at" ]
   end
-  
+
   # Define which associations can be searched via Ransack
   def self.ransackable_associations(auth_object = nil)
-    ["active_membership", "campaigns", "conference", "current_organization", "current_organization_affiliation", "division", "league", "memberships", "organization_affiliations", "organizations", "players", "ratings", "stadium"]
+    [ "active_membership", "campaigns", "conference", "current_organization", "current_organization_affiliation", "division", "league", "memberships", "organization_affiliations", "organizations", "players", "ratings", "stadium" ]
   end
 
   private

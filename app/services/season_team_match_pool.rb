@@ -28,7 +28,7 @@ class SeasonTeamMatchPool
   end
 
   def teams
-    @teams ||= Team.where(id: assignments.values).index_by(&:id)
+    @teams ||= Team.includes(league: :sport).where(id: assignments.values).index_by(&:id)
   end
 
   def grouped

@@ -25,11 +25,19 @@
 
         <div class="mt-5 border-t border-line pt-4">
           <p class="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink-3">Current Teams</p>
-          <% if organization.current_teams.any? %>
+          <% sorted_teams = organization.current_teams.sort_by { |team| [ team.sport&.name.to_s, team.league&.name.to_s, team.name ] } %>
+          <% if sorted_teams.any? %>
+            <% visible_teams = sorted_teams.first(8) %>
+            <% overflow_count = sorted_teams.size - visible_teams.size %>
             <div class="flex flex-wrap gap-3">
-              <% organization.current_teams.each do |team| %>
+              <% visible_teams.each do |team| %>
                 <span class="inline-flex rounded-full bg-surface-2 px-3 py-1 text-sm font-medium text-ink">
-                  <%= team.name %>
+                  <%= team_display_name(team, context: sorted_teams.size > 1 ? :always : :auto, style: :short) %>
+                </span>
+              <% end %>
+              <% if overflow_count.positive? %>
+                <span class="inline-flex rounded-full bg-surface-2 px-3 py-1 text-sm font-medium text-ink-3">
+                  <%= "+#{overflow_count} more" %>
                 </span>
               <% end %>
             </div>

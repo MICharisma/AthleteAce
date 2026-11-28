@@ -107,15 +107,19 @@
       <%= tag.button "Any team", type: "button", class: "tool-button", disabled: @setup.selected_team_ids.empty?, data: { action: "round-setup#anyTeam" } %>
     <% end %>
     <% team_options = @setup.team_options %>
+    <% ambiguous_names = @setup.league_id.blank? ? Team.ambiguous_names(team_options) : Set.new %>
     <%= tag.div class: "round-team-options", role: "group", aria: { label: "Teams" } do %>
       <% team_options.each do |team| %>
         <%= tag.label class: "round-option round-team-option" do %>
           <%= round_team_badge team %>
           <%= tag.span class: "round-team-name" do %>
             <%= tag.strong team.name %>
+            <% if @setup.league_id.blank? && team_name_ambiguous?(team, ambiguous_names: ambiguous_names) && (context_label = team_context_label(team, style: :short)).present? %>
+              <%= tag.span context_label, class: "round-caption" %>
+            <% end %>
             <%= tag.span @setup.selected_team_ids.include?(team.id) ? "Selected" : "Add to round", class: "round-caption" %>
           <% end %>
-          <%= check_box_tag "team_ids[]", team.id, @setup.selected_team_ids.include?(team.id), id: "round_team_#{team.id}", aria: { label: team.name }, data: { action: "change->round-setup#update" } %>
+          <%= check_box_tag "team_ids[]", team.id, @setup.selected_team_ids.include?(team.id), id: "round_team_#{team.id}", aria: { label: team_display_name(team, context: @setup.league_id.blank? ? :auto : :never, ambiguous_names: ambiguous_names, style: :short) }, data: { action: "change->round-setup#update" } %>
         <% end %>
       <% end %>
     <% end %>

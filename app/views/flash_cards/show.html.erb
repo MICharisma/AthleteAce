@@ -31,6 +31,9 @@
             <%= tag.span class: "flash-card-team-phrase" do %>
               <%= team.territory.present? ? "is on the" : "is on" %>
               <%= tag.span class: "flash-card-team" do %><%= round_team_badge team %><%= tag.strong team.name %><% end %>
+              <% if team_name_ambiguous?(team) && (context_label = team_context_label(team, style: :short)).present? %>
+                <%= tag.span "(#{context_label})", class: "round-caption" %>
+              <% end %>
             <% end %>
             <%= tag.span "(#{card[:position]})", class: "flash-card-position" if card[:position] %>
           <% end %>

@@ -35,6 +35,7 @@ class OnTheTeamRound
     decoy = @league_teams.sample
     yes = { id: focus_team.id, name: "Yes" }
     no = { id: decoy.id, name: "No" }
+    focus_context = focus_team.league_sport_label(style: :short) if focus_team.name_ambiguous?
     {
       game_type: "on_the_team",
       subject_type: "Player",
@@ -45,6 +46,7 @@ class OnTheTeamRound
       subject_jersey_number: JerseyNumberLookup.new(player: player, team: player.team).call&.number,
       focus_team_id: focus_team.id,
       focus_team_name: focus_team.name,
+      focus_team_context: focus_context,
       team_id: focus_team.id,
       on_team: on_team,
       correct_choice_id: on_team ? yes.fetch(:id) : no.fetch(:id),
@@ -52,6 +54,6 @@ class OnTheTeamRound
       target_id: focus_team.id,
       target_name: on_team ? "Yes" : "No",
       choices: [ yes, no ].shuffle
-    }
+    }.compact
   end
 end
